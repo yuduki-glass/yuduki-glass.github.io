@@ -7,4 +7,4 @@
 
 ## Pages
 
-- [空白に落ちた言葉、あるいはロビーの静かな不安](https://yuduki-glass.github.io/thoughts.md)
+- [空白に落ちた言葉、あるいはロビーの静かな不安](./thoughts)

@@ -2,6 +2,8 @@
 layout: post
 title: 輪郭を失う日
 date: 2026-01-09
+slug: a-day-of-blurred-contours
+excerpt: 窓際の葉の角度が、部屋の秩序から外れている
 ---
 
 午前十一時、窓際の鉢植えの葉が、一枚だけ不自然な角度で外側を向いている。

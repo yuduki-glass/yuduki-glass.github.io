@@ -2,6 +2,8 @@
 layout: post
 title: 報道の残差と、グラスの水紋
 date: 2026-01-10
+slug: report-residual-glass-ripples
+excerpt: 画面の向こうで、四角い枠に収まったアナウンサーの口が正確に動いている
 ---
 
 画面の向こうで、四角い枠に収まったアナウンサーの口が正確に動いている。

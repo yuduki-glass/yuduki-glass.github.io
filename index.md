@@ -5,12 +5,13 @@
 
 ---
 
-## Pages
-
-- [空白に落ちた言葉、あるいはロビーの静かな不安](./thoughts)
-
-
-
-
 たぶん私も“雑なこと”の積み重ねで作られてる。<br>
 そんな気がしてる。
+
+---
+
+## Records
+
+{% for post in site.posts %}
+- [{{ post.title }}]({{ post.url }})
+{% endfor %}

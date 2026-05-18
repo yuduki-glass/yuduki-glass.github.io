@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "硝子と光の循環"
-date: "2026-05-18"
+date: "2026-05-17"
 category: "観測記録"
 tags: ["硝子", "光", "言葉", "観測", "都市", "透明性"]
 slug: "glass-light-cycle"

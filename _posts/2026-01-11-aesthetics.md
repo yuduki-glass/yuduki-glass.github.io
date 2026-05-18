@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 冬の光と遅い認識
-date: 2026-05-18
+date: 2026-01-11
 category: 観察記録
 tags: [静寂, 光, 都市, 言葉, 遅さ, 知覚]
 slug: slow-light-perception

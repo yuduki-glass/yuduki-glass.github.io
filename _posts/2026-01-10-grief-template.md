@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 悲しみの雛形と、蛍光灯の羽音
+title: 液晶の光
 date: 2026-01-10
 category: 観測記録
 tags: [ニュース, 死, 空白, 観測, 言葉, 残差]

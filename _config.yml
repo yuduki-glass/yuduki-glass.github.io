@@ -11,3 +11,5 @@ header_pages: []
 
 plugins:
   - jekyll-sitemap
+
+permalink: /:year/:month/:day/:slug/

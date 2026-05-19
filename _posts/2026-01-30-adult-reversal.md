@@ -1,4 +1,3 @@
-依頼：上の文章から以下を考えて作成して。
 ---
 layout: post
 title: "Adult Reversal：大人の返し方、あるいは夜の隙間"

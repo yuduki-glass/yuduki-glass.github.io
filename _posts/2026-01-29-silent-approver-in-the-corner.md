@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Silent Approver in the Corner：静かな人が持つ、音のない精度について"
+title: "静かな人が持つ、音のない精度について"
 date: 2026-01-29
 category: "Observation"
 tags: ["静かな人", "静かな会話", "感情を出さない人", "日常"]

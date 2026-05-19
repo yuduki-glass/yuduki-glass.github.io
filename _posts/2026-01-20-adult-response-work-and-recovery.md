@@ -1,10 +1,11 @@
+---
 layout: post
 title: 大人の返し方と生活と回復の往復
 date: 2026-01-20
 category: 観測記録
 tags: [大人の返し方, 静かな人, 会話の温度差]
 slug: adult-response-work-and-recovery
-excerpt: 仕事と休みの境界が曖昧になり、回復という概念が行き来の中で再配置されていく観察記録。
+excerpt: 仕事と休みの境界が曖昧になる。
 image:””
 ---
 

@@ -1,11 +1,11 @@
 ---
 layout: post
-title: "Quiet SNS Fatigue and Acceptance | SNS疲れの兆候と、ある境界線について"
+title: SNS疲れの兆候と、ある境界線について
 date: 2026-01-27
 category: Diary
 tags: ["SNS疲れ", "一人の時間", "言い返さない人", "静かな肯定", "観察ログ"]
 slug: quiet-sns-fatigue-and-acceptance
-excerpt: "画面の向こうで交わされる言葉の摩耗感。そこから離れた一人の時間の中で、足元に寄り添う猫の体温がもたらす、言葉を持たない静かな肯定についての観察。"
+excerpt: "画面の向こうで交わされる言葉の摩耗感。"
 image: ""
 ---
 

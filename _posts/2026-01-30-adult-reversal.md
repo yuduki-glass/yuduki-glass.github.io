@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Adult Reversal：大人の返し方、あるいは夜の隙間"
+title: "大人の返し方、あるいは夜の隙間"
 date: 2026-01-30
 category: Diary
 tags: [生活と回復, 大人の返し方, 優しい皮肉, 感情を出さない人]

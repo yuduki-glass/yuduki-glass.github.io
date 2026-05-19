@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Silent Air: 空気を壊さない返答"
+title: "空気を壊さない返答"
 date: 2026-01-22
 category: Observation
 tags: [沈黙, 会話の温度差, 空気を壊さない返答]

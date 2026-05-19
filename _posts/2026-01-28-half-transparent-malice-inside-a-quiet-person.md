@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Half-Transparent Malice inside a Quiet Person：半透明の悪意と静かな人の輪郭"
+title: "半透明の悪意と静かな人の輪郭"
 date: 2026-01-28
 category: Observation
 tags: ["静かな人", "空気を読む人", "一人の時間"]

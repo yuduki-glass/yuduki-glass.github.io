@@ -6,7 +6,7 @@ category: 観測記録
 tags: [大人の返し方, 静かな人, 会話の温度差]
 slug: adult-response-work-and-recovery
 excerpt: 仕事と休みの境界が曖昧になる。
-image:""
+image: ""
 ---
 
 仕事と休みの境界が薄い一日がある。机の前にいる時間がそのまま消耗ではなく、呼吸の整理として働いているように見える。

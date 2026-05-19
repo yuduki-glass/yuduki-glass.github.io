@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "The Exhaustion of Expression and the Mimetic Arena / SNS疲れの輪郭と、感情の模倣者たちについて"
+title: "SNS疲れの輪郭と、感情の模倣者たちについて"
 date: 2026-01-31
 category: Observation
 tags: [SNS疲れ, 優しい皮肉, SNS向いてない]

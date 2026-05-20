@@ -6,7 +6,7 @@ category: observations
 tags: SNS疲れ, デジタルデトックス, SNS疲れ観察, SNS fatigue, 人付き合いに疲れた, 会話の温度差
 slug: sns-fatigue-drift-log
 excerpt: SNS疲れが循環するタイムラインの観察記録。デジタルデトックスという遅れて届く言葉が重なりながら意味をずらしていく様子。
-image:””
+image: ””
 ---
 
 画面には、同じような投稿が薄い間隔で並んでいる。

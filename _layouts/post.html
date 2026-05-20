@@ -13,12 +13,32 @@ layout: default
 
 <hr>
 
+---
+layout: default
+---
+
+<h1>{{ page.title }}</h1>
+
+<p>
+  {% assign w = page.date | date: "%w" %}
+  {{ page.date | date: "%Y年%-m月%-d日" }}（{{ "日月火水木金土" | slice: w, 1 }}）
+</p>
+
+{{ content }}
+
+<hr>
+
 <p>
   {% if page.previous %}
-    ← <a href="{{ page.previous.url }}">前日の記録へ</a>
+    ← <a href="{{ page.previous.url }}">{{ page.previous.title }}</a>
+  {% endif %}
+
+  {% if page.previous and page.next %}
+    ｜ 
   {% endif %}
 
   {% if page.next %}
-    <a href="{{ page.next.url }}">翌日の記録へ</a> →
+    <a href="{{ page.next.url }}">{{ page.next.title }}</a> →
   {% endif %}
 </p>
+

@@ -1,0 +1,797 @@
+/* ==========================================================================
+   1. VARIABLES & DESIGN TOKENS（共通変数・設計） 
+   ========================================================================== */
+:root {
+  /* Colors */ 
+  --color-bg-base: #f3f4f6;
+  --color-text-main: #2E2E2E;
+  --color-text-muted: #666666;
+  --color-link: #35506B;
+  --color-link-footer: #556677;
+  --color-border-glow: rgba(255, 255, 255, 0.4);
+  --color-border-dim: rgba(255, 255, 255, 0.1);
+
+  /* Fonts */
+  --font-serif: "Klee One", "HGS教科書体", "HGS Kyokashotai", "HG教科書体", "Zen Antique", "Noto Serif JP", serif;
+
+  /* Layout */
+  --glass-offset: 12px;
+  --glass-radius: 15px;
+}
+
+/* ==========================================================================
+   2. BASE & RESET（共通・基本設定）
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: auto;
+  min-height: 100vh;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+
+/* ★ バグの温床だった 3D 空間（perspective）を完全に排除 */
+.parallax-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: visible; /* スクロールをブラウザ標準に委ねる */
+}
+
+/* ==========================================================================
+   3. BACKGROUNDS & LAYERS（背景・ガラス・エフェクト）
+   ========================================================================== */
+/* [Layer -5] 4重の円形グラデーション（完全最背面・画面固定） */
+.bg-base {
+  position: fixed; /* 画面に完全固定 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    radial-gradient(circle at 20% 20%, #cfe2ff 0%, transparent 60%),
+    radial-gradient(circle at 80% 30%, #fbcfe8 0%, transparent 70%),
+    radial-gradient(circle at 30% 85%, #bae6fd 0%, transparent 65%),
+    radial-gradient(circle at 50% 50%, #ffffff 0%, transparent 50%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -5;
+  pointer-events: none;
+}
+
+/* [Layer -4] スクロールで揺れる光のグラデーション（白い靄・画面固定） */
+.bg-light-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: 
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+  z-index: -4;
+  pointer-events: none;
+}
+
+/* [Layer -3] ★真の解決策：画面固定リピート ＋ スクロール連動視差 */
+.bg-svg {
+  position: fixed; /* ─── 3D空間から脱出し、画面全体にロック ─── */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* ─── 画面サイズぴったりに固定して「ポツン」を絶対回避 ─── */
+  
+  background-image: url("/assets/images/wholebackground.png");
+  
+  /* ─── 横幅は画面に合わせ、縦方向はシームレスに無限ループ ─── */
+  background-size: 100vw auto; 
+  background-position: center top; 
+  background-repeat: repeat-y; 
+  
+  pointer-events: none;
+  z-index: -3;
+
+  /* ─── 【超次元マジック】モダンブラウザ機能で、JS無しでスクロール速度を「文字より遅く」する ─── */
+  animation: parallax-scroll linear both;
+  animation-timeline: scroll(root);
+  animation-range: 0px 5000px; /* 疑似的にゆっくり動かす範囲を設定 */
+
+  will-change: transform;
+}
+
+/* スクロールに応じて背景画像だけを少しずつ上方にずらすアニメーション（視差効果） */
+@keyframes parallax-scroll {
+  from { background-origin: padding-box; background-position-y: 0px; }
+  to { background-position-y: -1000px; } /* 文字のスクロールに対して控えめに動かす */
+}
+
+/* ==========================================================================
+   3. BACKGROUNDS & LAYERS（修正版）
+   ========================================================================== */
+
+/* [Layer 0] メインのガラスレイヤー（画面完全固定・ズレ修正版） */
+.glass-layer {
+  position: fixed;
+  
+  top: var(--glass-offset);
+  left: var(--glass-offset);
+  
+  width: calc(100vw - (var(--glass-offset) * 2));
+  height: calc(100vh - (var(--glass-offset) * 2)); 
+  
+  z-index: 0;
+
+  overflow: hidden;
+  background-color: transparent;
+  
+  /* 奥のSVG背景をしっかり認識してボカす */
+  backdrop-filter: blur(8px) grayscale(32%) brightness(1.12);
+  -webkit-backdrop-filter: blur(8px) grayscale(32%) brightness(1.12);
+  
+  border-radius: var(--glass-radius);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 8px 8px 10px 2px rgba(0, 0, 0, 0.2);
+
+  /* ★【大改造】位置ズレの根本治療
+    .glass-layer が `var(--glass-offset)` 分だけ右下にズレて配置されているので、
+    マスクの中心点を同じ分だけ「左上（マイナス方向）」に補正する。
+    さらに、フチのはみ出しを防ぐためにマスク径を59pxに微調整。
+  */
+  mask-image: radial-gradient(
+    circle 59px at calc(var(--mouse-x) - var(--glass-offset)) calc(var(--mouse-y) - var(--glass-offset)),
+    transparent 0px, transparent 57px, black 59px
+  );
+  -webkit-mask-image: radial-gradient(
+    circle 59px at calc(var(--mouse-x) - var(--glass-offset)) calc(var(--mouse-y) - var(--glass-offset)),
+    transparent 0px, transparent 57px, black 59px
+  );
+}
+
+/* 1. 立体レンズ：marginを消して、calcで中心点を引く */
+.mouse-glow {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  
+  /* ★レンズは画面全体（0, 0基準）を動くので、ここは引き算を維持。
+    マウス座標のままだとレンズの左上が基準になってしまうので、半径（60px）分だけ左上にずらして中心を合わせる。
+  */
+  transform: translate3d(
+    calc(var(--mouse-x, -999px) - 60px), 
+    calc(var(--mouse-y, -999px) - 60px), 
+    0
+  );
+  
+  border-radius: 50%; 
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.12);
+  
+  /* ★最重要：コンテンツ（z-index: 10）の上にレンズを重ねる */
+  z-index: 11; 
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   4. LINKS & ANIMATIONS（リンク共通・スクロールアニメーション）
+   ========================================================================== */
+a {
+  color: var(--color-link);
+  /* 1. 標準の下線を消して、文字の下に少し余白を作る */
+  text-decoration: none;
+  display: inline;
+  padding-bottom: 3px; 
+
+  /* 2. 背景グラデーションで「下線」の土台を作る */
+  background-image: linear-gradient(var(--color-link), var(--color-link));
+  background-repeat: no-repeat;
+  background-position: left bottom; /* 左から右へ伸ばす */
+  
+  /* 3. 初期状態（画面下部に入る前）は横幅 0% */
+  background-size: 0% 1px; 
+  
+  /* 4. 「ゆっくり引く」ための transition 設定（1.5秒かけて滑らかに） */
+  transition: background-size 8.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: background-size;
+}
+
+/* ★ 画面の下から2割に到達し、JSでクラスが付与された瞬間に発火 */
+a.is-visible,
+a.is-active {
+  background-size: 100% 1px;
+}
+
+a:visited { color: var(--color-link); }
+a::after { content: none !important; display: none !important; }
+/* ==========================================================================
+   5. LAYOUT & TYPOGRAPHY（骨格・コンテンツ・文字演出）
+   ========================================================================== */
+.layout {
+  display: flex;
+  justify-content: space-between; /* ★左右にきっちり分散させる */
+  width: 100%;                    /* ★画面幅いっぱいに収める */
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+/* ガラスのふち表現 */
+.layout::before {
+  content: "";
+  position: fixed;
+  top: var(--glass-offset);
+  left: var(--glass-offset);
+  right: var(--glass-offset);
+  bottom: var(--glass-offset);
+  border-radius: calc(var(--glass-radius) + 1px);
+  border-top: 1px solid var(--color-border-glow);
+  border-left: 1px solid var(--color-border-glow);
+  border-right: 1px solid var(--color-border-dim);
+  border-bottom: 1px solid var(--color-border-dim);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ★サイドバーが絶対に潰されない・押し出されない防壁を設定 */
+.sidebar-left { 
+  width: 60px; 
+  flex-shrink: 0; /* ★絶対に縮ませない */
+  position: relative; 
+  z-index: 10; 
+}
+
+.sidebar-right { 
+  width: 140px;   /* ★「ゆづき がらす」が余裕を持って収まる幅に調整 */
+  flex-shrink: 0; /* ★中央コンテンツに絶対に押し出させない */
+  position: relative; 
+  z-index: 10; 
+  padding-top: 2rem; 
+  padding-right: 1.5rem;
+  text-align: right; /* ★右端にきれいに寄せる */
+}
+
+/* 中央をさらに広げる */
+.content {
+  flex: 1;
+  position: relative;
+  max-width: 1100px; /* がっつり広げる */
+  min-width: 0;      /* ★Flexbox内の子要素のはみ出しによるレイアウト崩れを防ぐ */
+  margin: 0 auto;
+  padding: 2rem;
+  background: transparent;
+  z-index: 10;
+}
+
+.site-header, main { position: relative; z-index: 10; }
+.post { padding-bottom: 4rem; }
+
+/* スマホより大きい画面（タブレット〜PC）のとき、ロゴを避けるために上を空ける */
+@media (min-width: 769px) {
+  .post-header {
+    margin-top: 5rem; /* ロゴの高さ（2.5rem）＋配置（2rem）を考慮してがっつり下げる */
+  }
+}
+
+.post-title { 
+  font-size: 2rem; 
+  font-weight: normal; 
+  line-height: 1.5; 
+  margin-bottom: 0.5rem; 
+}
+
+.post-date { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+.post-content p { margin-bottom: 2.2rem; }
+.back-home { margin-top: 2rem; }
+
+.blur-reveal { display: block !important; text-align: left; max-width: fit-content; margin: 8rem auto 4rem; }
+.blur-reveal .reveal-gap { display: block; height: 3.5rem; content: ""; }
+.blur-reveal .reveal-char {
+  display: inline-block;
+  line-height: 1.8;
+  letter-spacing: 0.15em;
+  font-weight: normal;
+  color: #3a3a3a;
+  font-family: var(--font-serif);
+  filter: blur(14px);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: filter 5.5s cubic-bezier(0.25, 1, 0.5, 1),
+              opacity 5.5s cubic-bezier(0.25, 1, 0.5, 1),
+              transform 5.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.blur-reveal.is-visible .reveal-char { filter: blur(0px); opacity: 1; transform: translateY(0); }
+
+/* ==========================================================================
+   6. COMPONENTS（特定パーツ）
+   ========================================================================== */
+.site-logo {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  font-size: 2.5rem;
+  letter-spacing: 0.1em;
+  color: var(--color-text-main) !important;
+  z-index: 100;
+  padding-bottom: 4px;
+}
+.site-logo::after { content: none !important; display: none !important; }
+
+.site-nav { text-align: right; white-space: nowrap; } /* ★右サイドバーに合わせて右寄せに */
+.site-nav a { font-size: 1rem; letter-spacing: 0.0em; color: var(--color-text-main); }
+
+.site-footer { width: 100%; margin: 6rem auto 3rem; text-align: center; position: relative; z-index: 10; }
+.site-footer a {
+  color: var(--color-link-footer);
+  margin: 0 16px;
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+.site-footer a:hover { color: #112233; }
+.footer-separator { color: #cbd5e1; font-size: 0.85rem; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   観測主題カード：絵文字から洗練されたBoxicons（SVG Data URI）へ差し替え
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* 共通設定：擬似要素をアイコン画像として振る舞わせる */
+.icon-reply::before,
+.icon-quiet::before,
+.icon-sns::before,
+.icon-aesthetic::before {
+  content: "";
+  display: block;
+  width: 22px;  /* 丸枠（48px）に対して綺麗に収まるサイズに微調整 */
+  height: 22px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* 💬 吹き出しアイコン */
+.icon-reply::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%232E2E2E' viewBox='0 0 24 24'><path d='m12,3C6.49,3,2,6.59,2,11s4.3,7.85,9.66,8l3.74,2.8c.18.13.39.2.6.2.15,0,.31-.04.45-.11.34-.17.55-.52.55-.89v-3.07c3.1-1.42,5-4.03,5-6.93,0-4.41-4.49-8-10-8Zm3.64,13.34c-.39.15-.64.52-.64.93v1.73l-2.4-1.8c-.17-.13-.38-.2-.6-.2-4.41,0-8-2.69-8-6s3.59-6,8-6,8,2.69,8,6c0,2.26-1.67,4.3-4.36,5.34Z'/></svg>");
+}
+
+/* 👤 静寂・個人アイコン */
+.icon-quiet::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%232E2E2E' viewBox='0 0 24 24'><path d='M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5m0-8c1.65 0 3 1.35 3 3s-1.35 3-3 3-3-1.35-3-3 1.35-3 3-3M4 22h16c.55 0 1-.45 1-1v-1c0-3.86-3.14-7-7-7h-4c-3.86 0-7 3.14-7 7v1c0 .55.45 1 1 1m6-7h4c2.76 0 5 2.24 5 5H5c0-2.76 2.24-5 5-5'/></svg>");
+}
+
+/* 📱 SNS・スマホアイコン */
+.icon-sns::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%232E2E2E' viewBox='0 0 24 24'><path d='M7 22h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2M7 4h10v16H7z'/><path d='M12 17a1 1 0 1 0 0 2 1 1 0 1 0 0-2'/></svg>");
+}
+
+/* 🍃 美学・盆栽アイコン */
+.icon-aesthetic::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%232E2E2E' viewBox='0 0 24 24'><path d='M21 9h-8V6.61c.78-.1 1.77-.36 2.53-1.02 1.46-1.28 1.47-3.57 1.47-3.57 0 0-2.35-.21-3.81 1.07-.79.69-1.15 1.67-1.32 2.43-.12-.57-.36-1.24-.87-1.74-1.1-1.06-3-.94-3-.94 0 0-.12 1.85.97 2.91.58.57 1.39.79 2.02.89v2.38H3c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h1.25l1.79 6.27c.12.43.52.73.96.73h10c.45 0 .84-.3.96-.73l1.79-6.27H21c-.55 0-1-.45-1-1v-4c0-.55-.45-1-1-1zm-4.75 11H7.75l-1.43-5h11.35l-1.43 5zm3.75-7H4v-2h16v2z'/></svg>");
+}
+
+/* ==========================================================================
+   追加：新トップページ専用スタイル（グラスモーフィズム・グリッド）
+   ========================================================================== */
+
+/* ヒーローエリア（上部レイアウト） */
+.hero-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 6rem;
+  margin-bottom: 4rem;
+  gap: 2rem;
+}
+.hero-lead {
+  flex: 1;
+  line-height: 1.8;
+}
+.hero-main {
+  font-size: 1.65rem;
+  line-height: 1.7;
+  letter-spacing: 0.05em;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+}
+.hero-tags {
+  width: 40%;
+  min-width: 250px;
+}
+.tag-title {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.8rem;
+  text-align: right;
+}
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.tag-item {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--color-text-main);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+/* セクションヘッダー */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+}
+.section-title {
+  font-size: 1.45rem;
+  letter-spacing: 0.06em;
+  font-weight: normal;
+  margin: 2rem 0 1.5rem;
+}
+.section-header .section-title {
+  margin: 0;
+}
+.view-all {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* グリッド共通 */
+.grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 4rem;
+}
+.grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 4rem;
+}
+
+/* すりガラスカードのベース */
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  text-decoration: none !important;
+  background-image: none !important; /* 通常のリンク下線を消す */
+}
+
+/* 最初に読む記事のカード */
+.card-article {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.5rem 1.5rem;
+  min-height: 220px;
+  color: var(--color-text-main) !important;
+}
+.card-article:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+}
+.card-num {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-family: sans-serif;
+  margin-bottom: 1rem;
+}
+.card-article h3 {
+  font-size: 1.05rem;
+  font-weight: normal;
+  line-height: 1.6;
+  margin: 0 auto 0 0;
+}
+.card-more {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 1.5rem;
+}
+
+/* 観測主題のカード */
+.card-theme {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.8rem;
+}
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  margin-right: 1.2rem;
+
+  background: rgba(255,255,255,0.18);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border-top: 1px solid rgba(255,255,255,0.8);
+  border-left: 1px solid rgba(255,255,255,0.6);
+  border-right: 1px solid rgba(255,255,255,0.15);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,0.7),
+    inset 0 -3px 6px rgba(0,0,0,0.05),
+    0 4px 12px rgba(0,0,0,0.08);
+
+  position: relative;
+}
+
+.card-icon::after {
+  content: "";
+  position: absolute;
+
+  top: 8px;
+  left: 10px;
+
+  width: 18px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: rgba(255,255,255,0.65);
+
+  filter: blur(4px);
+
+  pointer-events: none;
+}
+
+.card-body {
+  flex: 1;
+}
+.card-body h3 {
+  font-size: 1.1rem;
+  font-weight: normal;
+  margin: 0 0 0.5rem;
+}
+.card-body p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+.link-sub {
+  font-size: 0.85rem;
+}
+
+/* タイムライン（最新の記録） */
+.timeline {
+  position: relative;
+  padding: 0 0 0 1.5rem;
+  margin: 0 0 4rem;
+  list-style: none;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: 4px;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.2rem;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -26px;
+  top: 0.55rem;
+  width: 7px;
+  height: 7px;
+  background: #cbd5e1;
+  border-radius: 50%;
+  border: 2px solid var(--color-bg-base); /* 背景色でくり抜いて見せる */
+  z-index: 2;
+}
+.timeline-date {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-family: sans-serif;
+}
+.timeline-link {
+  color: var(--color-text-main);
+}
+
+/* ==========================================================================
+   7. RESPONSIVE（スマホ対応）
+   ========================================================================== */
+@media (max-width: 768px) {
+
+  .hero-section {
+    flex-direction: column;
+    margin-top: 3rem;
+  }
+
+  .hero-tags {
+    width: 100%;
+  }
+
+  .tag-container {
+    justify-content: flex-start;
+  }
+
+  .grid-3col,
+  .grid-2col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-article {
+    min-height: auto;
+  }
+
+  .layout {
+    flex-direction: column;
+    padding: 2rem 1rem;
+  }
+
+  .sidebar-left,
+  .sidebar-right {
+    width: 100%;
+    min-width: auto;
+    padding: 1rem 0;
+  }
+
+  .site-nav {
+    text-align: center;
+  }
+
+  .content {
+    width: 100%;
+    padding: 1rem 0;
+  }
+
+  .hero-main {
+    font-size: 1.35rem;
+  }
+  .timeline {
+    padding-left: 1.2rem;
+  }
+
+  .timeline::before {
+    left: 4px;
+  }
+
+  .timeline-item {
+    gap: 1rem;
+  }
+
+  .timeline-item::before {
+    left: -21px;
+    top: 0.45rem;
+  }
+
+  .timeline-date {
+    width: 90px;
+    flex-shrink: 0;
+  }
+
+}
+
+/* ==========================================================================
+   8. ADVANCED SCROLL REVEAL（スクロール連動トリガー版・1.8秒浮上演出）
+   ========================================================================== */
+
+/* ─── 初期状態（まだ画面の下から2割に達していない時） ─── */
+.glass-card, .timeline-item {
+  opacity: 0;
+  transform: translateY(40px);
+  will-change: opacity, transform;
+}
+
+/* ★超重要：基本の a タグに設定されている transition との競合を排除 */
+.glass-card {
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+              background 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+              box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+/* ─── 発火状態（JSによって .is-active がついた瞬間からアニメーション開始） ─── */
+.glass-card.is-active, 
+.timeline-item.is-active {
+  animation-name: glassReveal;
+  animation-duration: 2.5s; /* 浮かび上がる速さ */
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── 同時に画面内に入った時のための「ほんの僅かな時間差（ディレイ）」 ─── */
+.grid-3col .glass-card:nth-child(1) { animation-delay: 0.4s; }
+.grid-3col .glass-card:nth-child(2) { animation-delay: 0.6s; }
+.grid-3col .glass-card:nth-child(3) { animation-delay: 0.8s; }
+
+.grid-2col .glass-card:nth-child(1) { animation-delay: 0.4s; }
+.grid-2col .glass-card:nth-child(2) { animation-delay: 0.6s; }
+.grid-2col .glass-card:nth-child(3) { animation-delay: 0.8s; }
+.grid-2col .glass-card:nth-child(4) { animation-delay: 1.0s; }
+
+/* タイムラインは縦並びなのでディレイなし */
+.timeline-item { animation-delay: 0s; }
+
+/* 浮上アニメーションの定義 */
+@keyframes glassReveal {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   9. CARD BACKGROUND IMAGES（英名パス完全確定版）
+   ========================================================================== */
+
+/* 3つのカードすべてに、確実に画像の土台（擬似要素）を作る */
+.bg-post01::before,
+.bg-post02::before,
+.bg-post03::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  opacity: 0.22; /* 普段は完全に隠す */
+  background-size: cover;
+  background-position: center;
+  transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  border-radius: 12px;
+}
+
+/* 各カードの背景画像指定 */
+.bg-post01::before { background-image: url("/assets/images/post01.png"); }
+.bg-post02::before { background-image: url("/assets/images/post02.png"); }
+.bg-post03::before { background-image: url("/assets/images/post03.png"); }
+
+/* ホバーした瞬間、不透明度を 18% にして薄く浮かび上がらせる */
+.bg-post01:hover::before,
+.bg-post02:hover::before,
+.bg-post03:hover::before {
+  opacity: 0.18; 
+}
+
+/* ロゴとの重なり防止：通常ページ用 */
+.content.sub-page {
+  padding-top: 7rem;
+}

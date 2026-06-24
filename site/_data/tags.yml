@@ -1,0 +1,32 @@
+- name: 静かな人
+  slug: shizukana-hito
+
+- name: 沈黙
+  slug: chinmoku
+
+- name: 違和感
+  slug: iwakan
+
+- name: 配置
+  slug: haichi
+
+- name: 痕跡
+  slug: konseki
+
+- name: 都市
+  slug: toshi
+
+- name: 距離
+  slug: kyori
+
+- name: 余白
+  slug: yohaku
+
+- name: 記憶
+  slug: kioku
+
+- name: 反射
+  slug: hansha
+
+- name: ことばになる前の感情
+  slug: gengo-mae

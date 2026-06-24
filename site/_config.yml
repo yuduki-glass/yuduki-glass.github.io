@@ -1,0 +1,15 @@
+title: 結月硝子
+description: 思ってたより整理されてることって少ないみたい
+
+url: "https://yuduki-glass.com"
+baseurl: ""
+
+theme: minima
+markdown: kramdown
+
+header_pages: []
+
+plugins:
+  - jekyll-sitemap
+
+permalink: /:year/:month/:day/:slug/

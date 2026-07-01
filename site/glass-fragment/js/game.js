@@ -78,14 +78,14 @@ window.addEventListener('resize', () => { resize(); if (started) resetPositions(
 
 const PADDLE_H = 12;
 const BALL_R   = 5;
-const COLS     = 12;
-const ROWS     = 6;
+const COLS = 32;
+const ROWS = 12;
 
 function paddleY()     { return CH - 40; }
 function brickStartY() { return Math.round(CH * 0.14); }
-function brickH()      { return 15; }
-function brickGapY()   { return 4; }
-function brickGapX()   { return 4; }
+function brickH()      { return 4; }
+function brickGapY()   { return 2; }
+function brickGapX()   { return 2; }
 function brickW()      { 
   const baseW = isPortrait ? CW : (CW - 160);
   return Math.floor((baseW - (COLS - 1) * brickGapX()) / COLS); 
@@ -108,13 +108,15 @@ let lastTouchX = 0;
 let drops = [];
 const PU_MULTIBALL  = 'multiball';
 const PU_WIDEBALL   = 'wideball';
+const PU_PIERCE     = 'pierce';
 const PU_DROP_CHANCE = 0.18;
 
 const PADDLE_W_BASE = 90;
 const PADDLE_W_WIDE = 160;
 let paddleWCurrent = PADDLE_W_BASE;  
 let paddleWTarget  = PADDLE_W_BASE;
-let wideballTimer  = 0;              
+let wideballTimer  = 0;
+let pierceTimer = 0;
 
 function activateWideball() {
   paddleWTarget = PADDLE_W_WIDE;
@@ -128,6 +130,28 @@ function activateWideball() {
       type: 'spark', x: paddleX, y: paddleY(),
       vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5,
       life: 1, decay: 0.03,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: 1.5 + Math.random() * 2
+    });
+  }
+}
+function activatePierce() {
+  pierceTimer = performance.now() + 10000;
+
+  const colors = ['rgba(255,255,255,0.7)', 'rgba(56,189,248,0.5)'];
+
+  for (let i = 0; i < 20; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3.5;
+
+    particles.push({
+      type: 'spark',
+      x: paddleX,
+      y: paddleY(),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      decay: 0.03,
       color: colors[Math.floor(Math.random() * colors.length)],
       size: 1.5 + Math.random() * 2
     });
@@ -185,8 +209,17 @@ function updateDrops() {
     if (d.y + d.h / 2 >= py && d.y - d.h / 2 <= py + PADDLE_H &&
         d.x >= paddleX - pw / 2 - d.w / 2 && d.x <= paddleX + pw / 2 + d.w / 2) {
       d.caught = true;
-      if (d.type === PU_MULTIBALL) { activateMultiball(); sfxPowerup(); }
-      else if (d.type === PU_WIDEBALL) { activateWideball(); sfxPowerup(); }
+    if (d.type === PU_MULTIBALL) {
+      activateMultiball();
+      sfxPowerup();
+    }
+    else if (d.type === PU_WIDEBALL) {
+      activateWideball();
+      sfxPowerup();
+    }
+    else if (d.type === PU_PIERCE) {
+      activatePierce();
+      sfxPowerup();
     }
   });
   drops = drops.filter(d => !d.caught && d.y < CH + 40);
@@ -233,9 +266,25 @@ function drawDrops() {
     roundRect(ctx, d.x - d.w/2, d.y - d.h/2, d.w, d.h, 2);
     ctx.fill(); ctx.stroke();
     ctx.shadowBlur = 0;
-    if (d.type === PU_WIDEBALL) drawWidePaddleIcon(d.x, d.y, d.h);
-    else drawMultiballIcon(d.x, d.y, d.h);
+    if (d.type === PU_WIDEBALL) {
+      drawWidePaddleIcon(d.x,d.y,d.h);
+    }
+    else if (d.type === PU_PIERCE) {
+      drawPierceIcon(d.x,d.y,d.h);
+    }
+    else {
+      drawMultiballIcon(d.x,d.y,d.h);
+    }
   });
+}
+
+function drawPierceIcon(cx, cy, size) {
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx-size*0.3,cy);
+  ctx.lineTo(cx+size*0.3,cy);
+  ctx.stroke();
 }
 
 function roundRect(c, x, y, w, h, r) {
@@ -363,7 +412,17 @@ function buildBricks() {
       const roll = Math.random();
       let dropType = null;
       if (roll < PU_DROP_CHANCE) {
-        dropType = Math.random() < 0.5 ? PU_MULTIBALL : PU_WIDEBALL;
+        const itemRoll = Math.random();
+      
+        if (itemRoll < 0.5) {
+          dropType = PU_MULTIBALL;
+        } 
+        else if (itemRoll < 0.8) {
+          dropType = PU_WIDEBALL;
+        } 
+        else {
+          dropType = PU_PIERCE;
+        }
       }
       bricks.push({
         x: bx + c * (bw + gx), y: by + r * (bh + gy),
@@ -380,7 +439,10 @@ function initGame() {
   score = 0; lives = 3; level = 1;
   paddleX = CW / 2; mouseX = CW / 2;
   particles = []; drops = [];
-  paddleWCurrent = PADDLE_W_BASE; paddleWTarget = PADDLE_W_BASE; wideballTimer = 0;
+  paddleWCurrent = PADDLE_W_BASE;
+  paddleWTarget = PADDLE_W_BASE;
+  wideballTimer = 0;
+  pierceTimer = 0;
   userEscaped = false;
   exitedIntentionally = false;
   paused = false;
@@ -444,7 +506,10 @@ function update() {
   updateParticles();
   updateDrops();
   updateWideballPowerup();
-  if (!started || gameState === 'idle' || gameState === 'over' || paused) return;
+  
+  if (pierceTimer > 0 && performance.now() >= pierceTimer) {
+    pierceTimer = 0;
+  }
 
   const PW = paddleWCurrent; 
   paddleX += (mouseX - paddleX) * 0.25;
@@ -490,17 +555,23 @@ function update() {
       if (!b.alive) continue;
       if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
           ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
-        b.alive = false;
-        score += 10 * level;
+      b.alive = false;
+      score += 10 * level;
+      
+      if (pierceTimer <= 0) {
+        const prevY = ball.y - ball.vy;
+        if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) {
+          ball.vy *= -1;
+        } else {
+          ball.vx *= -1;
+        }
+      }
         hi = Math.max(hi, score);
         updHUD();
         spawnBrickParticles(b.x, b.y, b.w, b.h);
         sfxBrick();
         triggerShake(2);
         if (b.dropType) spawnDrop(b.x, b.y, b.w, b.h, b.dropType);
-        const prevY = ball.y - ball.vy;
-        if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) ball.vy *= -1;
-        else ball.vx *= -1;
         break;
       }
     }
@@ -517,7 +588,9 @@ function update() {
   if (balls.length === 0) {
     lives--;
     drops = [];
-    paddleWTarget = PADDLE_W_BASE; wideballTimer = 0;
+    paddleWTarget = PADDLE_W_BASE;
+    wideballTimer = 0;
+    pierceTimer = 0;
     updHUD();
 if (lives <= 0) {
   gameState = 'over';
@@ -619,8 +692,15 @@ function draw() {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF';
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = '#00FFFF';
+      
+      if (pierceTimer > 0) {
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = '#ffffff';
+      } else {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#00FFFF';
+      }
+      
       ctx.fill();
       ctx.shadowBlur = 0;
     });

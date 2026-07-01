@@ -139,3 +139,14 @@ function openCollection(){
   ).style.display="flex";
 
 }
+
+document
+.getElementById("collectionBtn")
+.addEventListener(
+"click",
+()=>{
+
+  loadCollection();
+  openCollection();
+
+});

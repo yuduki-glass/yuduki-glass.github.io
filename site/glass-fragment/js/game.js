@@ -623,16 +623,18 @@ function update() {
 
   // ── ステージクリア（次のレベルへ） ──
 if (bricks.every(b => !b.alive)) {
-    // クリア報酬
-    addCollectionItem(level);
-    level++;
-    drops = [];
-    buildBricks();
-    balls = [makeBall()];
-    gameState = 'waiting'; // 次のステージの打ち出し待ちにする
-    updHUD();
-    // ★理不尽な「観測終了（ゲームオーバー）」処理は綺麗に削除した。これで次のレベルに進める。
-  }
+
+  // ★クリア報酬
+  addCollectionItem(level);
+
+  level++;
+
+  drops = [];
+  buildBricks();
+  balls = [makeBall()];
+  gameState = 'waiting';
+  updHUD();
+}
 }
 
 function draw() {

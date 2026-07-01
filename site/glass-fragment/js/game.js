@@ -206,22 +206,28 @@ function updateDrops() {
   drops.forEach(d => {
     d.y += d.vy;
     d.pulse += 0.12;
+    
+    // パドルとの衝突判定
     if (d.y + d.h / 2 >= py && d.y - d.h / 2 <= py + PADDLE_H &&
         d.x >= paddleX - pw / 2 - d.w / 2 && d.x <= paddleX + pw / 2 + d.w / 2) {
+      
       d.caught = true;
-    if (d.type === PU_MULTIBALL) {
-      activateMultiball();
-      sfxPowerup();
-    }
-    else if (d.type === PU_WIDEBALL) {
-      activateWideball();
-      sfxPowerup();
-    }
-    else if (d.type === PU_PIERCE) {
-      activatePierce();
-      sfxPowerup();
-    }
+      
+      if (d.type === PU_MULTIBALL) {
+        activateMultiball();
+        sfxPowerup();
+      }
+      else if (d.type === PU_WIDEBALL) {
+        activateWideball();
+        sfxPowerup();
+      }
+      else if (d.type === PU_PIERCE) {
+        activatePierce();
+        sfxPowerup();
+      }
+    } // ★ここ！パドル衝突の if を閉じるブラケットが抜けていた
   });
+  
   drops = drops.filter(d => !d.caught && d.y < CH + 40);
 }
 

@@ -150,3 +150,14 @@ document
   openCollection();
 
 });
+document
+.getElementById("closeCollection")
+.addEventListener(
+"click",
+()=>{
+
+ document.getElementById(
+ "collectionView"
+ ).style.display="none";
+
+});

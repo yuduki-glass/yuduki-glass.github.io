@@ -502,6 +502,9 @@ const ROW_BD = [
 ];
 
 function update() {
+  // ★追加：プレイ中か待機中以外は、物理演算も衝突判定も一切動かさない
+  if (gameState !== 'playing' && gameState !== 'waiting') return;
+
   if (shakeTime > 0) shakeTime--; 
   updateParticles();
   updateDrops();
@@ -527,7 +530,6 @@ function update() {
   for (const ball of balls) {
     if (ball.lost) continue;
     
-    // 彗星の軌跡（鮮やかな水色が滲む、美しい宇宙線の残像）
     ball.history.push({ x: ball.x, y: ball.y });
     if (ball.history.length > 6) ball.history.shift();
 
@@ -555,17 +557,17 @@ function update() {
       if (!b.alive) continue;
       if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
           ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
-      b.alive = false;
-      score += 10 * level;
-      
-      if (pierceTimer <= 0) {
-        const prevY = ball.y - ball.vy;
-        if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) {
-          ball.vy *= -1;
-        } else {
-          ball.vx *= -1;
+        b.alive = false;
+        score += 10 * level;
+        
+        if (pierceTimer <= 0) {
+          const prevY = ball.y - ball.vy;
+          if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) {
+            ball.vy *= -1;
+          } else {
+            ball.vx *= -1;
+          }
         }
-      }
         hi = Math.max(hi, score);
         updHUD();
         spawnBrickParticles(b.x, b.y, b.w, b.h);
@@ -585,6 +587,7 @@ function update() {
 
   balls = balls.filter(b => !b.lost);
 
+  // ── ライフ減少・ゲームオーバー処理 ──
   if (balls.length === 0) {
     lives--;
     drops = [];
@@ -592,31 +595,36 @@ function update() {
     wideballTimer = 0;
     pierceTimer = 0;
     updHUD();
-if (lives <= 0) {
-  gameState = 'over';
-  exitPointerLock();
-  showDot(true);
+
+    if (lives <= 0) {
+      gameState = 'over';
+      exitPointerLock();
+      showDot(true);
       setTimeout(() => {
         overlay.style.display = 'flex'; 
         overlay.querySelector('.glitch').textContent = '散逸'; 
         overlay.querySelectorAll('.tagline')[0].textContent = '残片R: ' + String(score).padStart(6,'0');
         startBtn.textContent = '[ もう一度 ]';
-        startBtn.onclick = null; 
         document.getElementById('ideoLink').style.display = 'block';
       }, 0);
     } else {
       balls = [makeBall()];
       gameState = 'waiting';
     }
+    return; // ライフが無くなったフレームはここで処理終了
   }
 
+  // ── ステージクリア（次のレベルへ） ──
   if (bricks.every(b => !b.alive)) {
     level++;
     drops = [];
     buildBricks();
     balls = [makeBall()];
-    gameState = 'waiting';
+    gameState = 'waiting'; // 次のステージの打ち出し待ちにする
     updHUD();
+    // ★理不尽な「観測終了（ゲームオーバー）」処理は綺麗に削除した。これで次のレベルに進める。
+  }
+}
     
 gameState = 'over';
 exitPointerLock();

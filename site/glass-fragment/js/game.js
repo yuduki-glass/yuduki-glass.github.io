@@ -440,6 +440,7 @@ function buildBricks() {
 }
 
 function initGame() {
+  loadCollection();
   exitPointerLock();
   resize();
   score = 0; lives = 3; level = 1;
@@ -621,7 +622,9 @@ function update() {
   }
 
   // ── ステージクリア（次のレベルへ） ──
-  if (bricks.every(b => !b.alive)) {
+if (bricks.every(b => !b.alive)) {
+    // クリア報酬
+    addCollectionItem(level);
     level++;
     drops = [];
     buildBricks();

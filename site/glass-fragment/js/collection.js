@@ -94,3 +94,48 @@ function showCollectionGet(item){
   );
 
 }
+
+function openCollection(){
+
+  const grid =
+    document.getElementById(
+      "collectionGrid"
+    );
+
+  grid.innerHTML="";
+
+
+  collectionItems.forEach(item=>{
+
+    const div=document.createElement("div");
+
+    if(collectedItems.includes(item.id)){
+
+      div.innerHTML=`
+        <img src="${item.image}">
+        <h3>${item.name}</h3>
+        <p>${item.description}</p>
+      `;
+
+    }else{
+
+      div.innerHTML=`
+        <div class="unknown">
+          ?
+        </div>
+        <h3>未観測</h3>
+      `;
+
+    }
+
+
+    grid.appendChild(div);
+
+  });
+
+
+  document.getElementById(
+    "collectionView"
+  ).style.display="flex";
+
+}

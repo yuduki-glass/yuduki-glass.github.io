@@ -625,18 +625,6 @@ function update() {
     // ★理不尽な「観測終了（ゲームオーバー）」処理は綺麗に削除した。これで次のレベルに進める。
   }
 }
-    
-gameState = 'over';
-exitPointerLock();
-showDot(true);
-    setTimeout(() => {
-      overlay.style.display = 'flex';
-      overlay.querySelector('.glitch').textContent = '観測終了';
-      overlay.querySelectorAll('.tagline')[0].textContent = '残片: ' + String(score).padStart(6,'0');
-      startBtn.textContent = '[ 次の観測 ]';
-    }, 0);
-  }
-}
 
 function draw() {
   ctx.save();

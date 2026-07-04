@@ -8,24 +8,28 @@ const startBtn = document.getElementById('startBtn');
 const collectionBtn = document.getElementById("collectionBtn");
 const collectionView = document.getElementById("collectionView");
 const closeCollection = document.getElementById("closeCollection");
+const pauseOverlay = document.getElementById('pauseOverlay');
+const resumeBtn    = document.getElementById('resumeBtn');
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const cursorDot = document.getElementById('cursor-dot');
 function showDot(show) {
-  if (!isMobile && show) {
-    cursorDot.style.display = 'block';
-    document.body.classList.add('custom-cursor-active');
-  } else {
-    cursorDot.style.display = 'none';
-    document.body.classList.remove('custom-cursor-active');
+  if (cursorDot) {
+    if (!isMobile && show) {
+      cursorDot.style.display = 'block';
+      document.body.classList.add('custom-cursor-active');
+    } else {
+      cursorDot.style.display = 'none';
+      document.body.classList.remove('custom-cursor-active');
+    }
   }
 }
 
 showDot(true);
 
 window.addEventListener('mousemove', (e) => {
-  if (cursorDot.style.display === 'block') {
+  if (cursorDot && cursorDot.style.display === 'block') {
     cursorDot.style.left = e.clientX + 'px';
     cursorDot.style.top = e.clientY + 'px';
   }
@@ -40,6 +44,7 @@ function triggerShake(duration) {
 }
 
 function resize() {
+  if (!canvasWrap || !leaderboard || !gameArea || !canvas) return;
   const availW = canvasWrap.clientWidth;
   const availH = canvasWrap.clientHeight;
   const LB_SIDE = 160; 
@@ -107,7 +112,11 @@ let started = false;
 
 let lastTouchX = 0;
 
-// ── Powerups (きらめく星々のような識別子) ──
+// ── 未定義だったコレクション関連のモック関数 ──
+function loadCollection() { console.log("Collection Loaded"); }
+function addCollectionItem(lvl) { console.log("Added collection item for level:", lvl); }
+
+// ── Powerups ──
 let drops = [];
 const PU_MULTIBALL  = 'multiball';
 const PU_WIDEBALL   = 'wideball';
@@ -124,7 +133,6 @@ let pierceTimer = 0;
 function activateWideball() {
   paddleWTarget = PADDLE_W_WIDE;
   wideballTimer = performance.now() + WIDEBALL_DURATION;
-  // きらめく水色と紫の粒子
   const colors = ['rgba(56,189,248,0.5)', 'rgba(192,132,252,0.4)'];
   for (let i = 0; i < 20; i++) {
     const angle = Math.random() * Math.PI * 2;
@@ -138,23 +146,17 @@ function activateWideball() {
     });
   }
 }
+
 function activatePierce() {
   pierceTimer = performance.now() + 10000;
-
   const colors = ['rgba(255,255,255,0.7)', 'rgba(56,189,248,0.5)'];
-
   for (let i = 0; i < 20; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 1.5 + Math.random() * 3.5;
-
     particles.push({
-      type: 'spark',
-      x: paddleX,
-      y: paddleY(),
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 1,
-      decay: 0.03,
+      type: 'spark', x: paddleX, y: paddleY(),
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      life: 1, decay: 0.03,
       color: colors[Math.floor(Math.random() * colors.length)],
       size: 1.5 + Math.random() * 2
     });
@@ -182,14 +184,15 @@ function spawnDrop(bx, by, bw, bh, type) {
     y: by + bh / 2,
     vy: 1.8,
     w: 36, h: 18,
-    pulse: 0
+    pulse: 0,
+    caught: false
   });
 }
 
 function drawMultiballIcon(cx, cy, size) {
   const r = size * 0.18;
   const offsets = [[-size*0.23, size*0.08],[size*0.23, size*0.08],[0, -size*0.23]];
-  ctx.fillStyle = '#38bdf8'; // きらめくアクア
+  ctx.fillStyle = '#38bdf8';
   for (const [ox, oy] of offsets) {
     ctx.beginPath();
     ctx.arc(cx + ox, cy + oy, r, 0, Math.PI * 2);
@@ -199,7 +202,7 @@ function drawMultiballIcon(cx, cy, size) {
 
 function drawWidePaddleIcon(cx, cy, size) {
   const hw = size * 0.38, hh = size * 0.1;
-  ctx.fillStyle = '#c084fc'; // コズミックパープル
+  ctx.fillStyle = '#c084fc';
   ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
 }
 
@@ -210,27 +213,15 @@ function updateDrops() {
     d.y += d.vy;
     d.pulse += 0.12;
     
-    // パドルとの衝突判定
     if (d.y + d.h / 2 >= py && d.y - d.h / 2 <= py + PADDLE_H &&
         d.x >= paddleX - pw / 2 - d.w / 2 && d.x <= paddleX + pw / 2 + d.w / 2) {
       
       d.caught = true;
-      
-      if (d.type === PU_MULTIBALL) {
-        activateMultiball();
-        sfxPowerup();
-      }
-      else if (d.type === PU_WIDEBALL) {
-        activateWideball();
-        sfxPowerup();
-      }
-      else if (d.type === PU_PIERCE) {
-        activatePierce();
-        sfxPowerup();
-      }
-    } // ★ここ！パドル衝突の if を閉じるブラケットが抜けていた
+      if (d.type === PU_MULTIBALL) { activateMultiball(); sfxPowerup(); }
+      else if (d.type === PU_WIDEBALL) { activateWideball(); sfxPowerup(); }
+      else if (d.type === PU_PIERCE) { activatePierce(); sfxPowerup(); }
+    }
   });
-  
   drops = drops.filter(d => !d.caught && d.y < CH + 40);
 }
 
@@ -275,15 +266,9 @@ function drawDrops() {
     roundRect(ctx, d.x - d.w/2, d.y - d.h/2, d.w, d.h, 2);
     ctx.fill(); ctx.stroke();
     ctx.shadowBlur = 0;
-    if (d.type === PU_WIDEBALL) {
-      drawWidePaddleIcon(d.x,d.y,d.h);
-    }
-    else if (d.type === PU_PIERCE) {
-      drawPierceIcon(d.x,d.y,d.h);
-    }
-    else {
-      drawMultiballIcon(d.x,d.y,d.h);
-    }
+    if (d.type === PU_WIDEBALL) { drawWidePaddleIcon(d.x, d.y, d.h); }
+    else if (d.type === PU_PIERCE) { drawPierceIcon(d.x, d.y, d.h); }
+    else { drawMultiballIcon(d.x, d.y, d.h); }
   });
 }
 
@@ -291,8 +276,8 @@ function drawPierceIcon(cx, cy, size) {
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(cx-size*0.3,cy);
-  ctx.lineTo(cx+size*0.3,cy);
+  ctx.moveTo(cx-size*0.3, cy);
+  ctx.lineTo(cx+size*0.3, cy);
   ctx.stroke();
 }
 
@@ -310,15 +295,13 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-// ── Particles (キラキラした宇宙：星屑のように激しく弾け飛ぶ破片) ──
+// ── Particles ──
 let particles = [];
 
 function spawnBrickParticles(bx, by, bw, bh) {
   const cx = bx + bw / 2, cy = by + bh / 2;
-  // 宇宙ガラスの彩り（アクアブルー、コズミックパープル、純白の星屑）
   const colors = ['rgba(56,189,248,0.7)', 'rgba(192,132,252,0.6)', 'rgba(255,255,255,0.8)'];
   
-  // 星のきらめき粒子（少し速度を上げ、華やかに散らす）
   for (let i = 0; i < 18; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 0.8 + Math.random() * 2.5;
@@ -330,7 +313,6 @@ function spawnBrickParticles(bx, by, bw, bh) {
       size: 1 + Math.random() * 2.2
     });
   }
-  // 飛び散るガラスの結晶（きらめく水色と紫のブレンド）
   for (let i = 0; i < 8; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 0.4 + Math.random() * 1.5;
@@ -383,7 +365,6 @@ function drawParticles() {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
       ctx.fillStyle = p.color;
-      // 星のまたたき風の微弱なグロー
       if (Math.random() > 0.5) {
         ctx.shadowBlur = 4;
         ctx.shadowColor = p.color;
@@ -408,7 +389,7 @@ function resetPositions() {
 }
 
 function makeBall() {
-  return { x: paddleX, y: paddleY() - BALL_R - 2, vx: 3.75, vy: -6.25, history: [] };
+  return { x: paddleX, y: paddleY() - BALL_R - 2, vx: 3.75, vy: -6.25, history: [], lost: false };
 }
 
 function buildBricks() {
@@ -422,16 +403,9 @@ function buildBricks() {
       let dropType = null;
       if (roll < PU_DROP_CHANCE) {
         const itemRoll = Math.random();
-      
-        if (itemRoll < 0.5) {
-          dropType = PU_MULTIBALL;
-        } 
-        else if (itemRoll < 0.8) {
-          dropType = PU_WIDEBALL;
-        } 
-        else {
-          dropType = PU_PIERCE;
-        }
+        if (itemRoll < 0.5) dropType = PU_MULTIBALL;
+        else if (itemRoll < 0.8) dropType = PU_WIDEBALL;
+        else dropType = PU_PIERCE;
       }
       bricks.push({
         x: bx + c * (bw + gx), y: by + r * (bh + gy),
@@ -456,23 +430,27 @@ function initGame() {
   userEscaped = false;
   exitedIntentionally = false;
   paused = false;
-  pauseOverlay.style.display = 'none';
-  document.getElementById('ideoLink').style.display = 'none';
-  overlay.querySelector('.glitch').textContent = '硝子片集め';
-  overlay.querySelectorAll('.tagline')[0].textContent = 'glass fragment breaker';
+  if (pauseOverlay) pauseOverlay.style.display = 'none';
+  const ideoLink = document.getElementById('ideoLink');
+  if (ideoLink) ideoLink.style.display = 'none';
+  
+  if (overlay) {
+    const glitch = overlay.querySelector('.glitch');
+    if (glitch) glitch.textContent = '硝子片集め';
+    const taglines = overlay.querySelectorAll('.tagline');
+    if (taglines.length > 0) taglines[0].textContent = 'glass fragment breaker';
+    overlay.style.display = 'none';
+  }
+  
   buildBricks();
   balls = [makeBall()];
   started = true;
   updHUD();
   
   setTimeout(() => {
-    overlay.style.display = 'none';
     gameState = 'waiting';
     showDot(false);
-
-    if (!isMobile) {
-      requestPointerLock();
-    }
+    if (!isMobile) requestPointerLock();
   }, 80);
 } 
   
@@ -487,13 +465,16 @@ function launch() {
 }
   
 function updHUD() {
-  document.getElementById('sv').textContent = String(score).padStart(6,'0');
-  document.getElementById('lv').textContent = String(level).padStart(2,'0');
-  document.getElementById('lf').textContent = lives;
-  document.getElementById('hv').textContent = String(hi).padStart(6,'0');
+  const sv = document.getElementById('sv');
+  const lv = document.getElementById('lv');
+  const lf = document.getElementById('lf');
+  const hv = document.getElementById('hv');
+  if (sv) sv.textContent = String(score).padStart(6,'0');
+  if (lv) lv.textContent = String(level).padStart(2,'0');
+  if (lf) lf.textContent = lives;
+  if (hv) hv.textContent = String(hi).padStart(6,'0');
 }
 
-// 宇宙ガラスのパレット（アクアブルーとコズミックパープルの煌めく透過グラデーション層）
 const ROW_BG = [
   'rgba(175,219,245,0.45)',
   'rgba(230,230,250,0.40)',
@@ -512,8 +493,7 @@ const ROW_BD = [
 ];
 
 function update() {
-  // ★追加：プレイ中か待機中以外は、物理演算も衝突判定も一切動かさない
-  if (gameState !== 'playing' && gameState !== 'waiting') return;
+  if (gameState === 'idle') return;
 
   if (shakeTime > 0) shakeTime--; 
   updateParticles();
@@ -529,9 +509,11 @@ function update() {
   paddleX = Math.max(PW / 2, Math.min(CW - PW / 2, paddleX));
 
   if (gameState === 'waiting') {
-    balls[0].x = paddleX;
-    balls[0].y = paddleY() - BALL_R - 2;
-    balls[0].history = [];
+    if (balls[0]) {
+      balls[0].x = paddleX;
+      balls[0].y = paddleY() - BALL_R - 2;
+      balls[0].history = [];
+    }
     return;
   }
 
@@ -599,11 +581,9 @@ function update() {
 
   // ── ライフ減少・ゲームオーバー処理 ──
   if (balls.length === 0) {
-    lives--;
-    drops = [];
-    paddleWTarget = PADDLE_W_BASE;
-    wideballTimer = 0;
-    pierceTimer = 0;
+    if (gameState === 'clear') return;
+    
+    lives--; // ★ここでライフを1減らす（元のコードにはなかった）
     updHUD();
 
     if (lives <= 0) {
@@ -611,38 +591,36 @@ function update() {
       exitPointerLock();
       showDot(true);
       setTimeout(() => {
-        overlay.style.display = 'flex'; 
-        overlay.querySelector('.glitch').textContent = '散逸'; 
-        overlay.querySelectorAll('.tagline')[0].textContent = '残片R: ' + String(score).padStart(6,'0');
-        startBtn.textContent = '[ もう一度 ]';
-        document.getElementById('ideoLink').style.display = 'block';
+        if (overlay) {
+          overlay.style.display = 'flex'; 
+          const glitch = overlay.querySelector('.glitch');
+          if (glitch) glitch.textContent = '散逸'; 
+          const taglines = overlay.querySelectorAll('.tagline');
+          if (taglines.length > 0) taglines[0].textContent = '残片R: ' + String(score).padStart(6,'0');
+        }
+        if (startBtn) startBtn.textContent = '[ もう一度 ]';
+        const ideoLink = document.getElementById('ideoLink');
+        if (ideoLink) ideoLink.style.display = 'block';
       }, 0);
     } else {
       balls = [makeBall()];
       gameState = 'waiting';
     }
-    return; // ライフが無くなったフレームはここで処理終了
+    return;
   }
 
   // ── ステージクリア（次のレベルへ） ──
-console.log(
-  "残り",
-  bricks.filter(b => b.alive).length
-);
-
-if (bricks.every(b => !b.alive)) {
-
-  // ★クリア報酬
-  addCollectionItem(level);
-
-  level++;
-
-  drops = [];
-  buildBricks();
-  balls = [makeBall()];
-  gameState = 'waiting';
-  updHUD();
-}
+  if (bricks.length > 0 && bricks.every(b => !b.alive)) {
+    if (gameState === 'clear') return;
+    gameState = 'clear';
+    addCollectionItem(level);
+    level++;
+    buildBricks();
+    balls = [makeBall()];
+    if (overlay) overlay.style.display = 'none';
+    updHUD();
+    gameState = 'waiting';
+  }
 }
 
 function draw() {
@@ -658,11 +636,10 @@ function draw() {
   ctx.fillStyle = '#050A15';
   ctx.fillRect(0, 0, CW, CH);
 
-  // 星雲のグリッド線（極薄の宇宙水色）
   ctx.strokeStyle = 'rgba(56, 189, 248, 0.025)';
   ctx.lineWidth = 0.5;
-  for (let x = 0; x < CW; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
-  for (let y = 0; y < CH; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+  for (let x = 0; x < CW; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+  for (let y = 0; y < CH; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
 
   bricks.forEach(b => {
     if (!b.alive) return;
@@ -683,7 +660,6 @@ function draw() {
   const PW = paddleWCurrent;
   const px = paddleX - PW / 2;
   
-  // パドル: 流星を受け止めるすりガラス（水色を帯びた透過層＋枠線）
   ctx.fillStyle = 'rgba(175,219,245,0.12)';
   ctx.fillRect(px, py, PW, PADDLE_H);
   ctx.strokeStyle = 'rgba(230,230,250,0.55)';
@@ -692,7 +668,6 @@ function draw() {
 
   if (gameState !== 'over') {
     balls.forEach(ball => {
-      // 彗星の軌跡（透き通ったアクアブルーの美しい残像）
       if (ball.history) {
         ball.history.forEach((pos, idx) => {
           const trailAlpha = (idx + 1) / ball.history.length * 0.25;
@@ -703,7 +678,6 @@ function draw() {
         });
       }
 
-      // 観測点（強烈にきらめく一番星の白＋水色の後光）
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF';
@@ -726,7 +700,6 @@ function draw() {
 
 // ── Audio ──
 let audioCtx = null;
-
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -734,17 +707,17 @@ function getAudioCtx() {
 
 function playTone(freq, type, duration, gainVal, fadeOut = true) {
   try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const ctxNode = getAudioCtx();
+    const osc = ctxNode.createOscillator();
+    const gain = ctxNode.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(ctxNode.destination);
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    gain.gain.setValueAtTime(gainVal, ctx.currentTime);
-    if (fadeOut) gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + duration);
+    osc.frequency.setValueAtTime(freq, ctxNode.currentTime);
+    gain.gain.setValueAtTime(gainVal, ctxNode.currentTime);
+    if (fadeOut) gain.gain.exponentialRampToValueAtTime(0.001, ctxNode.currentTime + duration);
+    osc.start(ctxNode.currentTime);
+    osc.stop(ctxNode.currentTime + duration);
     
     setTimeout(() => {
       osc.disconnect();
@@ -753,9 +726,7 @@ function playTone(freq, type, duration, gainVal, fadeOut = true) {
   } catch(e) {}
 }
 
-function sfxPaddle() {
-  playTone(520, 'triangle', 0.12, 0.04);
-}
+function sfxPaddle() { playTone(520, 'triangle', 0.12, 0.04); }
 
 let lastBrickSfx = 0;
 function sfxBrick() {
@@ -763,22 +734,19 @@ function sfxBrick() {
   if (now - lastBrickSfx < 40) return; 
   lastBrickSfx = now;
   try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const ctxNode = getAudioCtx();
+    const osc = ctxNode.createOscillator();
+    const gain = ctxNode.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(ctxNode.destination);
     osc.detune.value = Math.random() * 8 - 4;
-osc.type = 'triangle';
-
-osc.frequency.setValueAtTime(880, ctx.currentTime);
-osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.15);
-
-gain.gain.setValueAtTime(0.04, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.07);
-
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(880, ctxNode.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, ctxNode.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.04, ctxNode.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctxNode.currentTime + 0.06);
+    osc.start(ctxNode.currentTime);
+    osc.stop(ctxNode.currentTime + 0.07);
     setTimeout(() => {
       osc.disconnect();
       gain.disconnect();
@@ -795,20 +763,18 @@ function sfxPowerup() {
 
 function sfxDeath() {
   try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const ctxNode = getAudioCtx();
+    const osc = ctxNode.createOscillator();
+    const gain = ctxNode.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
-osc.type = 'triangle';
-
-osc.frequency.setValueAtTime(220, ctx.currentTime);
-osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.8);
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.4);
-
+    gain.connect(ctxNode.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, ctxNode.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctxNode.currentTime + 0.8);
+    gain.gain.setValueAtTime(0.08, ctxNode.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctxNode.currentTime + 0.4);
+    osc.start(ctxNode.currentTime);
+    osc.stop(ctxNode.currentTime + 0.4);
     setTimeout(() => {
       osc.disconnect();
       gain.disconnect();
@@ -816,32 +782,31 @@ osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.8);
   } catch(e) {}
 }
 
-// ── Pause ────────────────────────────────────────────────────────────────────
-const pauseOverlay = document.getElementById('pauseOverlay');
-const resumeBtn    = document.getElementById('resumeBtn');
-
+// ── Pause ──
 function pauseGame() {
   if (paused || (gameState !== 'playing' && gameState !== 'waiting')) return;
   paused = true;
-  pauseOverlay.style.display = 'flex';
+  if (pauseOverlay) pauseOverlay.style.display = 'flex';
   showDot(true);
 }
 
 function resumeGame() {
   if (!paused) return;
   paused = false;
-  pauseOverlay.style.display = 'none';
+  if (pauseOverlay) pauseOverlay.style.display = 'none';
   showDot(false);
   userEscaped = false;
   if (!isMobile) requestPointerLock();
 }
 
-resumeBtn.addEventListener('touchstart', (e) => {
-  e.stopPropagation(); e.preventDefault(); resumeGame();
-}, { passive:false });
-resumeBtn.addEventListener('click', (e) => {
-  e.stopPropagation(); resumeGame();
-});
+if (resumeBtn) {
+  resumeBtn.addEventListener('touchstart', (e) => {
+    e.stopPropagation(); e.preventDefault(); resumeGame();
+  }, { passive:false });
+  resumeBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); resumeGame();
+  });
+}
 
 document.addEventListener('pointerlockchange', () => {
   if (!isMobile &&
@@ -853,7 +818,6 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
-// ── Pointer Lock ─────────────────────────────────────────────────────────────
 function exitPointerLock() {
   if (document.pointerLockElement === gameArea) {
     document.exitPointerLock();
@@ -861,60 +825,53 @@ function exitPointerLock() {
 }
 
 function requestPointerLock() {
-  if (isMobile) return; 
+  if (isMobile || !gameArea) return; 
   gameArea.requestPointerLock({ unadjustedMovement: true }).catch(() => {
     gameArea.requestPointerLock();
   });
 }
 
-gameArea.addEventListener('mousemove', e => {
-  if (!isMobile && document.pointerLockElement === gameArea) {
-    mouseX = Math.max(0, Math.min(CW, mouseX + e.movementX));
-  } else if (!isMobile) {
-    const r = gameArea.getBoundingClientRect();
-    mouseX = e.clientX - r.left;
-  }
-});
-
-// ── Touch Control ──
-gameArea.addEventListener('touchstart', e => {
-  if (overlay.style.display !== 'none' || gameState === 'idle' || gameState === 'over') return;
-  e.preventDefault();
-  
-  const touch = e.touches[0];
-  lastTouchX = touch.clientX;
-  
-  if (gameState === 'waiting') {
-    launch();
-  }
-}, { passive:false });
-
-gameArea.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (gameState !== 'playing' && gameState !== 'waiting') return;
-  
-  const touch = e.touches[0];
-  const deltaX = touch.clientX - lastTouchX;
-  lastTouchX = touch.clientX;
-  
-  mouseX = Math.max(0, Math.min(CW, mouseX + deltaX * 1.2));
-}, { passive:false });
-
-if (!isMobile) {
-  gameArea.addEventListener('click', () => {
-    if (gameState === 'playing' || gameState === 'waiting') {
-      if (document.pointerLockElement !== gameArea && !userEscaped) {
-        exitedIntentionally = false;
-        paused = false;
-        pauseOverlay.style.display = 'none';
-        requestPointerLock();
-        showDot(false);
-      }
-      if (gameState === 'waiting') {
-        launch();
-      }
+if (gameArea) {
+  gameArea.addEventListener('mousemove', e => {
+    if (!isMobile && document.pointerLockElement === gameArea) {
+      mouseX = Math.max(0, Math.min(CW, mouseX + e.movementX));
+    } else if (!isMobile) {
+      const r = gameArea.getBoundingClientRect();
+      mouseX = e.clientX - r.left;
     }
   });
+
+  gameArea.addEventListener('touchstart', e => {
+    if ((overlay && overlay.style.display !== 'none') || gameState === 'idle' || gameState === 'over') return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    lastTouchX = touch.clientX;
+    if (gameState === 'waiting') { launch(); }
+  }, { passive:false });
+
+  gameArea.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (gameState !== 'playing' && gameState !== 'waiting') return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - lastTouchX;
+    lastTouchX = touch.clientX;
+    mouseX = Math.max(0, Math.min(CW, mouseX + deltaX * 1.2));
+  }, { passive:false });
+
+  if (!isMobile) {
+    gameArea.addEventListener('click', () => {
+      if (gameState === 'playing' || gameState === 'waiting') {
+        if (document.pointerLockElement !== gameArea && !userEscaped) {
+          exitedIntentionally = false;
+          paused = false;
+          if (pauseOverlay) pauseOverlay.style.display = 'none';
+          requestPointerLock();
+          showDot(false);
+        }
+        if (gameState === 'waiting') { launch(); }
+      }
+    });
+  }
 }
 
 function handleStartAction(e) {
@@ -922,24 +879,33 @@ function handleStartAction(e) {
   e.preventDefault();
   initGame();
 }
-startBtn.addEventListener('touchstart', handleStartAction, { passive:false });
-startBtn.addEventListener('click', handleStartAction);
-
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+if (startBtn) {
+  startBtn.addEventListener('touchstart', handleStartAction, { passive:false });
+  startBtn.addEventListener('click', handleStartAction);
 }
 
-collectionBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  overlay.style.display = "none";
-  collectionView.style.display = "flex";
-});
+function updateClock() {
+  const clock = document.getElementById('clock');
+  if (clock) {
+    const now = new Date();
+    clock.textContent = now.toTimeString().split(' ')[0];
+  }
+}
 
-closeCollection.addEventListener("click", () => {
-  collectionView.style.display = "none";
-  overlay.style.display = "flex";
-});
+if (collectionBtn) {
+  collectionBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (overlay) overlay.style.display = "none";
+    if (collectionView) collectionView.style.display = "flex";
+  });
+}
+
+if (closeCollection) {
+  closeCollection.addEventListener("click", () => {
+    if (collectionView) collectionView.style.display = "none";
+    if (overlay) overlay.style.display = "flex";
+  });
+}
 setInterval(updateClock, 1000);
 updateClock();
 

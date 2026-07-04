@@ -625,6 +625,11 @@ function update() {
   }
 
   // ── ステージクリア（次のレベルへ） ──
+console.log(
+  "残り",
+  bricks.filter(b => b.alive).length
+);
+
 if (bricks.every(b => !b.alive)) {
 
   // ★クリア報酬

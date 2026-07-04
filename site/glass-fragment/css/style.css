@@ -249,3 +249,28 @@ font-size:40px;
 color:#555;
 
 }
+
+/* ── 【追加】硝子片集（コレクション）内のテキスト視認性向上 ── */
+#collectionGrid h3 {
+  color: #ffffff;
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-top: 12px;
+  text-shadow: 0 0 6px rgba(125, 211, 252, 0.3);
+}
+
+#collectionGrid p {
+  color: #7dd3fc; /* 他のパーツと統一した水色 */
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-top: 8px;
+  line-height: 1.4;
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.3);
+  opacity: 0.85; /* ほんの少しだけ透過させて雰囲気を出す */
+}
+
+/* ついでに未観測の「？」マークも少し発光させておく（お好みで） */
+.unknown {
+  color: rgba(56, 189, 248, 0.2) !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
+}

@@ -222,8 +222,12 @@ function updateDrops() {
 }
 
 function activateMultiball() {
+  // ── 【最適化】最大50個制限を設けて過負荷を防止 ──
+  if (balls.length >= 50) return;
+
   const current = [...balls];
   for (const source of current) {
+    if (balls.length >= 50) break; // ループ内でも上限チェック
     const spd = Math.hypot(source.vx, source.vy);
     const base = Math.atan2(source.vy, source.vx);
     const angles = [-0.35, 0.35];
@@ -286,7 +290,7 @@ function roundRect(c, x, y, w, h, r) {
   c.arcTo(x + w, y + h, x + w - r, y + h, r);
   c.lineTo(x + r, y + h);
   c.arcTo(x, y + h, x, y + h - r, r);
-  c.lineTo(x, y + r);
+  c.lineTo(x + r, y + r, r);
   c.arcTo(x, y + r, x + r, y, r);
   c.closePath();
 }
@@ -414,7 +418,7 @@ function buildBricks() {
 
 function initGame() {
   if (typeof loadCollection === "function") {
-    loadCollection(); // collection.js の本物を呼ぶ
+    loadCollection(); 
   }
   exitPointerLock();
   resize();
@@ -520,12 +524,16 @@ function update() {
   }
 
   const py = paddleY();
+  
+  // ── 【最適化】ブロックが並んでいる領域の最大Y座標をあらかじめ算出 ──
+  const maxRows = Math.min(ROWS + level - 1, 10);
+  const maxBrickY = brickStartY() + maxRows * (brickH() + brickGapY());
 
   for (const ball of balls) {
     if (ball.lost) continue;
     
     ball.history.push({ x: ball.x, y: ball.y });
-    if (ball.history.length > 6) ball.history.shift();
+    if (ball.history.length > 5) ball.history.shift(); // 軌跡数をわずかに削減（6→5）
 
     ball.x += ball.vx;
     ball.y += ball.vy;
@@ -547,28 +555,31 @@ function update() {
       triggerShake(4); 
     }
 
-    for (const b of bricks) {
-      if (!b.alive) continue;
-      if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
-          ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
-        b.alive = false;
-        score += 10 * level;
-        
-        if (pierceTimer <= 0) {
-          const prevY = ball.y - ball.vy;
-          if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) {
-            ball.vy *= -1;
-          } else {
-            ball.vx *= -1;
+    // ── 【最適化】ボールがブロックのある最下部より上方にいるときだけ当たり判定ループを回す ──
+    if (ball.y - BALL_R <= maxBrickY) {
+      for (const b of bricks) {
+        if (!b.alive) continue;
+        if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+            ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+          b.alive = false;
+          score += 10 * level;
+          
+          if (pierceTimer <= 0) {
+            const prevY = ball.y - ball.vy;
+            if (prevY + BALL_R <= b.y || prevY - BALL_R >= b.y + b.h) {
+              ball.vy *= -1;
+            } else {
+              ball.vx *= -1;
+            }
           }
+          hi = Math.max(hi, score);
+          updHUD();
+          spawnBrickParticles(b.x, b.y, b.w, b.h);
+          sfxBrick();
+          triggerShake(2);
+          if (b.dropType) spawnDrop(b.x, b.y, b.w, b.h, b.dropType);
+          break;
         }
-        hi = Math.max(hi, score);
-        updHUD();
-        spawnBrickParticles(b.x, b.y, b.w, b.h);
-        sfxBrick();
-        triggerShake(2);
-        if (b.dropType) spawnDrop(b.x, b.y, b.w, b.h, b.dropType);
-        break;
       }
     }
 
@@ -610,12 +621,10 @@ function update() {
     return;
   }
 
-  // ── ステージクリア（結晶共鳴画面 ＋ アイテム獲得） ──
   if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
     
-    // collection.js 側の取得ロジックを発火
     if (typeof addCollectionItem === "function") {
       addCollectionItem(level);
     }
@@ -627,7 +636,6 @@ function update() {
       
       const taglines = overlay.querySelectorAll('.tagline');
       if (taglines.length > 0) {
-        // collectionItems 配列から現在のレベルのアイテム情報を引っ張って表示に反映
         const item = (typeof collectionItems !== "undefined") ? collectionItems[level - 1] : null;
         if (item) {
           taglines[0].innerHTML = `LEVEL ${level} CLEAR!<br><span style="color: #38bdf8; font-size: 0.9em; margin-top: 10px; display: inline-block;">【${item.name}】を回収しました</span>`;
@@ -690,32 +698,34 @@ function draw() {
   ctx.strokeRect(px + 0.5, py + 0.5, PW - 1, PADDLE_H - 1);
 
   if (gameState !== 'over') {
+    // ── 【最適化】すべてのボールの軌跡を一括で「一本の線」としてパス描画 ──
+    ctx.lineWidth = BALL_R * 1.3;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+    
     balls.forEach(ball => {
-      if (ball.history) {
-        ball.history.forEach((pos, idx) => {
-          const trailAlpha = (idx + 1) / ball.history.length * 0.25;
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, BALL_R * 0.9, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(56, 189, 248, ${trailAlpha})`; 
-          ctx.fill();
-        });
+      if (ball.history && ball.history.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(ball.history[0].x, ball.history[0].y);
+        for (let i = 1; i < ball.history.length; i++) {
+          ctx.lineTo(ball.history[i].x, ball.history[i].y);
+        }
+        ctx.stroke();
       }
+    });
 
+    // ── 本体（白丸）の描画。高負荷な影（shadowBlur）の処理をここだけに限定 ──
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowBlur = pierceTimer > 0 ? 30 : 18;
+    ctx.shadowColor = pierceTimer > 0 ? '#ffffff' : '#00FFFF';
+
+    balls.forEach(ball => {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      
-      if (pierceTimer > 0) {
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = '#ffffff';
-      } else {
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = '#00FFFF';
-      }
-      
       ctx.fill();
-      ctx.shadowBlur = 0;
     });
+    
+    ctx.shadowBlur = 0; // ループを抜けた後、最後に一度だけリセット
   }
   
   ctx.restore();

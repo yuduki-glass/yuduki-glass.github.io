@@ -112,7 +112,7 @@ let started = false;
 
 let lastTouchX = 0;
 
-// ── 未定義だったコレクション関連のモック関数 ──
+// ── コレクション関連のモック関数 ──
 function loadCollection() { console.log("Collection Loaded"); }
 function addCollectionItem(lvl) { console.log("Added collection item for level:", lvl); }
 
@@ -442,6 +442,10 @@ function initGame() {
     overlay.style.display = 'none';
   }
   
+  if (startBtn) {
+    startBtn.textContent = '[ 観測開始 ]';
+  }
+  
   buildBricks();
   balls = [makeBall()];
   started = true;
@@ -583,7 +587,7 @@ function update() {
   if (balls.length === 0) {
     if (gameState === 'clear') return;
     
-    lives--; // ★ここでライフを1減らす（元のコードにはなかった）
+    lives--; 
     updHUD();
 
     if (lives <= 0) {
@@ -609,17 +613,28 @@ function update() {
     return;
   }
 
-  // ── ステージクリア（次のレベルへ） ──
+  // ── ステージクリア（クリア画面表示） ──
   if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
     addCollectionItem(level);
-    level++;
-    buildBricks();
-    balls = [makeBall()];
-    if (overlay) overlay.style.display = 'none';
-    updHUD();
-    gameState = 'waiting';
+
+    if (overlay) {
+      overlay.style.display = 'flex';
+      const glitch = overlay.querySelector('.glitch');
+      if (glitch) glitch.textContent = '結晶共鳴';
+      const taglines = overlay.querySelectorAll('.tagline');
+      if (taglines.length > 0) {
+        taglines[0].textContent = `LEVEL ${level} CLEAR! (Score: ${score})`;
+      }
+    }
+    if (startBtn) {
+      startBtn.textContent = '[ 次の層へ ]';
+    }
+
+    exitPointerLock();
+    showDot(true);
+    return;
   }
 }
 
@@ -842,7 +857,7 @@ if (gameArea) {
   });
 
   gameArea.addEventListener('touchstart', e => {
-    if ((overlay && overlay.style.display !== 'none') || gameState === 'idle' || gameState === 'over') return;
+    if ((overlay && overlay.style.display !== 'none' && gameState !== 'clear') || gameState === 'idle' || gameState === 'over') return;
     e.preventDefault();
     const touch = e.touches[0];
     lastTouchX = touch.clientX;
@@ -877,8 +892,24 @@ if (gameArea) {
 function handleStartAction(e) {
   e.stopPropagation();
   e.preventDefault();
-  initGame();
+  
+  if (gameState === 'clear') {
+    level++;
+    buildBricks();
+    balls = [makeBall()];
+    if (overlay) overlay.style.display = 'none';
+    updHUD();
+    
+    setTimeout(() => {
+      gameState = 'waiting';
+      showDot(false);
+      if (!isMobile) requestPointerLock();
+    }, 80);
+  } else {
+    initGame();
+  }
 }
+
 if (startBtn) {
   startBtn.addEventListener('touchstart', handleStartAction, { passive:false });
   startBtn.addEventListener('click', handleStartAction);

@@ -10,6 +10,7 @@ const collectionView = document.getElementById("collectionView");
 const closeCollection = document.getElementById("closeCollection");
 const pauseOverlay = document.getElementById('pauseOverlay');
 const resumeBtn    = document.getElementById('resumeBtn');
+const resetDataBtn = document.getElementById('resetDataBtn');
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 

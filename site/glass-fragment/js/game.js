@@ -986,3 +986,27 @@ function loop() {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+// ── 【追加】「記録を初期化」ボタンを押したときの挙動 ──
+if (resetDataBtn) {
+  const handleResetAction = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // 誤操作防止の確認ダイアログ
+    if (confirm("これまでに集めた硝子片の記録をすべて消去します。よろしいですか？")) {
+      // 硝子片コレクションの記憶を削除
+      localStorage.removeItem("glassCollection");
+      
+      // もしゲームのハイスコアも完全にゼロに戻したければ、以下2行のコメントアウトを解除してくれ
+      // localStorage.removeItem("hiScore"); // ハイスコアの保存キー名に合わせて調整
+      // hi = 0; updHUD();
+      
+      alert("記録を初期化しました。");
+      location.reload(); // ページをリロードして「？」状態を反映
+    }
+  };
+
+  resetDataBtn.addEventListener('touchstart', handleResetAction, { passive: false });
+  resetDataBtn.addEventListener('click', handleResetAction);
+}

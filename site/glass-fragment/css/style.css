@@ -154,7 +154,8 @@ canvas { display:block; position:absolute; top:0; left:0; }
 
 #startBtn,
 #collectionBtn,
-#closeCollection {
+#closeCollection,
+#resetDataBtn { /* ── 【追加】ここにカンマ区切りで並べる ── */
   margin-top:32px;
   padding:12px 40px;
   border:1px solid rgba(56,189,248,0.25);
@@ -170,12 +171,14 @@ canvas { display:block; position:absolute; top:0; left:0; }
 
 #startBtn:hover,
 #collectionBtn:hover,
-#closeCollection:hover {
+#closeCollection:hover,
+#resetDataBtn:hover { /* ── 【追加】ホバー側にも並べる ── */
   background:rgba(56,189,248,.05);
   border-color:rgba(56,189,248,.6);
   color:#fff;
   box-shadow:0 0 10px rgba(56,189,248,.2);
 }
+
 #collectionView{
 
 position:absolute;

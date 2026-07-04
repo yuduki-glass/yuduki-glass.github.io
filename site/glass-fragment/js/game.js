@@ -942,7 +942,40 @@ function updateClock() {
     clock.textContent = now.toTimeString().split(' ')[0];
   }
 }
+// ── 【追加】クリア画面やタイトルで「硝子片集」ボタンを押したときの挙動制御 ──
+if (collectionBtn) {
+  const handleCollectionOpen = (e) => {
+    e.stopPropagation();
+    // コレクションを開くときは、手前のゲームオーバー/クリア画面のモヤを一時的に隠す
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+    // ※ 実際の開く処理（collectionViewの表示など）は collection.js 側がやっている想定
+    if (collectionView) {
+      collectionView.style.display = 'flex'; // コレクション画面を確実に表示
+    }
+  };
 
+  collectionBtn.addEventListener('touchstart', handleCollectionOpen, { passive: false });
+  collectionBtn.addEventListener('click', handleCollectionOpen);
+}
+
+// ── 【追加】コレクション画面の「[ 戻る ]」ボタンを押したときの挙動制御 ──
+if (closeCollection) {
+  const handleCollectionClose = (e) => {
+    e.stopPropagation();
+    // もしゲームの状態が 'clear'（ステージクリア時）か 'over'（ゲームオーバー時）か 'idle' なら、
+    // コレクションを閉じた後に、再度その状態のモヤ画面を表示し直す
+    if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') {
+      if (overlay) {
+        overlay.style.display = 'flex';
+      }
+    }
+  };
+
+  closeCollection.addEventListener('touchstart', handleCollectionClose, { passive: false });
+  closeCollection.addEventListener('click', handleCollectionClose);
+}
 setInterval(updateClock, 1000);
 updateClock();
 

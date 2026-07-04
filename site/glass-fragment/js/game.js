@@ -112,10 +112,6 @@ let started = false;
 
 let lastTouchX = 0;
 
-// ── コレクション関連のモック関数 ──
-function loadCollection() { console.log("Collection Loaded"); }
-function addCollectionItem(lvl) { console.log("Added collection item for level:", lvl); }
-
 // ── Powerups ──
 let drops = [];
 const PU_MULTIBALL  = 'multiball';
@@ -417,7 +413,9 @@ function buildBricks() {
 }
 
 function initGame() {
-  loadCollection();
+  if (typeof loadCollection === "function") {
+    loadCollection(); // collection.js の本物を呼ぶ
+  }
   exitPointerLock();
   resize();
   score = 0; lives = 3; level = 1;
@@ -583,7 +581,6 @@ function update() {
 
   balls = balls.filter(b => !b.lost);
 
-  // ── ライフ減少・ゲームオーバー処理 ──
   if (balls.length === 0) {
     if (gameState === 'clear') return;
     
@@ -613,19 +610,30 @@ function update() {
     return;
   }
 
-  // ── ステージクリア（クリア画面表示） ──
+  // ── ステージクリア（結晶共鳴画面 ＋ アイテム獲得） ──
   if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
-    addCollectionItem(level);
+    
+    // collection.js 側の取得ロジックを発火
+    if (typeof addCollectionItem === "function") {
+      addCollectionItem(level);
+    }
 
     if (overlay) {
       overlay.style.display = 'flex';
       const glitch = overlay.querySelector('.glitch');
       if (glitch) glitch.textContent = '結晶共鳴';
+      
       const taglines = overlay.querySelectorAll('.tagline');
       if (taglines.length > 0) {
-        taglines[0].textContent = `LEVEL ${level} CLEAR! (Score: ${score})`;
+        // collectionItems 配列から現在のレベルのアイテム情報を引っ張って表示に反映
+        const item = (typeof collectionItems !== "undefined") ? collectionItems[level - 1] : null;
+        if (item) {
+          taglines[0].innerHTML = `LEVEL ${level} CLEAR!<br><span style="color: #38bdf8; font-size: 0.9em; margin-top: 10px; display: inline-block;">【${item.name}】を回収しました</span>`;
+        } else {
+          taglines[0].textContent = `LEVEL ${level} CLEAR! (Score: ${score})`;
+        }
       }
     }
     if (startBtn) {
@@ -923,20 +931,6 @@ function updateClock() {
   }
 }
 
-if (collectionBtn) {
-  collectionBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (overlay) overlay.style.display = "none";
-    if (collectionView) collectionView.style.display = "flex";
-  });
-}
-
-if (closeCollection) {
-  closeCollection.addEventListener("click", () => {
-    if (collectionView) collectionView.style.display = "none";
-    if (overlay) overlay.style.display = "flex";
-  });
-}
 setInterval(updateClock, 1000);
 updateClock();
 

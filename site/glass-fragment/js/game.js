@@ -5,6 +5,9 @@ const gameArea = document.getElementById('gameArea');
 const leaderboard = document.getElementById('leaderboard');
 const overlay = document.getElementById('overlay');
 const startBtn = document.getElementById('startBtn');
+const collectionBtn = document.getElementById("collectionBtn");
+const collectionView = document.getElementById("collectionView");
+const closeCollection = document.getElementById("closeCollection");
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -921,6 +924,17 @@ function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
 }
+
+collectionBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  overlay.style.display = "none";
+  collectionView.style.display = "flex";
+});
+
+closeCollection.addEventListener("click", () => {
+  collectionView.style.display = "none";
+  overlay.style.display = "flex";
+});
 setInterval(updateClock, 1000);
 updateClock();
 

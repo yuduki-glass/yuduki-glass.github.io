@@ -109,8 +109,10 @@ function openCollection(){
 
     const div=document.createElement("div");
 
-    if(collectedItems.includes(item.id)){
+    // item.id が数値でも文字列でも正しく判定できるように型を統一
+    if(collectedItems.includes(Number(item.id))){
 
+      // ── 【修正】獲得済み：画像、名前（アイテム名）、説明を表示 ──
       div.innerHTML=`
         <img src="${item.image}">
         <h3>${item.name}</h3>
@@ -119,6 +121,7 @@ function openCollection(){
 
     }else{
 
+      // ── 未獲得：？マークと、名前を「未観測」にして表示 ──
       div.innerHTML=`
         <div class="unknown">
           ?

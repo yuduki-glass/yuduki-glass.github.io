@@ -911,11 +911,12 @@ function handleStartAction(e) {
   e.stopPropagation();
   e.preventDefault();
   
+  // ── 【修正】文字基準ではなく、現在のgameStateが'clear'かどうかで確実に判定 ──
   if (gameState === 'clear') {
     level++;
     buildBricks();
     balls = [makeBall()];
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) overlay.style.display = 'none'; // ここで確実にモヤを消す
     updHUD();
     
     setTimeout(() => {
@@ -924,6 +925,7 @@ function handleStartAction(e) {
       if (!isMobile) requestPointerLock();
     }, 80);
   } else {
+    // 初回スタート、またはゲームオーバーからのリトライ時
     initGame();
   }
 }

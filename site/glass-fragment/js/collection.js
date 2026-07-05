@@ -100,19 +100,19 @@ function openCollection(){
 
 // ── 【修正】ポップアップの枠外（背景）をクリックしたら閉じる処理 ──
 // 最初からイベントを張るのではなく、安全なガード（ifチェックとstopPropagation）を入れる
+// ── 【修正】ポップアップの枠外（背景）をクリックしたら閉じる処理（判定をより確実に） ──
 const itemPopup = document.getElementById("itemPopup");
 if (itemPopup) {
   itemPopup.addEventListener("click", (e) => {
-    // ポップアップ自体のクリックイベントが、外側のcollectionViewに伝播して誤作動するのを防ぐ
+    // イベントの伝播をここで完全にストップ
     e.stopPropagation();
 
-    // ポップアップが実際に開いている（flex）かつ、クリックされたのが背景（itemPopup自身）のときだけ閉じる
-    if (itemPopup.style.display === "flex" && e.target === itemPopup) {
+    // ポップアップが「非表示（none）」ではなく、かつクリックされたのが背景（itemPopup自身）のとき
+    if (itemPopup.style.display !== "none" && e.target === itemPopup) {
       itemPopup.style.display = "none";
     }
   });
 }
-
 document.getElementById("collectionBtn").addEventListener("click", ()=>{
   loadCollection();
   openCollection();

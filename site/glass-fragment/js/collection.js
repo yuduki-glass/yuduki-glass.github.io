@@ -205,3 +205,113 @@ if (document.readyState === "loading") {
   loadCollection();
   updateTotalWeightDisplay();
 }
+/* ── 【修正】10個対応：グリッドのレイアウト崩れ防止 ── */
+#collectionGrid {
+  display: grid;
+  /* スマホなら2列、PCなら自動で綺麗に並ぶように幅を制限 */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 16px;
+  padding: 15px;
+  max-height: 60vh; /* 縦に伸びすぎて画面を突き抜けないようにスクロール枠をつける */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* スマホでのスクロールを滑らかに */
+}
+
+/* グリッド内の各アイテム枠の調整 */
+#collectionGrid > div {
+  background: rgba(6, 11, 20, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 4px;
+  padding: 12px 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#collectionGrid img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+#collectionGrid h3 {
+  font-size: 11px;
+  margin: 0;
+  color: rgba(56, 189, 248, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 文字が長すぎても崩れないように三点リーダーにする */
+}
+
+/* 未観測（？）の枠 */
+.unknown {
+  width: 50px;
+  height: 50px;
+  line-height: 50px;
+  margin: 0 auto 8px;
+  background: rgba(56, 189, 248, 0.05);
+  color: rgba(56, 189, 248, 0.3);
+  font-size: 20px;
+  border: 1px dashed rgba(56, 189, 248, 0.2);
+}
+
+/* ── 【修正】詳細ポップアップのサイズ溢れ防止 ── */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 7, 18, 0.85); /* 背景をしっかり暗く */
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background: #060b14;
+  border: 1px solid #38bdf8;
+  padding: 24px;
+  width: 85%;
+  max-width: 290px;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+/* ステータス表をさらに見やすく整列 */
+.popup-stats {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(56, 189, 248, 0.2);
+  display: flex;
+  justify-content: center;
+}
+
+.popup-stats table {
+  width: 100%;
+  font-size: 12px;
+  color: rgba(56, 189, 248, 0.7);
+  border-collapse: collapse;
+}
+
+.popup-stats td {
+  padding: 5px 0;
+  text-align: left;
+}
+
+.popup-stats td:last-child {
+  text-align: right;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace;
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
+}
+
+.popup-hint {
+  display: block;
+  margin-top: 16px;
+  font-size: 11px;
+  color: rgba(56, 189, 248, 0.4);
+}

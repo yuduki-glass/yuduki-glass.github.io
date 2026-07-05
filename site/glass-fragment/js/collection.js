@@ -57,29 +57,32 @@ function saveCollection(){
 }
 
 // 取得
+// ── 【修正】addCollectionItem の中身を時間まで取得するようにアップデート ──
 function addCollectionItem(level){
   const item = collectionItems[level-1];
   if(!item) return;
 
-  // ── 【修正】未所持なら新しく追加、既所持なら観測回数をカウントアップ ──
   if(!collectedItems.includes(item.id)){
     collectedItems.push(item.id);
   }
 
   // 統計データの更新
   if(!collectionStats[item.id]){
-    // 初めて取得した時
+    // 初めて取得した時（現在の年・月・日・時・分をゼロ埋めで取得）
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mi = String(now.getMinutes()).padStart(2, '0');
     
+    // ── 希望のフォーマット「YYYY.MM.DD HH:MI」で格納 ──
     collectionStats[item.id] = {
-      date: `${yyyy}.${mm}.${dd}`,
+      date: `${yyyy}.${mm}.${dd} ${hh}:${mi}`,
       count: 1
     };
   } else {
-    // 2回目以降の観測（レベルクリア時などに呼ばれたらカウントアップ）
+    // 2回目以降の観測
     collectionStats[item.id].count += 1;
   }
 

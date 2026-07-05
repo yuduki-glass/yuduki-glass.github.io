@@ -112,16 +112,23 @@ function openCollection(){
     // item.id が数値でも文字列でも正しく判定できるように型を統一
     if(collectedItems.includes(Number(item.id))){
 
-      // ── 【修正】獲得済み：画像、名前（アイテム名）、説明を表示 ──
+      // ── 【変更】獲得済み：グリッド側は画像と名前だけにして、クリックできるようにする ──
       div.innerHTML=`
-        <img src="${item.image}">
+        <img src="${item.image}" style="cursor: pointer;">
         <h3>${item.name}</h3>
-        <p>${item.description}</p>
       `;
+
+      // ── 【追加】獲得済みアイテムをクリックした時にポップアップを開く ──
+      div.addEventListener('click', () => {
+        document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}">`;
+        document.getElementById("popupName").textContent = item.name;
+        document.getElementById("popupDesc").textContent = item.description;
+        document.getElementById("itemPopup").style.display = "flex";
+      });
 
     }else{
 
-      // ── 未獲得：？マークと、名前を「未観測」にして表示 ──
+      // ── 未獲得：？マークと、名前を「未観測」にして表示（こちらはクリック不可） ──
       div.innerHTML=`
         <div class="unknown">
           ?
@@ -142,6 +149,15 @@ function openCollection(){
   ).style.display="flex";
 
 }
+
+// ── 【追加】ポップアップの枠外（背景）をクリックしたら閉じる処理 ──
+document.getElementById("itemPopup").addEventListener("click", (e) => {
+  // クリックされたのがポップアップの背景（itemPopup自身）だった場合だけ閉じる
+  if (e.target === document.getElementById("itemPopup")) {
+    document.getElementById("itemPopup").style.display = "none";
+  }
+});
+
 
 document
 .getElementById("collectionBtn")

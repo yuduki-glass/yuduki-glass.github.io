@@ -8,7 +8,7 @@ const collectionItems = [
     name: "灰色の器",
     image: "assets/items/item001.svg",
     description: "静かに沈黙する欠片",
-    // ── 【追加】アイテム固有のステータス ──
+    // ── アイテム固有のステータス ──
     weight: "38g",
     opacity: "14%"
   },
@@ -32,7 +32,7 @@ const collectionItems = [
 
 // 所持リスト
 let collectedItems = [];
-// ── 【追加】アイテムごとの詳細記録（日時や回数）を保存するオブジェクト ──
+// アイテムごとの詳細記録（日時や回数）を保存するオブジェクト
 let collectionStats = {};
 
 // 読み込み
@@ -42,7 +42,6 @@ function loadCollection(){
     collectedItems = JSON.parse(data);
   }
   
-  // ── 【追加】追加ステータスの読み込み ──
   const statsData = localStorage.getItem("glassCollectionStats");
   if(statsData){
     collectionStats = JSON.parse(statsData);
@@ -52,12 +51,37 @@ function loadCollection(){
 // 保存
 function saveCollection(){
   localStorage.setItem("glassCollection", JSON.stringify(collectedItems));
-  // ── 【追加】追加ステータスの保存 ──
   localStorage.setItem("glassCollectionStats", JSON.stringify(collectionStats));
 }
 
+// ── 【追加】集めた硝子片の総重量を計算して各画面に反映する関数 ──
+function updateTotalWeightDisplay() {
+  let total = 0;
+
+  collectionItems.forEach(item => {
+    if (collectedItems.includes(Number(item.id))) {
+      // "38g" から数値部分だけを抽出して加算
+      const weightNum = parseInt(item.weight) || 0;
+      total += weightNum;
+    }
+  });
+
+  // トップ画面（タイトル）の数値を更新
+  const titleWeightEl = document.getElementById("titleTotalWeight");
+  if (titleWeightEl) {
+    titleWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
+  }
+
+  // クリア画面（ポーズ画面）の数値を更新
+  const clearWeightEl = document.getElementById("clearTotalWeight");
+  if (clearWeightEl) {
+    clearWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
+  }
+
+  return total;
+}
+
 // 取得
-// ── 【修正】addCollectionItem の中身を時間まで取得するようにアップデート ──
 function addCollectionItem(level){
   const item = collectionItems[level-1];
   if(!item) return;
@@ -76,7 +100,7 @@ function addCollectionItem(level){
     const hh = String(now.getHours()).padStart(2, '0');
     const mi = String(now.getMinutes()).padStart(2, '0');
     
-    // ── 希望のフォーマット「YYYY.MM.DD HH:MI」で格納 ──
+    // フォーマット「YYYY.MM.DD HH:MI」で格納
     collectionStats[item.id] = {
       date: `${yyyy}.${mm}.${dd} ${hh}:${mi}`,
       count: 1
@@ -87,6 +111,8 @@ function addCollectionItem(level){
   }
 
   saveCollection();
+  // ── 【追加】新しく取得、またはカウントアップした瞬間に総重量表示も再計算 ──
+  updateTotalWeightDisplay();
   showCollectionGet(item);
 }
 
@@ -115,13 +141,12 @@ function openCollection(){
         
         const itemPopup = document.getElementById("itemPopup");
         if (itemPopup) {
-          // 動的に記録データを取得（万が一データがなければデフォルト値を出すガード付き）
-          const stats = collectionStats[item.id] || { date: "----.--.--", count: 1 };
+          const stats = collectionStats[item.id] || { date: "----.--.-- --:--", count: 1 };
 
           document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}">`;
           document.getElementById("popupName").textContent = item.name;
           
-          // ── 【修正】説明文の下に、SFチックなステータスログを合成して流し込む ──
+          // 説明文の下に、固有ステータスと動的ログを合成して流し込む
           document.getElementById("popupDesc").innerHTML = `
             ${item.description}
             <div class="popup-stats">
@@ -176,4 +201,10 @@ document.getElementById("collectionBtn").addEventListener("click", (e)=>{
 document.getElementById("closeCollection").addEventListener("click", (e)=>{
   e.stopPropagation();
   document.getElementById("collectionView").style.display = "none";
+});
+
+// ── 【追加】起動時にデータを読み込んで総重量の初期表示を機能させる ──
+document.addEventListener("DOMContentLoaded", () => {
+  loadCollection();
+  updateTotalWeightDisplay();
 });

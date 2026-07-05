@@ -274,3 +274,65 @@ color:#555;
   color: rgba(56, 189, 248, 0.2) !important;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
 }
+
+/* ── 【追加】硝子片詳細ポップアップのスタイル ── */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 21, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30; /* コレクション画面より手前に出す */
+  transition: opacity 0.2s ease;
+}
+
+.popup-content {
+  background: rgba(6, 11, 20, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+  padding: 40px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  border-radius: 4px;
+  animation: popupFadeIn 0.2s ease-out;
+}
+
+@keyframes popupFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#popupImageWrap img {
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
+}
+
+#popupName {
+  color: #ffffff;
+  font-size: 18px;
+  letter-spacing: 3px;
+  margin-top: 20px;
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.4);
+}
+
+#popupDesc {
+  color: #7dd3fc;
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-top: 12px;
+  line-height: 1.5;
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.3);
+}
+
+.popup-hint {
+  display: block;
+  color: #384f6b;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-top: 32px;
+}

@@ -181,37 +181,41 @@ canvas { display:block; position:absolute; top:0; left:0; }
 
 /* ── 硝子片集（コレクション一覧）外枠 ── */
 #collectionView {
-  position:absolute;
-  inset:0;
-  background:rgba(5,10,21,0.96);
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  z-index:20;
-  padding:30px 15px;
-  overflow:hidden; /* 全体ははみ出さず内部スクロールさせる */
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 10, 21, 0.96);
+  z-index: 20;
+  padding: 40px 20px;
+  
+  /* 競合防止のための確実なflex定義 */
+  display: none; 
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start;
 }
 
 /* ── 【修正】10個対応レスポンシブ・グリッド ── */
 #collectionGrid {
-  display: grid;
-  /* スマホなら2列〜3列、PCなら幅に応じて最適に自動配置 */
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  display: grid !important;
+  /* 横幅に合わせて1列〜4列に自動で綺麗に流し込む */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
   gap: 16px;
   width: 100%;
-  max-width: 480px; /* 横に広がりすぎて不格好になるのを防ぐ */
-  margin: 20px 0;
-  padding: 10px 5px;
-  flex: 1;
-  overflow-y: auto; /* 10個並んで縦に溢れたらここだけスクロール */
+  max-width: 520px; /* PCでも広がりすぎず綺麗にまとまる幅 */
+  margin: 24px 0;
+  padding: 10px;
+  
+  /* 縦幅の潰れ防止とスクロールの担保 */
+  max-height: 65vh; 
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
 }
 
 /* 各アイテムのカード枠 */
 #collectionGrid > div {
-  border: 1px solid rgba(125,211,252,0.3);
-  background: rgba(6, 11, 20, 0.6);
-  padding: 12px 8px;
+  border: 1px solid rgba(125, 211, 252, 0.3) !important;
+  background: rgba(6, 11, 20, 0.6) !important;
+  padding: 16px 8px !important;
   text-align: center;
   border-radius: 4px;
   display: flex;
@@ -219,12 +223,23 @@ canvas { display:block; position:absolute; top:0; left:0; }
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+#collectionGrid > div[style*="pointer"] {
+  /* 解放済みアイテムのホバー感 */
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+#collectionGrid > div[style*="pointer"]:hover {
+  background: rgba(56, 189, 248, 0.05) !important;
+  border-color: rgba(56, 189, 248, 0.8) !important;
 }
 
 #collectionGrid img {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
+  display: block;
 }
 
 /* コレクション内のテキスト調整 */
@@ -236,18 +251,18 @@ canvas { display:block; position:absolute; top:0; left:0; }
   text-shadow: 0 0 6px rgba(125, 211, 252, 0.3);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* 名前が長すぎる場合の溢れ防止 */
+  text-overflow: ellipsis;
   width: 100%;
 }
 
 /* 未観測（？）の枠 */
 .unknown {
-  width: 60px;
-  height: 60px;
-  display: flex;
+  width: 56px;
+  height: 56px;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   color: rgba(56, 189, 248, 0.2) !important;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
   background: rgba(56, 189, 248, 0.02);
@@ -264,7 +279,7 @@ canvas { display:block; position:absolute; top:0; left:0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 30; /* コレクション画面より手前に出す */
+  z-index: 30;
 }
 
 .popup-content {

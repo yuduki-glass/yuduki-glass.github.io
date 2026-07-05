@@ -69,13 +69,13 @@ function updateTotalWeightDisplay() {
   // トップ画面（タイトル）の数値を更新
   const titleWeightEl = document.getElementById("titleTotalWeight");
   if (titleWeightEl) {
-    titleWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
+    titleWeightEl.textContent = `収集した硝子の重量: ${total}g`;
   }
 
   // クリア画面（ポーズ画面）の数値を更新
   const clearWeightEl = document.getElementById("clearTotalWeight");
   if (clearWeightEl) {
-    clearWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
+    clearWeightEl.textContent = `収集した硝子の重量: ${total}g`;
   }
 
   return total;

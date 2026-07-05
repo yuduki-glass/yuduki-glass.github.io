@@ -336,3 +336,32 @@ color:#555;
   letter-spacing: 2px;
   margin-top: 32px;
 }
+
+/* ── 【追加】ポップアップ内ステータス表のスタイリング ── */
+.popup-stats {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(56, 189, 248, 0.2); /* 境界線を点線にして電脳感を出す */
+  display: flex;
+  justify-content: center;
+}
+
+.popup-stats table {
+  width: 200px;
+  font-size: 13px;
+  color: rgba(56, 189, 248, 0.8);
+  border-collapse: collapse;
+}
+
+.popup-stats td {
+  padding: 4px 0;
+  text-align: left;
+}
+
+/* 右側の数値だけ右寄せにしてシャキッと整列させる */
+.popup-stats td:last-child {
+  text-align: right;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace; /* 数値はデジタルフォントにする */
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
+}

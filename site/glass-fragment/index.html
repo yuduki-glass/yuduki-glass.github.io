@@ -41,7 +41,6 @@
       <div id="scanlines"></div>
       
       <div id="collectionView">
-      
         <div class="glitch">
           硝子片集
         </div>
@@ -60,17 +59,20 @@
             <span class="popup-hint">枠外に触れて戻る</span>
           </div>
         </div>
-      
       </div>
       
       <div id="overlay">
         <div class="glitch">硝子片集め</div>
         <p class="tagline">硝子片集め</p>
+        
+        <p id="titleTotalWeight" style="font-size:14px; color:#7dd3fc; margin-top:12px; font-family:'Share Tech Mono', monospace; letter-spacing:2px; text-shadow:0 0 6px rgba(56,189,248,0.4);">
+          TOTAL WEIGHT: 0g
+        </p>
+
         <p class="hint" style="margin-top:20px;">動かして受け止める</p>
         <p class="hint">触れて開始</p>
         <button id="startBtn">[ 観測 ]</button>
         <button id="collectionBtn">硝子片集</button>
-        
         <button id="resetDataBtn">[ 記録初期化 ]</button>
         
         <a id="ideoLink" href="https://yuduki-glass.com/" style="display:none">表紙へ戻る</a>
@@ -78,7 +80,12 @@
       
       <div id="pauseOverlay">
         <div class="glitch">静寂</div>
-        <p class="tagline" style="margin-bottom:20px;">— 記録停止中 —</p>
+        <p class="tagline">— 記録停止中 —</p>
+        
+        <p id="clearTotalWeight" style="font-size:14px; color:#7dd3fc; margin-bottom:20px; font-family:'Share Tech Mono', monospace; letter-spacing:2px; text-shadow:0 0 6px rgba(56,189,248,0.4);">
+          TOTAL WEIGHT: 0g
+        </p>
+
         <button id="resumeBtn" class="pause-btn">[ 再開 ]</button>
         <a href="https://yuduki-glass.com/" class="pause-btn" style="margin-top:8px;">表紙へ戻る</a>
       </div>

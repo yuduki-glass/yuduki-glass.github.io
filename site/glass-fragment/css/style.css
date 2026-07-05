@@ -155,7 +155,7 @@ canvas { display:block; position:absolute; top:0; left:0; }
 #startBtn,
 #collectionBtn,
 #closeCollection,
-#resetDataBtn { /* ── 【追加】ここにカンマ区切りで並べる ── */
+#resetDataBtn {
   margin-top:32px;
   padding:12px 40px;
   border:1px solid rgba(56,189,248,0.25);
@@ -172,110 +172,89 @@ canvas { display:block; position:absolute; top:0; left:0; }
 #startBtn:hover,
 #collectionBtn:hover,
 #closeCollection:hover,
-#resetDataBtn:hover { /* ── 【追加】ホバー側にも並べる ── */
+#resetDataBtn:hover {
   background:rgba(56,189,248,.05);
   border-color:rgba(56,189,248,.6);
   color:#fff;
   box-shadow:0 0 10px rgba(56,189,248,.2);
 }
 
-#collectionView{
-
-position:absolute;
-inset:0;
-
-background:
-rgba(5,10,21,0.95);
-
-display:none;
-
-flex-direction:column;
-align-items:center;
-
-z-index:20;
-
-padding:30px;
-
-overflow:auto;
-
+/* ── 硝子片集（コレクション一覧）外枠 ── */
+#collectionView {
+  position:absolute;
+  inset:0;
+  background:rgba(5,10,21,0.96);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  z-index:20;
+  padding:30px 15px;
+  overflow:hidden; /* 全体ははみ出さず内部スクロールさせる */
 }
 
-
-#collectionGrid{
-
-display:grid;
-
-grid-template-columns:
-repeat(3,1fr);
-
-gap:20px;
-
-margin:30px;
-
+/* ── 【修正】10個対応レスポンシブ・グリッド ── */
+#collectionGrid {
+  display: grid;
+  /* スマホなら2列〜3列、PCなら幅に応じて最適に自動配置 */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 480px; /* 横に広がりすぎて不格好になるのを防ぐ */
+  margin: 20px 0;
+  padding: 10px 5px;
+  flex: 1;
+  overflow-y: auto; /* 10個並んで縦に溢れたらここだけスクロール */
+  -webkit-overflow-scrolling: touch;
 }
 
-
-#collectionGrid div{
-
-border:1px solid rgba(125,211,252,0.4);
-
-padding:15px;
-
-text-align:center;
-
+/* 各アイテムのカード枠 */
+#collectionGrid > div {
+  border: 1px solid rgba(125,211,252,0.3);
+  background: rgba(6, 11, 20, 0.6);
+  padding: 12px 8px;
+  text-align: center;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
-
-#collectionGrid img{
-
-width:100px;
-height:100px;
-
+#collectionGrid img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
 
-
-.unknown{
-
-width:100px;
-height:100px;
-
-display:flex;
-
-align-items:center;
-justify-content:center;
-
-font-size:40px;
-
-color:#555;
-
-}
-
-/* ── 【追加】硝子片集（コレクション）内のテキスト視認性向上 ── */
+/* コレクション内のテキスト調整 */
 #collectionGrid h3 {
   color: #ffffff;
-  font-size: 15px;
-  letter-spacing: 2px;
-  margin-top: 12px;
-  text-shadow: 0 0 6px rgba(125, 211, 252, 0.3);
-}
-
-#collectionGrid p {
-  color: #7dd3fc; /* 他のパーツと統一した水色 */
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 1px;
-  margin-top: 8px;
-  line-height: 1.4;
-  text-shadow: 0 0 4px rgba(56, 189, 248, 0.3);
-  opacity: 0.85; /* ほんの少しだけ透過させて雰囲気を出す */
+  margin-top: 10px;
+  text-shadow: 0 0 6px rgba(125, 211, 252, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 名前が長すぎる場合の溢れ防止 */
+  width: 100%;
 }
 
-/* ついでに未観測の「？」マークも少し発光させておく（お好みで） */
+/* 未観測（？）の枠 */
 .unknown {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
   color: rgba(56, 189, 248, 0.2) !important;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.02);
+  border: 1px dashed rgba(56, 189, 248, 0.15);
 }
 
-/* ── 【追加】硝子片詳細ポップアップのスタイル ── */
+/* ── 硝子片詳細ポップアップのスタイル ── */
 .popup-overlay {
   position: fixed;
   inset: 0;
@@ -286,18 +265,18 @@ color:#555;
   align-items: center;
   justify-content: center;
   z-index: 30; /* コレクション画面より手前に出す */
-  transition: opacity 0.2s ease;
 }
 
 .popup-content {
   background: rgba(6, 11, 20, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
   box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
-  padding: 40px;
+  padding: 30px 24px;
   text-align: center;
-  max-width: 320px;
-  width: 90%;
+  max-width: 300px;
+  width: 88%;
   border-radius: 4px;
+  box-sizing: border-box;
   animation: popupFadeIn 0.2s ease-out;
 }
 
@@ -307,24 +286,25 @@ color:#555;
 }
 
 #popupImageWrap img {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
+  object-fit: contain;
 }
 
 #popupName {
   color: #ffffff;
-  font-size: 18px;
+  font-size: 17px;
   letter-spacing: 3px;
-  margin-top: 20px;
+  margin-top: 16px;
   text-shadow: 0 0 8px rgba(125, 211, 252, 0.4);
 }
 
 #popupDesc {
   color: #7dd3fc;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 1px;
-  margin-top: 12px;
+  margin-top: 10px;
   line-height: 1.5;
   text-shadow: 0 0 4px rgba(56, 189, 248, 0.3);
 }
@@ -332,36 +312,35 @@ color:#555;
 .popup-hint {
   display: block;
   color: #384f6b;
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 2px;
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
-/* ── 【追加】ポップアップ内ステータス表のスタイリング ── */
+/* ポップアップ内ステータス表 ── */
 .popup-stats {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px dashed rgba(56, 189, 248, 0.2); /* 境界線を点線にして電脳感を出す */
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(56, 189, 248, 0.2);
   display: flex;
   justify-content: center;
 }
 
 .popup-stats table {
-  width: 200px;
-  font-size: 13px;
+  width: 100%;
+  font-size: 12px;
   color: rgba(56, 189, 248, 0.8);
   border-collapse: collapse;
 }
 
 .popup-stats td {
-  padding: 4px 0;
+  padding: 5px 0;
   text-align: left;
 }
 
-/* 右側の数値だけ右寄せにしてシャキッと整列させる */
 .popup-stats td:last-child {
   text-align: right;
   color: #ffffff;
-  font-family: 'Share Tech Mono', monospace; /* 数値はデジタルフォントにする */
+  font-family: 'Share Tech Mono', monospace;
   text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
 }

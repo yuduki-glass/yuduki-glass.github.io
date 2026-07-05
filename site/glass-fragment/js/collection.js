@@ -64,16 +64,16 @@ function openCollection(){
     const div = document.createElement("div");
 
     if(collectedItems.includes(Number(item.id))){
-      // 獲得済み：画像と名前
+      // 獲得済み：グリッド側は画像と名前だけ
       div.innerHTML=`
-        <img src="${item.image}" style="cursor: pointer;">
-        <h3>${item.name}</h3>
+        <img src="${item.image}" style="cursor: pointer; pointer-events: none;">
+        <h3 style="pointer-events: none;">${item.name}</h3>
       `;
+      div.style.cursor = "pointer";
 
-      // 獲得済みアイテムをクリックした時にポップアップを開く
+      // ── 【修正】アイテム枠をクリックした時に詳細ポップアップを展開 ──
       div.addEventListener('click', (e) => {
-        // グリッドクリックのイベントが外（collectionViewなど）に漏れるのを防ぐ
-        e.stopPropagation();
+        e.stopPropagation(); // イベントの連鎖をここで完全に断つ
         
         const itemPopup = document.getElementById("itemPopup");
         if (itemPopup) {
@@ -84,8 +84,8 @@ function openCollection(){
         }
       });
 
-    }else{
-      // 未獲得：？マーク
+    } else {
+      // 未獲得：？マークと、名前を「未観測」にして表示
       div.innerHTML=`
         <div class="unknown">?</div>
         <h3>未観測</h3>
@@ -98,28 +98,32 @@ function openCollection(){
   document.getElementById("collectionView").style.display = "flex";
 }
 
-// ── 【修正】ポップアップの枠外（背景）をクリックしたら閉じる処理 ──
-// 最初からイベントを張るのではなく、安全なガード（ifチェックとstopPropagation）を入れる
-// ── 【修正】ポップアップの枠外（背景）をクリックしたら閉じる処理（判定をより確実に） ──
+// ── 【修正】ポップアップの枠外（背景）を触ったら確実に閉じる処理 ──
 const itemPopup = document.getElementById("itemPopup");
 if (itemPopup) {
-  itemPopup.addEventListener("click", (e) => {
-    // イベントの伝播をここで完全にストップ
-    e.stopPropagation();
-
-    // ポップアップが「非表示（none）」ではなく、かつクリックされたのが背景（itemPopup自身）のとき
-    if (itemPopup.style.display !== "none" && e.target === itemPopup) {
+  const closePopupAction = (e) => {
+    // クリック/タッチされたのが、中身のコンテンツではなく「背景の黒いエリア（itemPopup自身）」のときだけ閉じる
+    if (e.target === itemPopup) {
+      e.preventDefault();
+      e.stopPropagation();
       itemPopup.style.display = "none";
     }
-  });
+  };
+
+  // スマホ（タッチ）とPC（クリック）の両方に対応
+  itemPopup.addEventListener("touchstart", closePopupAction, { passive: false });
+  itemPopup.addEventListener("click", closePopupAction);
 }
-document.getElementById("collectionBtn").addEventListener("click", ()=>{
+
+// ── コレクション画面を開くボタン ──
+document.getElementById("collectionBtn").addEventListener("click", (e)=>{
+  e.stopPropagation();
   loadCollection();
   openCollection();
 });
 
+// ── コレクション画面の「戻る」ボタン ──
 document.getElementById("closeCollection").addEventListener("click", (e)=>{
-  // 念のためここにも伝播防止を入れておく
   e.stopPropagation();
   document.getElementById("collectionView").style.display = "none";
 });

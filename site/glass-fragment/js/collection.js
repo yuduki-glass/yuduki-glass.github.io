@@ -3,31 +3,17 @@
 // ===============================
 
 const collectionItems = [
-  {
-    id: 1,
-    name: "灰色の器",
-    image: "assets/items/item001.svg",
-    description: "静かに沈黙する欠片",
-    // ── アイテム固有のステータス ──
-    weight: "38g",
-    opacity: "14%"
-  },
-  {
-    id: 2,
-    name: "青い残響",
-    image: "assets/items/item002.svg",
-    description: "光をわずかに返す硝子",
-    weight: "24g",
-    opacity: "65%"
-  },
-  {
-    id: 3,
-    name: "忘れられた輪郭",
-    image: "assets/items/item003.svg",
-    description: "誰かが見落とした形",
-    weight: "51g",
-    opacity: "3%"
-  }
+  { id: 1, name: "灰色の器", image: "assets/items/item001.svg", description: "静かに沈黙する欠片", weight: "38g", opacity: "14%" },
+  { id: 2, name: "青い残響", image: "assets/items/item002.svg", description: "光をわずかに返す硝子", weight: "24g", opacity: "65%" },
+  { id: 3, name: "忘れられた輪郭", image: "assets/items/item003.svg", description: "誰かが見落とした形", weight: "51g", opacity: "3%" },
+  // ── 【追加】4〜10個目のアイテム ──
+  { id: 4, name: "琥珀の微睡み", image: "assets/items/item004.svg", description: "夕刻の熱を閉じ込めた結晶", weight: "42g", opacity: "40%" },
+  { id: 5, name: "深海の底流", image: "assets/items/item005.svg", description: "圧せられて深く、昏い青", weight: "68g", opacity: "8%" },
+  { id: 6, name: "微細な亀裂", image: "assets/items/item006.svg", description: "何かが生まれる直前の線", weight: "15g", opacity: "88%" },
+  { id: 7, name: "水面の記憶", image: "assets/items/item007.svg", description: "揺らぎだけが定着した面", weight: "29g", opacity: "92%" },
+  { id: 8, name: "凍てつく吐息", image: "assets/items/item008.svg", description: "熱を拒絶する、鋭利な白", weight: "33g", opacity: "50%" },
+  { id: 9, name: "煤けた星屑", image: "assets/items/item009.svg", description: "輝きを忘れた夜の残骸", weight: "47g", opacity: "1%" },
+  { id: 10, name: "透明な境界", image: "assets/items/item010.svg", description: "在る事すら見失うほどの無", weight: "12g", opacity: "99%" }
 ];
 
 // 所持リスト
@@ -54,28 +40,25 @@ function saveCollection(){
   localStorage.setItem("glassCollectionStats", JSON.stringify(collectionStats));
 }
 
-// ── 【追加】集めた硝子片の総重量を計算して各画面に反映する関数 ──
+// 集めた硝子片の総重量を計算して各画面に反映する関数
 function updateTotalWeightDisplay() {
   let total = 0;
 
   collectionItems.forEach(item => {
     if (collectedItems.includes(Number(item.id))) {
-      // "38g" から数値部分だけを抽出して加算
       const weightNum = parseInt(item.weight) || 0;
       total += weightNum;
     }
   });
 
-  // トップ画面（タイトル）の数値を更新
   const titleWeightEl = document.getElementById("titleTotalWeight");
   if (titleWeightEl) {
-    titleWeightEl.textContent = `収集した硝子の重量: ${total}g`;
+    titleWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
   }
 
-  // クリア画面（ポーズ画面）の数値を更新
   const clearWeightEl = document.getElementById("clearTotalWeight");
   if (clearWeightEl) {
-    clearWeightEl.textContent = `収集した硝子の重量: ${total}g`;
+    clearWeightEl.textContent = `TOTAL WEIGHT: ${total}g`;
   }
 
   return total;
@@ -83,7 +66,8 @@ function updateTotalWeightDisplay() {
 
 // 取得
 function addCollectionItem(level){
-  const item = collectionItems[level-1];
+  // レベルに対応するアイテムを探索（IDで探す方が安全）
+  const item = collectionItems.find(i => i.id === Number(level));
   if(!item) return;
 
   if(!collectedItems.includes(item.id)){
@@ -92,7 +76,6 @@ function addCollectionItem(level){
 
   // 統計データの更新
   if(!collectionStats[item.id]){
-    // 初めて取得した時（現在の年・月・日・時・分をゼロ埋めで取得）
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -100,18 +83,15 @@ function addCollectionItem(level){
     const hh = String(now.getHours()).padStart(2, '0');
     const mi = String(now.getMinutes()).padStart(2, '0');
     
-    // フォーマット「YYYY.MM.DD HH:MI」で格納
     collectionStats[item.id] = {
       date: `${yyyy}.${mm}.${dd} ${hh}:${mi}`,
       count: 1
     };
   } else {
-    // 2回目以降の観測
     collectionStats[item.id].count += 1;
   }
 
   saveCollection();
-  // ── 【追加】新しく取得、またはカウントアップした瞬間に総重量表示も再計算 ──
   updateTotalWeightDisplay();
   showCollectionGet(item);
 }
@@ -146,7 +126,6 @@ function openCollection(){
           document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}">`;
           document.getElementById("popupName").textContent = item.name;
           
-          // 説明文の下に、固有ステータスと動的ログを合成して流し込む
           document.getElementById("popupDesc").innerHTML = `
             ${item.description}
             <div class="popup-stats">
@@ -190,21 +169,39 @@ if (itemPopup) {
   itemPopup.addEventListener("click", closePopupAction);
 }
 
-// コレクション画面を開くボタン
-document.getElementById("collectionBtn").addEventListener("click", (e)=>{
-  e.stopPropagation();
-  loadCollection();
-  openCollection();
-});
+// コレクション画面を開くボタン（PC・スマホ両対応）
+const collectionBtn = document.getElementById("collectionBtn");
+if (collectionBtn) {
+  const handleOpenCollection = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    loadCollection();
+    updateTotalWeightDisplay();
+    openCollection();
+  };
+  collectionBtn.addEventListener("touchstart", handleOpenCollection, { passive: false });
+  collectionBtn.addEventListener("click", handleOpenCollection);
+}
 
 // コレクション画面の「戻る」ボタン
-document.getElementById("closeCollection").addEventListener("click", (e)=>{
-  e.stopPropagation();
-  document.getElementById("collectionView").style.display = "none";
-});
+const closeCollection = document.getElementById("closeCollection");
+if (closeCollection) {
+  const handleCloseCollection = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById("collectionView").style.display = "none";
+  };
+  closeCollection.addEventListener("touchstart", handleCloseCollection, { passive: false });
+  closeCollection.addEventListener("click", handleCloseCollection);
+}
 
-// ── 【追加】起動時にデータを読み込んで総重量の初期表示を機能させる ──
-document.addEventListener("DOMContentLoaded", () => {
+// 起動時の初期化処理（タイミングの安全ガード付き）
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    loadCollection();
+    updateTotalWeightDisplay();
+  });
+} else {
   loadCollection();
   updateTotalWeightDisplay();
-});
+}

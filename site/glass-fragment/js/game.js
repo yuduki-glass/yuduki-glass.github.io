@@ -628,29 +628,28 @@ function update() {
     return;
   }
 
-  if (bricks.length > 0 && bricks.every(b => !b.alive)) {
+if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
     
-    if (typeof addCollectionItem === "function") {
-      addCollectionItem(level);
-    }
-
+    // ── 【修正】オーバーレイ（モヤ）を先に表示する ──
     if (overlay) {
       overlay.style.display = 'flex';
       const glitch = overlay.querySelector('.glitch');
       if (glitch) glitch.textContent = '結晶共鳴';
-      
-      const taglines = overlay.querySelectorAll('.tagline');
+    }
+
+    // ── 【修正】コレクション側を呼び出し、ランダム選出＆テキスト書き換えを行わせる ──
+    if (typeof addCollectionItem === "function") {
+      addCollectionItem(level);
+    } else {
+      // フォールバック（関数がない場合）
+      const taglines = overlay ? overlay.querySelectorAll('.tagline') : [];
       if (taglines.length > 0) {
-        const item = (typeof collectionItems !== "undefined") ? collectionItems[level - 1] : null;
-        if (item) {
-          taglines[0].innerHTML = `LEVEL ${level} CLEAR!<br><span style="color: #38bdf8; font-size: 0.9em; margin-top: 10px; display: inline-block;">【${item.name}】を回収しました</span>`;
-        } else {
-          taglines[0].textContent = `LEVEL ${level} CLEAR! (Score: ${score})`;
-        }
+        taglines[0].textContent = `LEVEL ${level} CLEAR!`;
       }
     }
+
     if (startBtn) {
       startBtn.textContent = '[ 次の層へ ]';
     }
@@ -996,42 +995,45 @@ if (closeCollection) {
 }
 
 // ── 【追記】記録初期化ボタンの処理 ──
+// ── 【修正版】記録初期化ボタンの処理 ──
 if (resetDataBtn) {
   const handleResetData = (e) => {
     e.stopPropagation();
     if (e.type === 'touchstart') e.preventDefault();
 
     if (confirm('今までの記録をすべて消去してもいい？')) {
-      // 1. ローカルストレージのデータを削除
-      // ※ キー名は `collection.js` 側で使っているものに合わせてな
-      localStorage.removeItem('highScore'); 
-      localStorage.removeItem('glassCollection'); // 例: コレクションデータ用
-      localStorage.removeItem('totalWeight');    // 例: 総重量用
       
-      // もしセーブデータを完全に丸ごと消していいなら、安全のために以下でもOK
-      // localStorage.clear();
+      // ──【連動】コレクション側のメモリとストレージを完全に初期化 ──
+      if (typeof window.resetCollectionMemory === "function") {
+        window.resetCollectionMemory();
+      } else {
+        localStorage.removeItem('highScore'); 
+        localStorage.removeItem('glassCollection');
+        localStorage.removeItem('glassCollectionStats');
+      }
 
-      // 2. メモリ上の変数を初期化
+      // 1. メモリ上のゲーム変数を初期化
       score = 0;
       hi = 0;
       level = 1;
       lives = 3;
 
-      // 3. 画面の表示（HUD）を初期化
+      // 2. 画面の表示（HUD）を初期化
       updHUD();
 
-      // 4. タイトル画面やリセットが必要な表示の更新
+      // 3. タイトル画面やリセットが必要な表示の更新
       const titleWeight = document.getElementById('titleTotalWeight');
-      if (titleWeight) titleWeight.textContent = '収集した硝子の重量: 0g';
+      if (titleWeight) titleWeight.textContent = '総重量: 0g';
 
       const clearWeight = document.getElementById('clearTotalWeight');
-      if (clearWeight) clearWeight.textContent = '収集した硝子の重量: 0g';
+      if (clearWeight) clearWeight.textContent = '総重量: 0g';
 
-      // ランキングやコレクションの表示も初期化したい場合、関数があれば呼ぶ
+      // 4. コレクション画面の表示（DOM）をリフレッシュ
       if (typeof loadCollection === "function") loadCollection();
       if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
 
-      // 5. 念のためゲームの状態を最初の状態に戻してレンダリング
+      // 5. ゲームの状態を最初の状態に戻してレンダリング
+      gameState = 'idle';
       buildBricks();
       balls = [makeBall()];
       draw();

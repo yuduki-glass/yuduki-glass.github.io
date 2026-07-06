@@ -953,9 +953,10 @@ updateClock();
 
 // ── 【一本化】コレクション画面を開く処理 ──
 // ── 【修正版】コレクション画面を開く処理（開閉の行き来だけを担当） ──
+// ── 【完全クリーン版】コレクション画面を開く処理（game.js） ──
 if (collectionBtn) {
   const handleCollectionOpen = (e) => {
-    e.stopPropagation();
+    // 画面のバブリング停止（stopPropagation）は一切しない
     
     // コレクションを開くときは、手前のゲームオーバー/クリア画面のモヤを一時的に隠す
     if (overlay) overlay.style.display = 'none';
@@ -964,25 +965,23 @@ if (collectionBtn) {
     // collection.js 側の画面描画関数を安全に呼び出す
     if (typeof loadCollection === "function") loadCollection();
     if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
-    if (typeof openCollection === "function") openCollection(); // ここでグリッドが生成され、アイテムクリックも有効化される
+    if (typeof openCollection === "function") openCollection(); 
   };
 
+  // collection.js 側の addEventListener を邪魔しないよう、onclick で綺麗に相乗りする
   collectionBtn.onclick = handleCollectionOpen;
-  collectionBtn.ontouchstart = (e) => { e.preventDefault(); handleCollectionOpen(e); };
 }
 
-// ── 【修正版】コレクション画面を閉じる処理（ポップアップは collection.js に任せる） ──
+// ── 【完全クリーン版】コレクション画面を閉じる処理（game.js） ──
 if (closeCollection) {
   const handleCollectionClose = (e) => {
-    e.stopPropagation();
-
-    // ★重要: もしアイテムポップアップが開いているなら、ここでは何もしない（collection.js 側の閉じる処理に任せる）
+    // もしアイテムポップアップが開いているなら、ここでは大枠の閉じる処理はスルー
     const itemPopup = document.getElementById("itemPopup");
     if (itemPopup && itemPopup.style.display === "flex") {
       return; 
     }
     
-    // ポップアップが開いていない＝コレクション画面自体を閉じる時だけ、ゲーム画面に戻す
+    // ポップアップが閉じていて、本当にコレクション画面自体を閉じるときだけ実行
     if (collectionView) collectionView.style.display = "none";
     
     // ゲームの状態に応じて元のモヤ（overlay）を表示し直す

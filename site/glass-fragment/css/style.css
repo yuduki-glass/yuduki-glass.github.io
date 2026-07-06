@@ -195,13 +195,14 @@ canvas { display:block; position:absolute; top:0; left:0; }
 }
 
 /* ── 【修正】10個対応レスポンシブ・グリッド ── */
+/* ── 【30個対応】レスポンシブ・グリッド ── */
 #collectionGrid {
   display: grid !important;
-  /* 横幅に合わせて1列〜4列に自動で綺麗に流し込む */
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
-  gap: 16px;
+  /* 画面幅に合わせて100px以上のサイズで自動で綺麗に流し込む */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+  gap: 12px; /* 30個並べた時に隙間が広すぎないよう少し詰める */
   width: 100%;
-  max-width: 520px; /* PCでも広がりすぎず綺麗にまとまる幅 */
+  max-width: 800px; /* 【変更】30個が横に広く並べるように拡張 */
   margin: 24px 0;
   padding: 10px;
   
@@ -209,6 +210,18 @@ canvas { display:block; position:absolute; top:0; left:0; }
   max-height: 65vh; 
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ついでにスクロールバーの見た目も世界観に合わせる指定（Webkit系ブラウザ用） */
+#collectionGrid::-webkit-scrollbar {
+  width: 4px;
+}
+#collectionGrid::-webkit-scrollbar-track {
+  background: rgba(56, 189, 248, 0.02);
+}
+#collectionGrid::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.15);
+  border-radius: 2px;
 }
 
 /* 各アイテムのカード枠 */

@@ -1,5 +1,5 @@
 // ===============================
-// 硝子片収集管理（純和風・泥沼仕様・30個完全版・構造修復）
+// 硝子片収集管理（純和風・泥沼仕様・30個完全版・構造修復・完全同期版）
 // ===============================
 
 // 稀少度分類: 'C'=常融(並) / 'R'=希硝(稀) / 'L'=幻晶(極めて稀)
@@ -12,10 +12,10 @@ const collectionItems = [
   { id: 6, name: "微細な亀裂", image: "assets/items/item006.svg", description: "何かが生まれる直前の線", weight: "15g", opacity: "88%", rarity: "C", weightValue: 100 },
   { id: 7, name: "水面の記憶", image: "assets/items/item007.svg", description: "揺らぎだけが定着した面", weight: "29g", opacity: "92%", rarity: "C", weightValue: 100 },
   { id: 8, name: "凍てつく吐息", image: "assets/items/item008.svg", description: "熱を拒絶する、鋭利な白", weight: "33g", opacity: "50%", rarity: "C", weightValue: 100 },
-  { id: 9, name: "煤けた星屑", image: "assets/items/item009.svg", description: "輝きを忘れた夜の残骸", weight: "47g", opacity: "10%", rarity: "R", weightValue: 30 }, // 修正（opacity補完、rarity復元）
+  { id: 9, name: "煤けた星屑", image: "assets/items/item009.svg", description: "輝きを忘れた夜の残骸", weight: "47g", opacity: "10%", rarity: "R", weightValue: 30 }, 
   { id: 10, name: "透明な境界", image: "assets/items/item010.svg", description: "在る事すら見失うほどの無", weight: "12g", opacity: "99%", rarity: "L", weightValue: 5 },
   { id: 11, name: "新緑の脈絡", image: "assets/items/item011.svg", description: "未だ瑞々しさを偽る偽物の葉", weight: "21g", opacity: "73%", rarity: "C", weightValue: 100 },
-  { id: 12, name: "薄明の残光", image: "assets/items/item012.svg", description: "夜が満ちる前の、最後の抵抗", weight: "45g", opacity: "20%", rarity: "C", weightValue: 100 }, // 修正（opacity補完、rarity復元）
+  { id: 12, name: "薄明の残光", image: "assets/items/item012.svg", description: "夜が満ちる前の、最後の抵抗", weight: "45g", opacity: "20%", rarity: "C", weightValue: 100 }, 
   { id: 13, name: "微熱の不在", image: "assets/items/item013.svg", description: "かつて誰かが触れていた名残", weight: "19g", opacity: "82%", rarity: "C", weightValue: 100 },
   { id: 14, name: "濁った祈り", image: "assets/items/item014.svg", description: "無数の願いが沈殿した結晶", weight: "55g", opacity: "11%", rarity: "R", weightValue: 30 },
   { id: 15, name: "白夜の迷子", image: "assets/items/item015.svg", description: "影を奪われ、立ち尽くす白", weight: "31g", opacity: "60%", rarity: "C", weightValue: 100 },
@@ -64,43 +64,35 @@ function updateTotalWeightDisplay() {
   return total;
 }
 
-// === site/glass-fragment/js/collection.js の修正内容 ===
-
 /**
- * ── 【修正】レベルをクリアした時に、硝子片をランダムに取得する ──
- * 稀少度（Rarity）に応じた重み付けで、未取得のものから1つ選ぶ。
+ * ── 【修正】レベルクリア時に未取得の中から確率で1つ抽選・画面表示を同期 ──
  */
 function addCollectionItem(clearedLevel){
-  // ──────────────────────────────────────────────
-  // 1. まず、まだ持っていない（未観測の）硝子片のリストを作る
-  // ──────────────────────────────────────────────
+  // 1. 未取得の硝子片リストを作成
   const uncollectedItems = collectionItems.filter(
     item => !collectedItems.includes(Number(item.id))
   );
 
-  // すべて収集済みなら、ダブらせずにリターン（またはコンプリート表示）
+  // コンプリート時の処理
   if (uncollectedItems.length === 0) {
     console.log("硝子片はすべて収集済みです。");
-    // ここでクリア画面のテキストをコンプリート用に書き換えても良い
-    const taglines = overlay.querySelectorAll('.tagline');
-    if (taglines.length > 0) {
-      taglines[0].innerHTML = `LEVEL ${clearedLevel} CLEAR!<br><span style="color: #fb7185; font-size: 0.9em; margin-top: 10px; display: inline-block;">【全30種 コンプリート】</span>`;
+    if (typeof overlay !== 'undefined' && overlay) {
+      const taglines = overlay.querySelectorAll('.tagline');
+      if (taglines.length > 0) {
+        taglines[0].innerHTML = `LEVEL ${clearedLevel} CLEAR!<br><span style="color: #fb7185; font-size: 0.9em; margin-top: 10px; display: inline-block;">【全30種 コンプリート】</span>`;
+      }
     }
     return;
   }
 
-  // ──────────────────────────────────────────────
-  // 2. 未取得リストの中だけで、重みの総和を計算する
-  // ──────────────────────────────────────────────
+  // 2. 未取得リストの重みの総和を計算
   const totalWeightOfUncollected = uncollectedItems.reduce(
     (sum, item) => sum + item.weightValue, 0
   );
 
-  // ──────────────────────────────────────────────
-  // 3. 重みに基づいて、未取得リストから1つ選ぶ
-  // ──────────────────────────────────────────────
+  // 3. 重みに基づいて抽選
   let randomValue = Math.random() * totalWeightOfUncollected;
-  let selectedItem = uncollectedItems[0]; // 初期値（フォールバック）
+  let selectedItem = uncollectedItems[0];
 
   for (const item of uncollectedItems) {
     if (randomValue < item.weightValue) {
@@ -110,19 +102,13 @@ function addCollectionItem(clearedLevel){
     randomValue -= item.weightValue;
   }
 
-  // 万が一、選択に失敗したら（重みデータがない等）安全にリターン
   if(!selectedItem) return;
 
-  // ──────────────────────────────────────────────
-  // 4. 取得した硝子片をSetに追加し、統計を更新してセーブ
-  // ──────────────────────────────────────────────
-  
-  // 未取得の中から選んでいるので、本来cludesチェックは不要だが、安全のため残す
+  // 4. コレクションに追加・統計更新・セーブ
   if(!collectedItems.includes(selectedItem.id)){
     collectedItems.push(selectedItem.id);
   }
 
-  // 採取統計（日時、カウント）の更新
   if(!collectionStats[selectedItem.id]){
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -133,33 +119,27 @@ function addCollectionItem(clearedLevel){
     
     collectionStats[selectedItem.id] = {
       date: `${yyyy}.${mm}.${dd} ${hh}:${mi}`,
-      count: 1 // 初めて採取した
+      count: 1
     };
   } else {
-    // ！！！ 【最適化】今回は未取得から選ぶので、ここは通らない（ダブらない）はず ！！！
     collectionStats[selectedItem.id].count += 1;
   }
 
-  saveCollection(); // localStorageへ保存
-  updateTotalWeightDisplay(); // HUDの総重量を更新
+  saveCollection(); 
+  updateTotalWeightDisplay(); 
   
-  // ──────────────────────────────────────────────
-  // 5. ゲームのクリア画面（overlay）の表示内容を、取得したアイテム名に更新する
-  // ──────────────────────────────────────────────
-  // ※ game.js側のsfx等はそのまま動く。ここではテキストだけ書き換える。
-  if (typeof overlay !== 'undefined') {
+  // 5. クリア画面（overlay）の表示内容を、実際に抽選されたアイテム名に更新
+  if (typeof overlay !== 'undefined' && overlay) {
     const taglines = overlay.querySelectorAll('.tagline');
     if (taglines.length > 0) {
-      // 稀少度に応じた色を付ける
-      let rarityColor = '#ffffff'; // 常融
-      if (selectedItem.rarity === 'R') rarityColor = '#7dd3fc'; // 希硝
-      if (selectedItem.rarity === 'L') rarityColor = '#fb7185'; // 幻晶
+      let rarityColor = '#ffffff'; // 常融 (C)
+      if (selectedItem.rarity === 'R') rarityColor = '#7dd3fc'; // 希硝 (R)
+      if (selectedItem.rarity === 'L') rarityColor = '#fb7185'; // 幻晶 (L)
 
       taglines[0].innerHTML = `LEVEL ${clearedLevel} CLEAR!<br><span style="color: ${rarityColor}; font-size: 0.9em; margin-top: 10px; display: inline-block;">【${selectedItem.name}】を回収しました</span>`;
     }
   }
 
-  // コンソール用のログ
   showCollectionGet(selectedItem);
 }
 
@@ -179,7 +159,6 @@ function openCollection(){
     if(item.rarity === "R") rarityText = "希硝";
     if(item.rarity === "L") rarityText = "幻晶";
 
-    // 安全対策：万が一rarityが不当な状態でも絶対に落ちないガード処理
     const rarityClass = item.rarity ? item.rarity.toLowerCase() : "c";
 
     if(collectedItems.includes(Number(item.id))){
@@ -227,6 +206,7 @@ function openCollection(){
   document.getElementById("collectionView").style.display = "flex";
 }
 
+// ── イベントリスナー・初期化系ガード ──
 if (typeof itemPopup === 'undefined') { var itemPopup = document.getElementById("itemPopup"); }
 if (itemPopup) {
   const closePopupAction = (e) => {
@@ -251,6 +231,18 @@ if (closeCollection) {
   closeCollection.addEventListener("touchstart", handleCloseCollection, { passive: false });
   closeCollection.addEventListener("click", handleCloseCollection);
 }
+
+/**
+ * ── 【追記】ゲームリセット時にコレクションのメモリ・ストレージを完全巻き戻す関数 ──
+ */
+window.resetCollectionMemory = function() {
+  localStorage.removeItem("glassCollection");
+  localStorage.removeItem("glassCollectionStats");
+  collectedItems = [];
+  collectionStats = {};
+  console.log("コレクション側のメモリおよびストレージの初期化が完了しました。");
+};
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => { loadCollection(); updateTotalWeightDisplay(); });
 } else {

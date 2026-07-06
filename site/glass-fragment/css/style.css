@@ -466,7 +466,7 @@ canvas { display:block; position:absolute; top:0; left:0; width:100%; height:100
 }
 
 .popup-stats td:first-child {
-  color: #384f6b;
+  color: #94a3b8 !important; /* 暗い青から、見えやすい明るいグレーブルーに変更 */
   text-align: left;
   letter-spacing: 2px;
 }

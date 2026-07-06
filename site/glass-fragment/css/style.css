@@ -179,7 +179,12 @@ canvas { display:block; position:absolute; top:0; left:0; }
   box-shadow:0 0 10px rgba(56,189,248,.2);
 }
 
-/* ── 硝子片集（コレクション一覧）外枠 ── */
+/* ──────────────────────────────────────────────
+   以下の記述を、元のCSSの「/* ── 硝子片集（コレクション一覧）外枠 ── */」から
+   一番最後までと丸ごと差し替える（構文エラー修正・ z-index調整済み）
+   ────────────────────────────────────────────── */
+
+/* ── 硝子片集（コレクション一覧）外枠（PCデフォルト） ── */
 #collectionView {
   position: absolute;
   inset: 0;
@@ -194,15 +199,13 @@ canvas { display:block; position:absolute; top:0; left:0; }
   justify-content: flex-start;
 }
 
-/* ── 【修正】10個対応レスポンシブ・グリッド ── */
-/* ── 【30個対応】レスポンシブ・グリッド ── */
+/* ── 【30個対応】レスポンシブ・グリッド（PCデフォルト） ── */
 #collectionGrid {
   display: grid !important;
-  /* 画面幅に合わせて100px以上のサイズで自動で綺麗に流し込む */
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
-  gap: 12px; /* 30個並べた時に隙間が広すぎないよう少し詰める */
+  gap: 12px;
   width: 100%;
-  max-width: 800px; /* 【変更】30個が横に広く並べるように拡張 */
+  max-width: 800px;
   margin: 24px 0;
   padding: 10px;
   
@@ -212,50 +215,53 @@ canvas { display:block; position:absolute; top:0; left:0; }
   -webkit-overflow-scrolling: touch;
 }
 
-/* ついでにスクロールバーの見た目も世界観に合わせる指定（Webkit系ブラウザ用） */
-#collectionGrid::-webkit-scrollbar {
-  width: 4px;
-}
-#collectionGrid::-webkit-scrollbar-track {
-  background: rgba(56, 189, 248, 0.02);
-}
-#collectionGrid::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.15);
-  border-radius: 2px;
-}
+/* スクロールバーの意匠（Webkit系） */
+#collectionGrid::-webkit-scrollbar { width: 4px; }
+#collectionGrid::-webkit-scrollbar-track { background: rgba(56, 189, 248, 0.02); }
+#collectionGrid::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.15); border-radius: 2px; }
 
-/* 各アイテムのカード枠 */
+/* 各アイテムのカード枠（PCデフォルト） */
 #collectionGrid > div {
   border: 1px solid rgba(125, 211, 252, 0.3) !important;
   background: rgba(6, 11, 20, 0.6) !important;
-  padding: 16px 8px !important;
+  padding: 10px 6px !important;
   text-align: center;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start !important;
   box-sizing: border-box;
   transition: border-color 0.15s, background-color 0.15s;
+  min-height: 120px;
 }
 
-#collectionGrid > div[style*="pointer"] {
-  /* 解放済みアイテムのホバー感 */
-  border-color: rgba(56, 189, 248, 0.4) !important;
-}
+#collectionGrid > div[style*="pointer"] { border-color: rgba(56, 189, 248, 0.4) !important; }
 #collectionGrid > div[style*="pointer"]:hover {
   background: rgba(56, 189, 248, 0.05) !important;
   border-color: rgba(56, 189, 248, 0.8) !important;
 }
 
-#collectionGrid img {
-  width: 56px;
-  height: 56px;
+#collectionGrid img, .unknown {
+  width: 44px !important;
+  height: 44px !important;
   object-fit: contain;
   display: block;
 }
 
-/* コレクション内のテキスト調整 */
+/* 未観測（？）の枠 */
+.unknown {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: rgba(56, 189, 248, 0.2) !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.02);
+  border: 1px dashed rgba(56, 189, 248, 0.15);
+}
+
+/* コレクション内のテキスト調整（PCデフォルト） */
 #collectionGrid h3 {
   color: #ffffff;
   font-size: 12px;
@@ -268,143 +274,8 @@ canvas { display:block; position:absolute; top:0; left:0; }
   width: 100%;
 }
 
-/* 未観測（？）の枠 */
-.unknown {
-  width: 56px;
-  height: 56px;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: rgba(56, 189, 248, 0.2) !important;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
-  background: rgba(56, 189, 248, 0.02);
-  border: 1px dashed rgba(56, 189, 248, 0.15);
-}
-
-/* ── 硝子片詳細ポップアップのスタイル ── */
-.popup-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 10, 21, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30;
-}
-
-.popup-content {
-  background: rgba(6, 11, 20, 0.95);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
-  padding: 30px 24px;
-  text-align: center;
-  max-width: 300px;
-  width: 88%;
-  border-radius: 4px;
-  box-sizing: border-box;
-  animation: popupFadeIn 0.2s ease-out;
-}
-
-@keyframes popupFadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-#popupImageWrap img {
-  width: 100px;
-  height: 100px;
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
-  object-fit: contain;
-}
-
-#popupName {
-  color: #ffffff;
-  font-size: 17px;
-  letter-spacing: 3px;
-  margin-top: 16px;
-  text-shadow: 0 0 8px rgba(125, 211, 252, 0.4);
-}
-
-#popupDesc {
-  color: #7dd3fc;
-  font-size: 13px;
-  letter-spacing: 1px;
-  margin-top: 10px;
-  line-height: 1.5;
-  text-shadow: 0 0 4px rgba(56, 189, 248, 0.3);
-}
-
-.popup-hint {
-  display: block;
-  color: #384f6b;
-  font-size: 11px;
-  letter-spacing: 2px;
-  margin-top: 24px;
-}
-
-/* ポップアップ内ステータス表 ── */
-.popup-stats {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(56, 189, 248, 0.2);
-  display: flex;
-  justify-content: center;
-}
-
-.popup-stats table {
-  width: 100%;
-  font-size: 12px;
-  color: rgba(56, 189, 248, 0.8);
-  border-collapse: collapse;
-}
-
-.popup-stats td {
-  padding: 5px 0;
-  text-align: left;
-}
-
-.popup-stats td:last-child {
-  text-align: right;
-  color: #ffffff;
-  font-family: 'Share Tech Mono', monospace;
-  text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
-}
-
-/* ── 稀少度表示の意匠（カード内でのサイズと位置の最適化） ── */
-.rarity-badge {
-  font-family: 'Klee One', serif;
-  font-size: 10px;          /* 11pxから10pxに少し縮小 */
-  letter-spacing: 1px;
-  padding: 1px 6px;         /* 余白を詰めて縦幅の膨らみを抑える */
-  border-radius: 3px;
-  margin-bottom: 6px;       /* 下の要素との隙間を少し詰める */
-  display: inline-block;
-  line-height: 1.2;
-}
-/* 常融（通常） */
-.rarity-c { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.5); }
-/* 希硝（稀少） */
-.rarity-r { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; text-shadow: 0 0 4px rgba(56,189,248,0.5); border: 1px solid rgba(56, 189, 248, 0.2); }
-/* 幻晶（幻） */
-.rarity-l { background: rgba(244, 63, 94, 0.15); color: #fb7185; text-shadow: 0 0 6px rgba(244,63,94,0.6); border: 1px solid rgba(244, 63, 94, 0.4); }
-
-/* ── カード枠自体の縦幅を安定させる追加指定 ── */
-#collectionGrid > div {
-  min-height: 120px;        /* カードが潰れたりはみ出したりしない最低限の高さ */
-  justify-content: flex-start !important; /* 上詰めに整列させて空間効率を上げる */
-  padding: 10px 6px !important; /* 縦の余白を16pxから10pxに削減して高さを抑える */
-}
-
-#collectionGrid img, 
-.unknown {
-  width: 44px !important;   /* 画像と？枠を56pxから44pxに少しだけ引き締め */
-  height: 44px !important;
-}
 /* ──────────────────────────────────────────────
-   スマートフォン向け（Galaxy S24等対応）：スクロール・レイアウト完全修正
+   スマートフォン向け（Galaxy S24等対応）：スクロール・レイアウト・構文エラー完全修正
    ────────────────────────────────────────────── */
 @media screen and (max-width: 1080px) {
   /* ── 画面全体を高さ100%でガチガチに固定する ── */
@@ -441,14 +312,10 @@ canvas { display:block; position:absolute; top:0; left:0; }
     flex-direction: column !important;
     justify-content: flex-start !important;
     background: rgba(5, 10, 21, 0.98) !important;
-    z-index: 25;
-  }
-
-  /* コレクションのタイトル */
-  #collectionView .glitch {
-    font-size: 22px !important;
-    margin-bottom: 8px !important;
-    flex-shrink: 0; /* 縮ませない */
+    
+    /* 【修正】コレクション画面が閉じているとき、
+       後ろにあるオーバーレイを阻まないよう、z-indexを調整（gameデフォルト:20） */
+    z-index: 10 !important;
   }
 
   /* ！！！ここが本番：グリッド自体を縦に長く、スクロールさせる！！！ */
@@ -471,37 +338,13 @@ canvas { display:block; position:absolute; top:0; left:0; }
   #collectionGrid > div {
     min-height: 105px !important;
     padding: 8px 4px !important;
+    justify-content: flex-start !important;
   }
 
-  #collectionGrid img, 
-  .unknown {
+  #collectionGrid img, .unknown {
     width: 36px !important; 
     height: 36px !important;
     margin-bottom: 4px !important;
-  }
-
-  /* カード内の硝子片名 */
-  #collectionGrid h3 {
-    font-size: 13px !important;
-    margin-top: 4px !important;
-  }
-
-  .rarity-badge {
-    font-size: 10px !important; 
-    padding: 1px 5px !important;
-    margin-bottom: 2px !important;
-  }
-
-  /* 「戻る」ボタンを巨大化して親指の真下に固定 */
-  #closeCollection {
-    display: block !important;
-    width: 90% !important;
-    max-width: 300px !important;
-    margin: 10px auto !important; /* グリッドの下に余白を確保 */
-    padding: 16px !important;
-    font-size: 18px !important;
-    flex-shrink: 0; /* 縮ませない */
-    z-index: 30;
   }
 
   /* その他：詳細ポップアップ（これも高さ調整） */
@@ -511,7 +354,8 @@ canvas { display:block; position:absolute; top:0; left:0; }
     overflow-y: auto; /* ポップアップ自体もスクロール可能に */
     padding: 20px 10px;
   }
-}
+
+  /* ▼▼▼ 【重要】元々メディアクエリの外にはみ出していた記述を中に戻した ▼▼▼ */
 
   #popupName {
     font-size: 18px; /* タイトルを強調 */
@@ -541,15 +385,29 @@ canvas { display:block; position:absolute; top:0; left:0; }
   }
 
   /* ボタン類を親指でタップしやすいサイズに */
-  #startBtn, #collectionBtn, #closeCollection, #resetDataBtn {
+  #startBtn, #collectionBtn, #resetDataBtn {
     padding: 14px 32px;
     font-size: 16px;
     width: 80%; /* スマホではボタンを少し横長にして押しやすく */
     max-width: 240px;
   }
 
+  /* 「戻る」ボタンは巨大化して親指の真下に固定 */
+  #closeCollection {
+    display: block !important;
+    width: 90% !important;
+    max-width: 300px !important;
+    margin: 10px auto !important; /* グリッドの下に余白を確保 */
+    padding: 16px !important;
+    font-size: 18px !important;
+    flex-shrink: 0; /* 縮ませない */
+    z-index: 30;
+  }
+
   /* リーダーボード（スコア履歴） */
   #leaderboard h3 { font-size: 14px !important; letter-spacing: 2px; }
   #leaderboard ol li { font-size: 13px !important; }
   .lb-empty { font-size: 13px !important; }
-}
+
+  /* 構文エラーになっていた余計な波括弧は削除 */
+} /* <-- これでメディアクエリ終了 */

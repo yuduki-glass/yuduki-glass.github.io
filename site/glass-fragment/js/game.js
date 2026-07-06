@@ -952,41 +952,42 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ── 【一本化】コレクション画面を開く処理 ──
+// ── 【修正版】コレクション画面を開く処理（開閉の行き来だけを担当） ──
 if (collectionBtn) {
   const handleCollectionOpen = (e) => {
     e.stopPropagation();
     
     // コレクションを開くときは、手前のゲームオーバー/クリア画面のモヤを一時的に隠す
-    if (overlay) {
-      overlay.style.display = 'none';
-    }
-    if (collectionView) {
-      collectionView.style.display = 'flex'; // コレクション画面を確実に表示
-    }
+    if (overlay) overlay.style.display = 'none';
+    if (collectionView) collectionView.style.display = 'flex';
     
-    // 他のファイル（collection.jsなど）で定義されている初期化関数があれば安全に実行
+    // collection.js 側の画面描画関数を安全に呼び出す
     if (typeof loadCollection === "function") loadCollection();
     if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
-    if (typeof openCollection === "function") openCollection();
+    if (typeof openCollection === "function") openCollection(); // ここでグリッドが生成され、アイテムクリックも有効化される
   };
 
-  // 重複発火を防ぐため、古いイベントリスナーではなく property への代入に一本化
   collectionBtn.onclick = handleCollectionOpen;
   collectionBtn.ontouchstart = (e) => { e.preventDefault(); handleCollectionOpen(e); };
 }
 
-// ── 【一本化】コレクション画面を閉じる（戻る）処理 ──
+// ── 【修正版】コレクション画面を閉じる処理（ポップアップは collection.js に任せる） ──
 if (closeCollection) {
   const handleCollectionClose = (e) => {
     e.stopPropagation();
-    if (collectionView) {
-      collectionView.style.display = "none";
+
+    // ★重要: もしアイテムポップアップが開いているなら、ここでは何もしない（collection.js 側の閉じる処理に任せる）
+    const itemPopup = document.getElementById("itemPopup");
+    if (itemPopup && itemPopup.style.display === "flex") {
+      return; 
     }
-    // もしゲームの状態が終了画面・クリア画面・タイトルなら、元のモヤ（overlay）を表示し直す
+    
+    // ポップアップが開いていない＝コレクション画面自体を閉じる時だけ、ゲーム画面に戻す
+    if (collectionView) collectionView.style.display = "none";
+    
+    // ゲームの状態に応じて元のモヤ（overlay）を表示し直す
     if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') {
-      if (overlay) {
-        overlay.style.display = 'flex';
-      }
+      if (overlay) overlay.style.display = 'flex';
     }
   };
 

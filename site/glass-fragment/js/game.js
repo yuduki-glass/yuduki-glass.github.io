@@ -52,7 +52,7 @@ function resize() {
   const LB_SIDE = 160; 
   const LB_TOP  = 48;  
 
-if (availW >= availH) {
+  if (availW >= availH) {
     isPortrait = false;
     canvasWrap.style.flexDirection = 'row';
     leaderboard.classList.remove('lb-top');
@@ -71,7 +71,7 @@ if (availW >= availH) {
     canvas.height = size;
   }
   
-    else {
+  else {
     isPortrait = true;
     canvasWrap.style.flexDirection = 'column';
     leaderboard.classList.remove('lb-left');
@@ -995,6 +995,55 @@ if (closeCollection) {
   closeCollection.ontouchstart = (e) => { e.preventDefault(); handleCollectionClose(e); };
 }
 
+// ── 【追記】記録初期化ボタンの処理 ──
+if (resetDataBtn) {
+  const handleResetData = (e) => {
+    e.stopPropagation();
+    if (e.type === 'touchstart') e.preventDefault();
+
+    if (confirm('今までの記録をすべて消去してもいい？')) {
+      // 1. ローカルストレージのデータを削除
+      // ※ キー名は `collection.js` 側で使っているものに合わせてな
+      localStorage.removeItem('highScore'); 
+      localStorage.removeItem('glassCollection'); // 例: コレクションデータ用
+      localStorage.removeItem('totalWeight');    // 例: 総重量用
+      
+      // もしセーブデータを完全に丸ごと消していいなら、安全のために以下でもOK
+      // localStorage.clear();
+
+      // 2. メモリ上の変数を初期化
+      score = 0;
+      hi = 0;
+      level = 1;
+      lives = 3;
+
+      // 3. 画面の表示（HUD）を初期化
+      updHUD();
+
+      // 4. タイトル画面やリセットが必要な表示の更新
+      const titleWeight = document.getElementById('titleTotalWeight');
+      if (titleWeight) titleWeight.textContent = '収集した硝子の重量: 0g';
+
+      const clearWeight = document.getElementById('clearTotalWeight');
+      if (clearWeight) clearWeight.textContent = '収集した硝子の重量: 0g';
+
+      // ランキングやコレクションの表示も初期化したい場合、関数があれば呼ぶ
+      if (typeof loadCollection === "function") loadCollection();
+      if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
+
+      // 5. 念のためゲームの状態を最初の状態に戻してレンダリング
+      buildBricks();
+      balls = [makeBall()];
+      draw();
+
+      alert('記録を初期化しました。');
+    }
+  };
+
+  resetDataBtn.onclick = handleResetData;
+  resetDataBtn.ontouchstart = handleResetData;
+}
+
 // ── ゲームループの開始 ──
 function loop() {
   if (!paused) {
@@ -1003,4 +1052,6 @@ function loop() {
   }
   requestAnimationFrame(loop);
 }
+
+// ループの初回起動
 requestAnimationFrame(loop);

@@ -39,20 +39,25 @@ body.hide-cursor { cursor: none; }
   font-weight: 600;
 }
 #homeBtn:hover { color:#7dd3fc; text-shadow: 0 0 8px rgba(56,189,248,0.6); }
+
+/* 【修正】PC版：中央でバランスよく並ぶように調整 */
 #canvasWrap {
   flex:1; overflow:hidden;
   display:flex; flex-direction:row; align-items:center; justify-content:center;
   background: #060b14;
   border-top: 1px solid rgba(56, 189, 248, 0.03);
   border-bottom: 1px solid rgba(56, 189, 248, 0.03);
+  gap: 20px; /* リーダーボードとゲーム画面の間の余白 */
+  padding: 20px;
 }
+
 #leaderboard {
   flex-shrink:0;
   display:flex; flex-direction:column;
   padding:20px 16px;
 }
 #leaderboard.lb-left {
-  width:160px;
+  width:180px;
   align-self:stretch;
   border-right:1px solid rgba(56, 189, 248, 0.06);
   border-bottom:none;
@@ -90,11 +95,18 @@ body.hide-cursor { cursor: none; }
   color:#384f6b; font-size:14px; letter-spacing:3px;
   margin-top:8px; line-height:2;
 }
+
+/* 【重要修正】PC版でのゲーム画面の縦横サイズをしっかり確保 */
 #gameArea {
   position:relative;
-  flex-shrink:0;
+  width: 100%;
+  max-width: 500px;  /* JS(game.js)のCanvas想定サイズに合わせて調整してください */
+  height: 100%;
+  max-height: 650px; /* PC画面からはみ出さない適正サイズ */
   outline: 1px solid rgba(56, 189, 248, 0.08);
+  background: #040810;
 }
+
 #ideoLink {
   margin-top:16px; padding:12px 36px;
   border:1px solid rgba(56, 189, 248, 0.2); color:rgba(125, 211, 252, 0.7);
@@ -113,7 +125,8 @@ body.hide-cursor { cursor: none; }
 #botbar span { display: flex; align-items: center; gap: 6px; }
 #botbar b { font-family: 'Share Tech Mono', monospace; color: #7dd3fc; font-weight: normal; text-shadow: 0 0 4px rgba(56,189,248,0.3); }
 
-canvas { display:block; position:absolute; top:0; left:0; }
+/* 【修正】Canvasがゲームエリアいっぱいに広がるように固定 */
+canvas { display:block; position:absolute; top:0; left:0; width:100%; height:100%; }
 
 /* 環境エフェクト：星雲の塵が漂うような薄い膜 */
 #scanlines {
@@ -178,11 +191,6 @@ canvas { display:block; position:absolute; top:0; left:0; }
   color:#fff;
   box-shadow:0 0 10px rgba(56,189,248,.2);
 }
-
-/* ──────────────────────────────────────────────
-   以下の記述を、元のCSSの「/* ── 硝子片集（コレクション一覧）外枠 ── */」から
-   一番最後までと丸ごと差し替える（構文エラー修正・ z-index調整済み）
-   ────────────────────────────────────────────── */
 
 /* ── 硝子片集（コレクション一覧）外枠（PCデフォルト） ── */
 #collectionView {
@@ -275,66 +283,60 @@ canvas { display:block; position:absolute; top:0; left:0; }
 }
 
 /* ──────────────────────────────────────────────
-   スマートフォン向け（Galaxy S24等対応）：スクロール・レイアウト・構文エラー完全修正
+   スマートフォン向け（Galaxy S24等対応）
    ────────────────────────────────────────────── */
 @media screen and (max-width: 1080px) {
-  /* ── 画面全体を高さ100%でガチガチに固定する ── */
   html, body, #wrap {
     height: 100% !important;
-    overflow: hidden !important; /* 全体は絶対にスクロールさせない */
+    overflow: hidden !important;
     position: relative;
   }
 
-  /* バーの文字ベース調整 */
   #topbar, #botbar {
     font-size: 13px;
     letter-spacing: 1px;
     padding: 0 12px;
-    height: 32px !important; /* 高さ固定 */
+    height: 32px !important;
   }
 
-  /* ゲームエリアをバーの間の高さに固定 */
+  /* スマホは上下にパーツを積み上げるため、rowからcolumnに変更 */
   #canvasWrap {
-    height: calc(100% - 64px) !important; /* 画面高さ - バーの高さ(32+32) */
-    overflow: hidden;
+    height: calc(100% - 64px) !important;
+    flex-direction: column !important;
+    padding: 0;
+    gap: 0;
   }
   #gameArea {
     width: 100% !important;
     height: 100% !important;
+    max-width: none;
+    max-height: none;
   }
 
-  /* ── 硝子片集（コレクション画面）全体を画面いっぱいに広げる ── */
   #collectionView {
     position: absolute;
-    inset: 0 !important; /* 画面内にぴったり合わせる */
-    padding: 10px 6px 6px 6px !important; /* 余白を最小限に */
-    display: none; /* JSでflexになる */
+    inset: 0 !important;
+    padding: 10px 6px 6px 6px !important;
+    display: none;
     flex-direction: column !important;
     justify-content: flex-start !important;
     background: rgba(5, 10, 21, 0.98) !important;
-    
-    /* 【修正】コレクション画面が閉じているとき、
-       後ろにあるオーバーレイを阻まないよう、z-indexを調整（gameデフォルト:20） */
     z-index: 10 !important;
   }
 
-  /* ！！！ここが本番：グリッド自体を縦に長く、スクロールさせる！！！ */
   #collectionGrid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important; /* 3〜4列 */
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
     gap: 8px !important;
     width: 100% !important;
-    flex: 1 !important; /* タイトルとボタンの残りの高さをすべて使う */
+    flex: 1 !important;
     margin: 0 !important;
     padding: 6px !important;
-    
-    /* 縦方向のスムーズなスクロールを有効化 */
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important; /* iOS等の慣性スクロール */
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* カード自体のサイズ調整（コンパクトに） */
   #collectionGrid > div {
     min-height: 105px !important;
     padding: 8px 4px !important;
@@ -347,85 +349,66 @@ canvas { display:block; position:absolute; top:0; left:0; }
     margin-bottom: 4px !important;
   }
 
-  /* その他：詳細ポップアップ（これも高さ調整） */
   .popup-content {
     max-width: 90% !important;
-    max-height: 85% !important; /* 画面からはみ出させない */
-    overflow-y: auto; /* ポップアップ自体もスクロール可能に */
+    max-height: 85% !important;
+    overflow-y: auto;
     padding: 20px 10px;
   }
 
-  /* ▼▼▼ 【重要】元々メディアクエリの外にはみ出していた記述を中に戻した ▼▼▼ */
+  #popupName { font-size: 18px; letter-spacing: 2px; }
+  #popupDesc { font-size: 14px; line-height: 1.6; }
+  .popup-stats table { font-size: 13px; }
 
-  #popupName {
-    font-size: 18px; /* タイトルを強調 */
-    letter-spacing: 2px;
-  }
-
-  #popupDesc {
-    font-size: 14px; /* 説明文を読みやすく拡大 */
-    line-height: 1.6;
-  }
-
-  .popup-stats table {
-    font-size: 13px; /* ステータス表の文字も一回り大きく */
-  }
-
-  /* ── タイトル画面・ボタン類の調整 ── */
   .glitch {
-    font-size: 26px !important; /* スマホの横幅に合わせて存在感を出す */
+    font-size: 26px !important;
     letter-spacing: 6px;
     margin-bottom: 20px;
   }
 
   .tagline, .hint {
-    font-size: 14px !important; /* 操作説明などの文字サイズを底上げ */
+    font-size: 14px !important;
     letter-spacing: 1px;
     line-height: 1.6;
   }
 
-  /* ボタン類を親指でタップしやすいサイズに */
   #startBtn, #collectionBtn, #resetDataBtn {
     padding: 14px 32px;
     font-size: 16px;
-    width: 80%; /* スマホではボタンを少し横長にして押しやすく */
+    width: 80%;
     max-width: 240px;
   }
 
-  /* 「戻る」ボタンは巨大化して親指の真下に固定 */
   #closeCollection {
     display: block !important;
     width: 90% !important;
     max-width: 300px !important;
-    margin: 10px auto !important; /* グリッドの下に余白を確保 */
+    margin: 10px auto !important;
     padding: 16px !important;
     font-size: 18px !important;
-    flex-shrink: 0; /* 縮ませない */
+    flex-shrink: 0;
     z-index: 30;
   }
 
-  /* リーダーボード（スコア履歴） */
   #leaderboard h3 { font-size: 14px !important; letter-spacing: 2px; }
   #leaderboard ol li { font-size: 13px !important; }
   .lb-empty { font-size: 13px !important; }
-
-  /* 構文エラーになっていた余計な波括弧は削除 */
-} /* <-- これでメディアクエリ終了 */
+}
 
 /* ── 詳細ポップアップ（背景の黒いモヤ） ── */
 .popup-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 8, 16, 0.85); /* ゲーム画面を覆う暗幕 */
+  background: rgba(4, 8, 16, 0.85);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index: 100; /* コレクション画面（z-index: 20）より手前に表示 */
-  display: none; /* 初期状態は非表示（JSでflexにする） */
+  z-index: 100;
+  display: none;
   align-items: center;
   justify-content: center;
 }
 
-/* ── ポップアップの中身（白いカード部分） ── */
+/* ── ポップアップの中身 ── */
 .popup-content {
   background: rgba(10, 18, 32, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
@@ -439,13 +422,11 @@ canvas { display:block; position:absolute; top:0; left:0; }
   position: relative;
 }
 
-/* ポップアップがふわっと開くアニメーション */
 @keyframes popupFadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
-/* ── ポップアップ内の要素デザイン ── */
 #popupImageWrap img {
   width: 64px;
   height: 64px;
@@ -468,10 +449,9 @@ canvas { display:block; position:absolute; top:0; left:0; }
   line-height: 1.6;
   text-align: left;
   margin-bottom: 20px;
-  white-space: pre-wrap; /* 改行を有効にする */
+  white-space: pre-wrap;
 }
 
-/* ステータス表（稀少度・重量など） */
 .popup-stats table {
   width: 100%;
   border-collapse: collapse;
@@ -486,18 +466,17 @@ canvas { display:block; position:absolute; top:0; left:0; }
 }
 
 .popup-stats td:first-child {
-  color: #384f6b; /* 項目のラベル（ネビュラブルー） */
+  color: #384f6b;
   text-align: left;
   letter-spacing: 2px;
 }
 
 .popup-stats td:last-child {
-  color: #7dd3fc; /* 値のテキスト */
+  color: #7dd3fc;
   text-align: right;
   font-family: 'Share Tech Mono', monospace;
 }
 
-/* 「枠外に触れて戻る」の案内文 */
 .popup-hint {
   display: block;
   font-size: 11px;

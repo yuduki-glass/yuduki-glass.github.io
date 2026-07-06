@@ -372,3 +372,20 @@ canvas { display:block; position:absolute; top:0; left:0; }
   font-family: 'Share Tech Mono', monospace;
   text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
 }
+
+/* 稀少度表示の意匠 */
+.rarity-badge {
+  font-family: 'Klee One', serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+/* 常融（通常） */
+.rarity-c { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.5); }
+/* 希硝（稀少） */
+.rarity-r { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; text-shadow: 0 0 4px rgba(56,189,248,0.5); border: 1px solid rgba(56, 189, 248, 0.2); }
+/* 幻晶（幻） */
+.rarity-l { background: rgba(244, 63, 94, 0.15); color: #fb7185; text-shadow: 0 0 6px rgba(244,63,94,0.6); border: 1px solid rgba(244, 63, 94, 0.4); }

@@ -180,7 +180,7 @@ function openCollection(){
             ${item.description}
             <div class="popup-stats">
               <table>
-                <tr><td>稀少度</td><td>${rarityText}</td></tr>
+                <tr><td>稀少度</td><td class="rarity-${rarityClass}">${rarityText}</td></tr>
                 <tr><td>重量</td><td>${item.weight}</td></tr>
                 <tr><td>透明度</td><td>${item.opacity}</td></tr>
                 <tr><td>採取日時</td><td>${stats.date}</td></tr>

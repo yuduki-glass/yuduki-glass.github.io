@@ -404,73 +404,114 @@ canvas { display:block; position:absolute; top:0; left:0; }
   height: 44px !important;
 }
 /* ──────────────────────────────────────────────
-   スマートフォン向け レスポンシブ最適化（画面幅1080px以下）
+   スマートフォン向け（Galaxy S24等対応）：スクロール・レイアウト完全修正
    ────────────────────────────────────────────── */
 @media screen and (max-width: 1080px) {
-  /* ── 画面全体のベース調整 ── */
+  /* ── 画面全体を高さ100%でガチガチに固定する ── */
+  html, body, #wrap {
+    height: 100% !important;
+    overflow: hidden !important; /* 全体は絶対にスクロールさせない */
+    position: relative;
+  }
+
+  /* バーの文字ベース調整 */
   #topbar, #botbar {
-    font-size: 13px; /* バーの文字が潰れない限界の大きさ */
-    letter-spacing: 1px; /* 文字間隔を少し詰めて視認性確保 */
+    font-size: 13px;
+    letter-spacing: 1px;
     padding: 0 12px;
+    height: 32px !important; /* 高さ固定 */
   }
 
-  /* コレクション外枠の余白調整 */
+  /* ゲームエリアをバーの間の高さに固定 */
+  #canvasWrap {
+    height: calc(100% - 64px) !important; /* 画面高さ - バーの高さ(32+32) */
+    overflow: hidden;
+  }
+  #gameArea {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── 硝子片集（コレクション画面）全体を画面いっぱいに広げる ── */
   #collectionView {
-    padding: 24px 12px;
+    position: absolute;
+    inset: 0 !important; /* 画面内にぴったり合わせる */
+    padding: 10px 6px 6px 6px !important; /* 余白を最小限に */
+    display: none; /* JSでflexになる */
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    background: rgba(5, 10, 21, 0.98) !important;
+    z-index: 25;
   }
 
-  /* ── 硝子片集（コレクション画面）の文字・レイアウト拡大 ── */
-  
-  /* メイン画面・クリア画面の「総重量」テキスト */
-  #titleTotalWeight,
-  #clearTotalWeight {
-    font-size: 16px !important; /* パッと見で読める大きさに拡大 */
-    letter-spacing: 2px;
-    color: #7dd3fc;
+  /* コレクションのタイトル */
+  #collectionView .glitch {
+    font-size: 22px !important;
+    margin-bottom: 8px !important;
+    flex-shrink: 0; /* 縮ませない */
   }
 
-  /* スマホ用にグリッドの列数を2〜3列に最適化 */
+  /* ！！！ここが本番：グリッド自体を縦に長く、スクロールさせる！！！ */
   #collectionGrid {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
-    gap: 8px; /* スマホでは隙間をさらに詰めて画面を有効活用 */
-    max-height: 70vh; /* 縦幅の表示領域を少し広げる */
-    margin: 16px 0;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important; /* 3〜4列 */
+    gap: 8px !important;
+    width: 100% !important;
+    flex: 1 !important; /* タイトルとボタンの残りの高さをすべて使う */
+    margin: 0 !important;
+    padding: 6px !important;
+    
+    /* 縦方向のスムーズなスクロールを有効化 */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important; /* iOS等の慣性スクロール */
   }
 
-  /* カード自体の調整：縦幅に余裕を持たせつつ文字を大きく */
+  /* カード自体のサイズ調整（コンパクトに） */
   #collectionGrid > div {
-    min-height: 110px;
-    justify-content: flex-start !important; /* 上詰めに整列させて空間効率を上げる */
+    min-height: 105px !important;
     padding: 8px 4px !important;
   }
 
   #collectionGrid img, 
   .unknown {
-    width: 40px !important; /* 画像サイズを少しコンパクトにして文字スペースを確保 */
-    height: 40px !important;
+    width: 36px !important; 
+    height: 36px !important;
+    margin-bottom: 4px !important;
   }
 
-  /* ！！！スマホでカード内の文字を読みやすく拡大！！！ */
+  /* カード内の硝子片名 */
   #collectionGrid h3 {
-    font-size: 13px !important; /* 12pxから13pxに拡大 */
-    margin-top: 6px;
-    white-space: normal; /* 文字が長い場合は2行まで折り返しを許容 */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    font-size: 13px !important;
+    margin-top: 4px !important;
   }
 
   .rarity-badge {
-    font-size: 11px !important; /* バッジの文字も少し大きく */
-    padding: 2px 6px;
-    margin-bottom: 4px;
+    font-size: 10px !important; 
+    padding: 1px 5px !important;
+    margin-bottom: 2px !important;
   }
 
-  /* ── 詳細ポップアップ（スマホでも押しやすく、見やすく） ── */
-  .popup-content {
-    max-width: 280px;
-    padding: 20px 16px;
+  /* 「戻る」ボタンを巨大化して親指の真下に固定 */
+  #closeCollection {
+    display: block !important;
+    width: 90% !important;
+    max-width: 300px !important;
+    margin: 10px auto !important; /* グリッドの下に余白を確保 */
+    padding: 16px !important;
+    font-size: 18px !important;
+    flex-shrink: 0; /* 縮ませない */
+    z-index: 30;
   }
+
+  /* その他：詳細ポップアップ（これも高さ調整） */
+  .popup-content {
+    max-width: 90% !important;
+    max-height: 85% !important; /* 画面からはみ出させない */
+    overflow-y: auto; /* ポップアップ自体もスクロール可能に */
+    padding: 20px 10px;
+  }
+}
 
   #popupName {
     font-size: 18px; /* タイトルを強調 */

@@ -484,3 +484,33 @@ canvas { display:block; position:absolute; top:0; left:0; width:100%; height:100
   margin-top: 16px;
   letter-spacing: 1px;
 }
+
+/* ── レア度別の視覚カラーエフェクト ── */
+
+/* 常融 (C) : 淡い水色・白（ベース） */
+.rarity-c {
+  color: #e0f2fe !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.7) !important;
+  font-weight: 600;
+}
+
+/* 希硝 (R) : 鮮やかなエメラルドグリーン */
+.rarity-r {
+  color: #34d399 !important;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.7) !important;
+  font-weight: 600;
+}
+
+/* 幻晶 (L) : 神秘的な幻想ピンク・マゼンタ */
+.rarity-l {
+  color: #f472b6 !important;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.8) !important;
+  font-weight: 600;
+}
+
+/* ポップアップ内の左側項目名（稀少度・重量など）が暗すぎたので視認性を底上げ */
+.popup-stats td:first-child {
+  color: #94a3b8 !important; /* 背景に埋もれない明るいグレーブルーに */
+  text-align: left;
+  letter-spacing: 2px;
+}

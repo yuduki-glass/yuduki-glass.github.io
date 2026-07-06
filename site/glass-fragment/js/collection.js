@@ -1,5 +1,5 @@
 // ===============================
-// 硝子片収集管理（純和風・泥沼仕様・30個完全版）
+// 硝子片収集管理（純和風・泥沼仕様・30個完全版・構造修復）
 // ===============================
 
 // 稀少度分類: 'C'=常融(並) / 'R'=希硝(稀) / 'L'=幻晶(極めて稀)
@@ -12,10 +12,10 @@ const collectionItems = [
   { id: 6, name: "微細な亀裂", image: "assets/items/item006.svg", description: "何かが生まれる直前の線", weight: "15g", opacity: "88%", rarity: "C", weightValue: 100 },
   { id: 7, name: "水面の記憶", image: "assets/items/item007.svg", description: "揺らぎだけが定着した面", weight: "29g", opacity: "92%", rarity: "C", weightValue: 100 },
   { id: 8, name: "凍てつく吐息", image: "assets/items/item008.svg", description: "熱を拒絶する、鋭利な白", weight: "33g", opacity: "50%", rarity: "C", weightValue: 100 },
-  { id: 9, name: "煤けた星屑", image: "assets/items/item009.svg", description: "輝きを忘れた夜の残骸", weight: "47g", opacity: "R", weightValue: 30 },
+  { id: 9, name: "煤けた星屑", image: "assets/items/item009.svg", description: "輝きを忘れた夜の残骸", weight: "47g", opacity: "10%", rarity: "R", weightValue: 30 }, // 修正（opacity補完、rarity復元）
   { id: 10, name: "透明な境界", image: "assets/items/item010.svg", description: "在る事すら見失うほどの無", weight: "12g", opacity: "99%", rarity: "L", weightValue: 5 },
   { id: 11, name: "新緑の脈絡", image: "assets/items/item011.svg", description: "未だ瑞々しさを偽る偽物の葉", weight: "21g", opacity: "73%", rarity: "C", weightValue: 100 },
-  { id: 12, name: "薄明の残光", image: "assets/items/item012.svg", description: "夜が満ちる前の、最後の抵抗", weight: "45g", opacity: "C", weightValue: 100 },
+  { id: 12, name: "薄明の残光", image: "assets/items/item012.svg", description: "夜が満ちる前の、最後の抵抗", weight: "45g", opacity: "20%", rarity: "C", weightValue: 100 }, // 修正（opacity補完、rarity復元）
   { id: 13, name: "微熱の不在", image: "assets/items/item013.svg", description: "かつて誰かが触れていた名残", weight: "19g", opacity: "82%", rarity: "C", weightValue: 100 },
   { id: 14, name: "濁った祈り", image: "assets/items/item014.svg", description: "無数の願いが沈殿した結晶", weight: "55g", opacity: "11%", rarity: "R", weightValue: 30 },
   { id: 15, name: "白夜の迷子", image: "assets/items/item015.svg", description: "影を奪われ、立ち尽くす白", weight: "31g", opacity: "60%", rarity: "C", weightValue: 100 },
@@ -24,7 +24,7 @@ const collectionItems = [
   { id: 18, name: "徒花の影", image: "assets/items/item018.svg", description: "咲くことなく、ただそこに落ちた黒", weight: "40g", opacity: "18%", rarity: "C", weightValue: 100 },
   { id: 19, name: "秒針の摩耗", image: "assets/items/item019.svg", description: "切り捨てられた時間の破片", weight: "27g", opacity: "47%", rarity: "C", weightValue: 100 },
   { id: 20, name: "煉獄の残り火", image: "assets/items/item020.svg", description: "燻り続ける、鈍い熱の記憶", weight: "50g", opacity: "25%", rarity: "R", weightValue: 30 },
-  { id: 21, name: "深紅の沈黙", image: "assets/items/item021.svg", description: "言葉になるのを拒んだ激昂", weight: "43g", opacity: "30%", rarity: "R", weightValue: 30 }, // 修正箇所
+  { id: 21, name: "深紅の沈黙", image: "assets/items/item021.svg", description: "言葉になるのを拒んだ激昂", weight: "43g", opacity: "30%", rarity: "R", weightValue: 30 },
   { id: 22, name: "迷宮の調律", image: "assets/items/item022.svg", description: "狂った世界の帳尻を合わせる楔", weight: "36g", opacity: "55%", rarity: "C", weightValue: 100 },
   { id: 23, name: "形骸化した約束", image: "assets/items/item023.svg", description: "意味を失ってもなお、形だけ残ったもの", weight: "58g", opacity: "7%", rarity: "L", weightValue: 5 },
   { id: 24, name: "朧月夜の惑い", image: "assets/items/item024.svg", description: "輪郭を曖昧にぼかす、淡い光", weight: "22g", opacity: "78%", rarity: "C", weightValue: 100 },
@@ -110,6 +110,7 @@ function showCollectionGet(item){
 
 function openCollection(){
   const grid = document.getElementById("collectionGrid");
+  if(!grid) return;
   grid.innerHTML="";
 
   collectionItems.forEach(item=>{
@@ -119,9 +120,12 @@ function openCollection(){
     if(item.rarity === "R") rarityText = "希硝";
     if(item.rarity === "L") rarityText = "幻晶";
 
+    // 安全対策：万が一rarityが不当な状態でも絶対に落ちないガード処理
+    const rarityClass = item.rarity ? item.rarity.toLowerCase() : "c";
+
     if(collectedItems.includes(Number(item.id))){
       div.innerHTML=`
-        <span class="rarity-badge rarity-${item.rarity.toLowerCase()}">${rarityText}</span>
+        <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
         <img src="${item.image}" style="cursor: pointer; pointer-events: none;">
         <h3 style="pointer-events: none;">${item.name}</h3>
       `;
@@ -152,7 +156,7 @@ function openCollection(){
 
     } else {
       div.innerHTML=`
-        <span class="rarity-badge rarity-${item.rarity.toLowerCase()}">${rarityText}</span>
+        <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
         <div class="unknown">?</div>
         <h3>未観測</h3>
       `;

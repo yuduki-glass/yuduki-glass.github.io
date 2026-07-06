@@ -6,7 +6,6 @@ const collectionItems = [
   { id: 1, name: "灰色の器", image: "assets/items/item001.svg", description: "静かに沈黙する欠片", weight: "38g", opacity: "14%" },
   { id: 2, name: "青い残響", image: "assets/items/item002.svg", description: "光をわずかに返す硝子", weight: "24g", opacity: "65%" },
   { id: 3, name: "忘れられた輪郭", image: "assets/items/item003.svg", description: "誰かが見落とした形", weight: "51g", opacity: "3%" },
-  // ── 4〜10個目のアイテム ──
   { id: 4, name: "琥珀の微睡み", image: "assets/items/item004.svg", description: "夕刻の熱を閉じ込めた結晶", weight: "42g", opacity: "40%" },
   { id: 5, name: "深海の底流", image: "assets/items/item005.svg", description: "圧せられて深く、昏い青", weight: "68g", opacity: "8%" },
   { id: 6, name: "微細な亀裂", image: "assets/items/item006.svg", description: "何かが生まれる直前の線", weight: "15g", opacity: "88%" },
@@ -154,8 +153,14 @@ function openCollection(){
   document.getElementById("collectionView").style.display = "flex";
 }
 
+// ==========================================
+// ── 【修正版】競合を完全に回避する処理 ──
+// ==========================================
+
 // ポップアップの枠外（背景）を触ったら確実に閉じる処理
-const itemPopup = document.getElementById("itemPopup");
+if (typeof itemPopup === 'undefined') {
+  var itemPopup = document.getElementById("itemPopup");
+}
 if (itemPopup) {
   const closePopupAction = (e) => {
     if (e.target === itemPopup) {
@@ -169,7 +174,9 @@ if (itemPopup) {
 }
 
 // コレクション画面を開くボタン（PC・スマホ両対応）
-const collectionBtn = document.getElementById("collectionBtn");
+if (typeof collectionBtn === 'undefined') {
+  var collectionBtn = document.getElementById("collectionBtn");
+}
 if (collectionBtn) {
   const handleOpenCollection = (e) => {
     e.preventDefault();
@@ -183,7 +190,9 @@ if (collectionBtn) {
 }
 
 // コレクション画面の「戻る」ボタン
-const closeCollection = document.getElementById("closeCollection");
+if (typeof closeCollection === 'undefined') {
+  var closeCollection = document.getElementById("closeCollection");
+}
 if (closeCollection) {
   const handleCloseCollection = (e) => {
     e.preventDefault();

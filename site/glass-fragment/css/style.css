@@ -373,15 +373,16 @@ canvas { display:block; position:absolute; top:0; left:0; }
   text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
 }
 
-/* 稀少度表示の意匠 */
+/* ── 稀少度表示の意匠（カード内でのサイズと位置の最適化） ── */
 .rarity-badge {
   font-family: 'Klee One', serif;
-  font-size: 11px;
-  letter-spacing: 2px;
-  padding: 2px 8px;
+  font-size: 10px;          /* 11pxから10pxに少し縮小 */
+  letter-spacing: 1px;
+  padding: 1px 6px;         /* 余白を詰めて縦幅の膨らみを抑える */
   border-radius: 3px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;       /* 下の要素との隙間を少し詰める */
   display: inline-block;
+  line-height: 1.2;
 }
 /* 常融（通常） */
 .rarity-c { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.5); }
@@ -389,3 +390,16 @@ canvas { display:block; position:absolute; top:0; left:0; }
 .rarity-r { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; text-shadow: 0 0 4px rgba(56,189,248,0.5); border: 1px solid rgba(56, 189, 248, 0.2); }
 /* 幻晶（幻） */
 .rarity-l { background: rgba(244, 63, 94, 0.15); color: #fb7185; text-shadow: 0 0 6px rgba(244,63,94,0.6); border: 1px solid rgba(244, 63, 94, 0.4); }
+
+/* ── カード枠自体の縦幅を安定させる追加指定 ── */
+#collectionGrid > div {
+  min-height: 120px;        /* カードが潰れたりはみ出したりしない最低限の高さ */
+  justify-content: flex-start !important; /* 上詰めに整列させて空間効率を上げる */
+  padding: 10px 6px !important; /* 縦の余白を16pxから10pxに削減して高さを抑える */
+}
+
+#collectionGrid img, 
+.unknown {
+  width: 44px !important;   /* 画像と？枠を56pxから44pxに少しだけ引き締め */
+  height: 44px !important;
+}

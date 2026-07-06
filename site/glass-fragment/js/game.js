@@ -92,7 +92,7 @@ resize();
 window.addEventListener('resize', () => { resize(); if (started) resetPositions(); });
 
 const PADDLE_H = 12;
-const BALL_R   = 5;
+const BALL_R = (window.innerWidth <= 1080) ? 2.5 : 5;
 const COLS = 32;
 const ROWS = 12;
 

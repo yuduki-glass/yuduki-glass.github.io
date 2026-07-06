@@ -64,12 +64,45 @@ function updateTotalWeightDisplay() {
   return total;
 }
 
-function addCollectionItem(level){
-  const totalWeight = collectionItems.reduce((sum, item) => sum + item.weightValue, 0);
-  let randomValue = Math.random() * totalWeight;
-  let selectedItem = collectionItems[0];
+// === site/glass-fragment/js/collection.js の修正内容 ===
 
-  for (const item of collectionItems) {
+/**
+ * ── 【修正】レベルをクリアした時に、硝子片をランダムに取得する ──
+ * 稀少度（Rarity）に応じた重み付けで、未取得のものから1つ選ぶ。
+ */
+function addCollectionItem(clearedLevel){
+  // ──────────────────────────────────────────────
+  // 1. まず、まだ持っていない（未観測の）硝子片のリストを作る
+  // ──────────────────────────────────────────────
+  const uncollectedItems = collectionItems.filter(
+    item => !collectedItems.includes(Number(item.id))
+  );
+
+  // すべて収集済みなら、ダブらせずにリターン（またはコンプリート表示）
+  if (uncollectedItems.length === 0) {
+    console.log("硝子片はすべて収集済みです。");
+    // ここでクリア画面のテキストをコンプリート用に書き換えても良い
+    const taglines = overlay.querySelectorAll('.tagline');
+    if (taglines.length > 0) {
+      taglines[0].innerHTML = `LEVEL ${clearedLevel} CLEAR!<br><span style="color: #fb7185; font-size: 0.9em; margin-top: 10px; display: inline-block;">【全30種 コンプリート】</span>`;
+    }
+    return;
+  }
+
+  // ──────────────────────────────────────────────
+  // 2. 未取得リストの中だけで、重みの総和を計算する
+  // ──────────────────────────────────────────────
+  const totalWeightOfUncollected = uncollectedItems.reduce(
+    (sum, item) => sum + item.weightValue, 0
+  );
+
+  // ──────────────────────────────────────────────
+  // 3. 重みに基づいて、未取得リストから1つ選ぶ
+  // ──────────────────────────────────────────────
+  let randomValue = Math.random() * totalWeightOfUncollected;
+  let selectedItem = uncollectedItems[0]; // 初期値（フォールバック）
+
+  for (const item of uncollectedItems) {
     if (randomValue < item.weightValue) {
       selectedItem = item;
       break;
@@ -77,12 +110,19 @@ function addCollectionItem(level){
     randomValue -= item.weightValue;
   }
 
+  // 万が一、選択に失敗したら（重みデータがない等）安全にリターン
   if(!selectedItem) return;
 
+  // ──────────────────────────────────────────────
+  // 4. 取得した硝子片をSetに追加し、統計を更新してセーブ
+  // ──────────────────────────────────────────────
+  
+  // 未取得の中から選んでいるので、本来cludesチェックは不要だが、安全のため残す
   if(!collectedItems.includes(selectedItem.id)){
     collectedItems.push(selectedItem.id);
   }
 
+  // 採取統計（日時、カウント）の更新
   if(!collectionStats[selectedItem.id]){
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -93,14 +133,33 @@ function addCollectionItem(level){
     
     collectionStats[selectedItem.id] = {
       date: `${yyyy}.${mm}.${dd} ${hh}:${mi}`,
-      count: 1
+      count: 1 // 初めて採取した
     };
   } else {
+    // ！！！ 【最適化】今回は未取得から選ぶので、ここは通らない（ダブらない）はず ！！！
     collectionStats[selectedItem.id].count += 1;
   }
 
-  saveCollection();
-  updateTotalWeightDisplay();
+  saveCollection(); // localStorageへ保存
+  updateTotalWeightDisplay(); // HUDの総重量を更新
+  
+  // ──────────────────────────────────────────────
+  // 5. ゲームのクリア画面（overlay）の表示内容を、取得したアイテム名に更新する
+  // ──────────────────────────────────────────────
+  // ※ game.js側のsfx等はそのまま動く。ここではテキストだけ書き換える。
+  if (typeof overlay !== 'undefined') {
+    const taglines = overlay.querySelectorAll('.tagline');
+    if (taglines.length > 0) {
+      // 稀少度に応じた色を付ける
+      let rarityColor = '#ffffff'; // 常融
+      if (selectedItem.rarity === 'R') rarityColor = '#7dd3fc'; // 希硝
+      if (selectedItem.rarity === 'L') rarityColor = '#fb7185'; // 幻晶
+
+      taglines[0].innerHTML = `LEVEL ${clearedLevel} CLEAR!<br><span style="color: ${rarityColor}; font-size: 0.9em; margin-top: 10px; display: inline-block;">【${selectedItem.name}】を回収しました</span>`;
+    }
+  }
+
+  // コンソール用のログ
   showCollectionGet(selectedItem);
 }
 

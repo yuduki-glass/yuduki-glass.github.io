@@ -64,10 +64,34 @@ function updateTotalWeightDisplay() {
 }
 
 // 取得
+// 取得（被る確率20% / 新規確率80% 調整版）
 function addCollectionItem(level){
-  const item = collectionItems.find(i => i.id === Number(level));
+  // 1. 未取得と既取得のリストを分ける
+  const uncollectedItems = collectionItems.filter(item => !collectedItems.includes(item.id));
+  const collectedItemsList = collectionItems.filter(item => collectedItems.includes(item.id));
+  
+  let item;
+
+  // 2. 確率の抽選（0.0 〜 1.0 のランダムな数）
+  const isDuplicateDrop = Math.random() < 0.20; // 20%の確率でtrue
+
+  if (isDuplicateDrop && collectedItemsList.length > 0) {
+    // 【20%の運命】かつ「すでに持っているアイテム」が存在する場合、そこから抽選（被り発生）
+    const randomIndex = Math.floor(Math.random() * collectedItemsList.length);
+    item = collectedItemsList[randomIndex];
+  } else if (uncollectedItems.length > 0) {
+    // 【80%の運命】または「まだ何も持っていない最初期」は、未取得から抽選（新規獲得）
+    const randomIndex = Math.floor(Math.random() * uncollectedItems.length);
+    item = uncollectedItems[randomIndex];
+  } else {
+    // すでに全部コンプリートしている場合は、全アイテムから均等にランダム（再観測）
+    const randomIndex = Math.floor(Math.random() * collectionItems.length);
+    item = collectionItems[randomIndex];
+  }
+
   if(!item) return;
 
+  // 所持リストに未登録なら追加
   if(!collectedItems.includes(item.id)){
     collectedItems.push(item.id);
   }

@@ -403,3 +403,112 @@ canvas { display:block; position:absolute; top:0; left:0; }
   width: 44px !important;   /* 画像と？枠を56pxから44pxに少しだけ引き締め */
   height: 44px !important;
 }
+/* ──────────────────────────────────────────────
+   スマートフォン向け レスポンシブ最適化（画面幅768px以下）
+   ────────────────────────────────────────────── */
+@media screen and (max-width: 768px) {
+  /* ── 画面全体のベース調整 ── */
+  #topbar, #botbar {
+    font-size: 13px; /* バーの文字が潰れない限界の大きさ */
+    letter-spacing: 1px; /* 文字間隔を少し詰めて視認性確保 */
+    padding: 0 12px;
+  }
+
+  /* コレクション外枠の余白調整 */
+  #collectionView {
+    padding: 24px 12px;
+  }
+
+  /* ── 硝子片集（コレクション画面）の文字・レイアウト拡大 ── */
+  
+  /* メイン画面・クリア画面の「総重量」テキスト */
+  #titleTotalWeight,
+  #clearTotalWeight {
+    font-size: 16px !important; /* パッと見で読める大きさに拡大 */
+    letter-spacing: 2px;
+    color: #7dd3fc;
+  }
+
+  /* スマホ用にグリッドの列数を2〜3列に最適化 */
+  #collectionGrid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
+    gap: 8px; /* スマホでは隙間をさらに詰めて画面を有効活用 */
+    max-height: 70vh; /* 縦幅の表示領域を少し広げる */
+    margin: 16px 0;
+  }
+
+  /* カード自体の調整：縦幅に余裕を持たせつつ文字を大きく */
+  #collectionGrid > div {
+    min-height: 110px;
+    justify-content: flex-start !important; /* 上詰めに整列させて空間効率を上げる */
+    padding: 8px 4px !important;
+  }
+
+  #collectionGrid img, 
+  .unknown {
+    width: 40px !important; /* 画像サイズを少しコンパクトにして文字スペースを確保 */
+    height: 40px !important;
+  }
+
+  /* ！！！スマホでカード内の文字を読みやすく拡大！！！ */
+  #collectionGrid h3 {
+    font-size: 13px !important; /* 12pxから13pxに拡大 */
+    margin-top: 6px;
+    white-space: normal; /* 文字が長い場合は2行まで折り返しを許容 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .rarity-badge {
+    font-size: 11px !important; /* バッジの文字も少し大きく */
+    padding: 2px 6px;
+    margin-bottom: 4px;
+  }
+
+  /* ── 詳細ポップアップ（スマホでも押しやすく、見やすく） ── */
+  .popup-content {
+    max-width: 280px;
+    padding: 20px 16px;
+  }
+
+  #popupName {
+    font-size: 18px; /* タイトルを強調 */
+    letter-spacing: 2px;
+  }
+
+  #popupDesc {
+    font-size: 14px; /* 説明文を読みやすく拡大 */
+    line-height: 1.6;
+  }
+
+  .popup-stats table {
+    font-size: 13px; /* ステータス表の文字も一回り大きく */
+  }
+
+  /* ── タイトル画面・ボタン類の調整 ── */
+  .glitch {
+    font-size: 26px !important; /* スマホの横幅に合わせて存在感を出す */
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+  }
+
+  .tagline, .hint {
+    font-size: 14px !important; /* 操作説明などの文字サイズを底上げ */
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+
+  /* ボタン類を親指でタップしやすいサイズに */
+  #startBtn, #collectionBtn, #closeCollection, #resetDataBtn {
+    padding: 14px 32px;
+    font-size: 16px;
+    width: 80%; /* スマホではボタンを少し横長にして押しやすく */
+    max-width: 240px;
+  }
+
+  /* リーダーボード（スコア履歴） */
+  #leaderboard h3 { font-size: 14px !important; letter-spacing: 2px; }
+  #leaderboard ol li { font-size: 13px !important; }
+  .lb-empty { font-size: 13px !important; }
+}

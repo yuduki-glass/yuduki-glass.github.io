@@ -411,3 +411,97 @@ canvas { display:block; position:absolute; top:0; left:0; }
 
   /* 構文エラーになっていた余計な波括弧は削除 */
 } /* <-- これでメディアクエリ終了 */
+
+/* ── 詳細ポップアップ（背景の黒いモヤ） ── */
+.popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 8, 16, 0.85); /* ゲーム画面を覆う暗幕 */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100; /* コレクション画面（z-index: 20）より手前に表示 */
+  display: none; /* 初期状態は非表示（JSでflexにする） */
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── ポップアップの中身（白いカード部分） ── */
+.popup-content {
+  background: rgba(10, 18, 32, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  width: 85%;
+  max-width: 340px;
+  padding: 24px;
+  text-align: center;
+  animation: popupFadeIn 0.2s ease-out;
+  position: relative;
+}
+
+/* ポップアップがふわっと開くアニメーション */
+@keyframes popupFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── ポップアップ内の要素デザイン ── */
+#popupImageWrap img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+}
+
+#popupName {
+  font-size: 18px;
+  color: #bae6fd;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+#popupDesc {
+  font-size: 13px;
+  color: rgba(175, 219, 245, 0.8);
+  line-height: 1.6;
+  text-align: left;
+  margin-bottom: 20px;
+  white-space: pre-wrap; /* 改行を有効にする */
+}
+
+/* ステータス表（稀少度・重量など） */
+.popup-stats table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  border-top: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.popup-stats td {
+  padding: 6px 4px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.popup-stats td:first-child {
+  color: #384f6b; /* 項目のラベル（ネビュラブルー） */
+  text-align: left;
+  letter-spacing: 2px;
+}
+
+.popup-stats td:last-child {
+  color: #7dd3fc; /* 値のテキスト */
+  text-align: right;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* 「枠外に触れて戻る」の案内文 */
+.popup-hint {
+  display: block;
+  font-size: 11px;
+  color: #384f6b;
+  margin-top: 16px;
+  letter-spacing: 1px;
+}

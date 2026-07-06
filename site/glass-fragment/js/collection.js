@@ -1,5 +1,5 @@
 // ===============================
-// 硝子片収集管理（純和風・泥沼仕様）
+// 硝子片収集管理（純和風・泥沼仕様・30個完全版）
 // ===============================
 
 // 稀少度分類: 'C'=常融(並) / 'R'=希硝(稀) / 'L'=幻晶(極めて稀)
@@ -24,7 +24,7 @@ const collectionItems = [
   { id: 18, name: "徒花の影", image: "assets/items/item018.svg", description: "咲くことなく、ただそこに落ちた黒", weight: "40g", opacity: "18%", rarity: "C", weightValue: 100 },
   { id: 19, name: "秒針の摩耗", image: "assets/items/item019.svg", description: "切り捨てられた時間の破片", weight: "27g", opacity: "47%", rarity: "C", weightValue: 100 },
   { id: 20, name: "煉獄の残り火", image: "assets/items/item020.svg", description: "燻り続ける、鈍い熱の記憶", weight: "50g", opacity: "25%", rarity: "R", weightValue: 30 },
-  { id: 21, name: "深紅 of 沈黙", image: "assets/items/item021.svg", description: "言葉になるのを拒んだ激昂", weight: "43g", opacity: "30%", rarity: "R", weightValue: 30 },
+  { id: 21, name: "深紅の沈黙", image: "assets/items/item021.svg", description: "言葉になるのを拒んだ激昂", weight: "43g", opacity: "30%", rarity: "R", weightValue: 30 }, // 修正箇所
   { id: 22, name: "迷宮の調律", image: "assets/items/item022.svg", description: "狂った世界の帳尻を合わせる楔", weight: "36g", opacity: "55%", rarity: "C", weightValue: 100 },
   { id: 23, name: "形骸化した約束", image: "assets/items/item023.svg", description: "意味を失ってもなお、形だけ残ったもの", weight: "58g", opacity: "7%", rarity: "L", weightValue: 5 },
   { id: 24, name: "朧月夜の惑い", image: "assets/items/item024.svg", description: "輪郭を曖昧にぼかす、淡い光", weight: "22g", opacity: "78%", rarity: "C", weightValue: 100 },
@@ -50,7 +50,6 @@ function saveCollection(){
   localStorage.setItem("glassCollectionStats", JSON.stringify(collectionStats));
 }
 
-// 総重量の表示更新（ここも日本語表記に連動できるように要素の更新だけ担保）
 function updateTotalWeightDisplay() {
   let total = 0;
   collectionItems.forEach(item => {
@@ -65,7 +64,6 @@ function updateTotalWeightDisplay() {
   return total;
 }
 
-// 取得（重み付きランダム抽選）
 function addCollectionItem(level){
   const totalWeight = collectionItems.reduce((sum, item) => sum + item.weightValue, 0);
   let randomValue = Math.random() * totalWeight;
@@ -110,7 +108,6 @@ function showCollectionGet(item){
   console.log("採取:", item.name);
 }
 
-// コレクション画面表示
 function openCollection(){
   const grid = document.getElementById("collectionGrid");
   grid.innerHTML="";
@@ -118,13 +115,11 @@ function openCollection(){
   collectionItems.forEach(item=>{
     const div = document.createElement("div");
     
-    // 稀少度の日本語表記化
     let rarityText = "常融";
     if(item.rarity === "R") rarityText = "希硝";
     if(item.rarity === "L") rarityText = "幻晶";
 
     if(collectedItems.includes(Number(item.id))){
-      // 【観測済み】
       div.innerHTML=`
         <span class="rarity-badge rarity-${item.rarity.toLowerCase()}">${rarityText}</span>
         <img src="${item.image}" style="cursor: pointer; pointer-events: none;">
@@ -156,7 +151,6 @@ function openCollection(){
       });
 
     } else {
-      // 【未観測】
       div.innerHTML=`
         <span class="rarity-badge rarity-${item.rarity.toLowerCase()}">${rarityText}</span>
         <div class="unknown">?</div>
@@ -170,7 +164,6 @@ function openCollection(){
   document.getElementById("collectionView").style.display = "flex";
 }
 
-// ── 以下、制御処理（変更なし） ──
 if (typeof itemPopup === 'undefined') { var itemPopup = document.getElementById("itemPopup"); }
 if (itemPopup) {
   const closePopupAction = (e) => {

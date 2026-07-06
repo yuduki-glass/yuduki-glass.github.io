@@ -1,19 +1,20 @@
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const canvasWrap = document.getElementById('canvasWrap');
-const gameArea = document.getElementById('gameArea');
-const leaderboard = document.getElementById('leaderboard');
-const overlay = document.getElementById('overlay');
-const startBtn = document.getElementById('startBtn');
-const collectionBtn = document.getElementById("collectionBtn");
-const collectionView = document.getElementById("collectionView");
-const closeCollection = document.getElementById("closeCollection");
-const pauseOverlay = document.getElementById('pauseOverlay');
-const resumeBtn    = document.getElementById('resumeBtn');
-const resetDataBtn = document.getElementById('resetDataBtn');
+// ──【解決策A】重複エラーを回避する安全な宣言に差し替え ──
+if (typeof canvas === 'undefined') { var canvas = document.getElementById('c'); }
+if (typeof ctx === 'undefined') { var ctx = canvas ? canvas.getContext('2d') : null; }
+if (typeof canvasWrap === 'undefined') { var canvasWrap = document.getElementById('canvasWrap'); }
+if (typeof gameArea === 'undefined') { var gameArea = document.getElementById('gameArea'); }
+if (typeof leaderboard === 'undefined') { var leaderboard = document.getElementById('leaderboard'); }
+if (typeof overlay === 'undefined') { var overlay = document.getElementById('overlay'); }
+if (typeof startBtn === 'undefined') { var startBtn = document.getElementById('startBtn'); }
+if (typeof collectionBtn === 'undefined') { var collectionBtn = document.getElementById("collectionBtn"); }
+if (typeof collectionView === 'undefined') { var collectionView = document.getElementById("collectionView"); }
+if (typeof closeCollection === 'undefined') { var closeCollection = document.getElementById("closeCollection"); }
+if (typeof pauseOverlay === 'undefined') { var pauseOverlay = document.getElementById('pauseOverlay'); }
+if (typeof resumeBtn === 'undefined') { var resumeBtn = document.getElementById('resumeBtn'); }
+if (typeof resetDataBtn === 'undefined') { var resetDataBtn = document.getElementById('resetDataBtn'); }
 
+// ── ここから下は消さずにそのまま残す ──
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
 const cursorDot = document.getElementById('cursor-dot');
 function showDot(show) {
   if (cursorDot) {
@@ -51,7 +52,7 @@ function resize() {
   const LB_SIDE = 160; 
   const LB_TOP  = 48;  
 
-  if (availW >= availH) {
+if (availW >= availH) {
     isPortrait = false;
     canvasWrap.style.flexDirection = 'row';
     leaderboard.classList.remove('lb-top');
@@ -59,13 +60,18 @@ function resize() {
     if (leaderboard.nextSibling !== gameArea) {
       canvasWrap.insertBefore(leaderboard, gameArea);
     }
+    
+    // 横幅の限界（全体の幅 - サイドバーの160px）と、縦幅の限界、小さい方をゲームサイズにする
     const size = Math.min(availW - LB_SIDE, availH);
     CW = size; CH = size;
+    
     gameArea.style.width   = size + 'px';
     gameArea.style.height = size + 'px';
     canvas.width   = size;
     canvas.height = size;
-  } else {
+  }
+  
+    else {
     isPortrait = true;
     canvasWrap.style.flexDirection = 'column';
     leaderboard.classList.remove('lb-left');
@@ -95,9 +101,9 @@ function brickStartY() { return Math.round(CH * 0.14); }
 function brickH()      { return 4; }
 function brickGapY()   { return 2; }
 function brickGapX()   { return 2; }
-function brickW()      { 
-  const baseW = isPortrait ? CW : (CW - 160);
-  return Math.floor((baseW - (COLS - 1) * brickGapX()) / COLS); 
+function brickW() { 
+  // PCでもスマホでも、ゲーム画面の横幅（CW）をベースに等分割すればいいだけ
+  return Math.floor((CW - (COLS - 1) * brickGapX()) / COLS); 
 }
 function brickStartX() { return Math.round((CW - (COLS * brickW() + (COLS-1) * brickGapX())) / 2); }
 
@@ -943,30 +949,41 @@ function updateClock() {
     clock.textContent = now.toTimeString().split(' ')[0];
   }
 }
-// ── 【追加】クリア画面やタイトルで「硝子片集」ボタンを押したときの挙動制御 ──
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── 【一本化】コレクション画面を開く処理 ──
 if (collectionBtn) {
   const handleCollectionOpen = (e) => {
     e.stopPropagation();
+    
     // コレクションを開くときは、手前のゲームオーバー/クリア画面のモヤを一時的に隠す
     if (overlay) {
       overlay.style.display = 'none';
     }
-    // ※ 実際の開く処理（collectionViewの表示など）は collection.js 側がやっている想定
     if (collectionView) {
       collectionView.style.display = 'flex'; // コレクション画面を確実に表示
     }
+    
+    // 他のファイル（collection.jsなど）で定義されている初期化関数があれば安全に実行
+    if (typeof loadCollection === "function") loadCollection();
+    if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
+    if (typeof openCollection === "function") openCollection();
   };
 
-  collectionBtn.addEventListener('touchstart', handleCollectionOpen, { passive: false });
-  collectionBtn.addEventListener('click', handleCollectionOpen);
+  // 重複発火を防ぐため、古いイベントリスナーではなく property への代入に一本化
+  collectionBtn.onclick = handleCollectionOpen;
+  collectionBtn.ontouchstart = (e) => { e.preventDefault(); handleCollectionOpen(e); };
 }
 
-// ── 【追加】コレクション画面の「[ 戻る ]」ボタンを押したときの挙動制御 ──
+// ── 【一本化】コレクション画面を閉じる（戻る）処理 ──
 if (closeCollection) {
   const handleCollectionClose = (e) => {
     e.stopPropagation();
-    // もしゲームの状態が 'clear'（ステージクリア時）か 'over'（ゲームオーバー時）か 'idle' なら、
-    // コレクションを閉じた後に、再度その状態のモヤ画面を表示し直す
+    if (collectionView) {
+      collectionView.style.display = "none";
+    }
+    // もしゲームの状態が終了画面・クリア画面・タイトルなら、元のモヤ（overlay）を表示し直す
     if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') {
       if (overlay) {
         overlay.style.display = 'flex';
@@ -974,39 +991,16 @@ if (closeCollection) {
     }
   };
 
-  closeCollection.addEventListener('touchstart', handleCollectionClose, { passive: false });
-  closeCollection.addEventListener('click', handleCollectionClose);
+  closeCollection.onclick = handleCollectionClose;
+  closeCollection.ontouchstart = (e) => { e.preventDefault(); handleCollectionClose(e); };
 }
-setInterval(updateClock, 1000);
-updateClock();
 
+// ── ゲームループの開始 ──
 function loop() {
-  update();
-  draw();
+  if (!paused) {
+    update();
+    draw();
+  }
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-
-// ── 【追加】「記録を初期化」ボタンを押したときの挙動 ──
-if (resetDataBtn) {
-  const handleResetAction = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    // 誤操作防止の確認ダイアログ
-    if (confirm("これまでに集めた硝子片の記録をすべて消去します。よろしいですか？")) {
-      // 硝子片コレクションの記憶を削除
-      localStorage.removeItem("glassCollection");
-      
-      // もしゲームのハイスコアも完全にゼロに戻したければ、以下2行のコメントアウトを解除してくれ
-      // localStorage.removeItem("hiScore"); // ハイスコアの保存キー名に合わせて調整
-      // hi = 0; updHUD();
-      
-      alert("記録を初期化しました。");
-      location.reload(); // ページをリロードして「？」状態を反映
-    }
-  };
-
-  resetDataBtn.addEventListener('touchstart', handleResetAction, { passive: false });
-  resetDataBtn.addEventListener('click', handleResetAction);
-}

@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://yuduki-glass.com/sitemap.xml

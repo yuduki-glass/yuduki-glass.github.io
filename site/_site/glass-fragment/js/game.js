@@ -545,6 +545,11 @@ if (lives <= 0) {
     gameState = 'waiting';
     updHUD();
     
+    // 全てクリアした時の演出をここに入れるなら入れる。
+    // もしここでゲームオーバーにする意図がないなら、上記のコードだけで十分だ。
+  }
+} // ← ここで update() 自体の閉じ括弧をしっかり閉じる
+    
 gameState = 'over';
 exitPointerLock();
 showDot(true);

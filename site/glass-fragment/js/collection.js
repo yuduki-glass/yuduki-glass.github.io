@@ -221,11 +221,16 @@ const handleOpenCollection = (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  const gameArea = document.getElementById("gameArea");
   const collectionView = document.getElementById("collectionView");
+  const canvasWrap = document.getElementById("canvasWrap");
 
-  if (gameArea) gameArea.style.display = "none";
-  if (collectionView) collectionView.style.display = "flex";
+  if (canvasWrap) {
+    canvasWrap.style.display = "none";
+  }
+
+  if (collectionView) {
+    collectionView.style.display = "flex";
+  }
 
   loadCollection();
   updateTotalWeightDisplay();
@@ -241,10 +246,15 @@ const handleCloseCollection = (e) => {
   e.stopPropagation();
 
   const collectionView = document.getElementById("collectionView");
-  const gameArea = document.getElementById("gameArea");
-
-  if (collectionView) collectionView.style.display = "none";
-  if (gameArea) gameArea.style.display = "block";
+  const canvasWrap = document.getElementById("canvasWrap");
+  
+  if (collectionView) {
+    collectionView.style.display = "none";
+  }
+  
+  if (canvasWrap) {
+    canvasWrap.style.display = "flex";
+  }
 };
   closeCollection.addEventListener("touchstart", handleCloseCollection, { passive: false });
   closeCollection.addEventListener("click", handleCloseCollection);

@@ -149,8 +149,14 @@ function showCollectionGet(item){
 }
 
 function openCollection(){
+  console.log("openCollection 実行中"); // ← これを追加
   const grid = document.getElementById("collectionGrid");
-  if(!grid) return;
+  console.log("grid要素:", grid); // ← これも追加
+  
+  if(!grid) {
+    console.error("grid要素が見つかりません！"); // ← これも追加
+    return;
+  }
   grid.innerHTML="";
 
   collectionItems.forEach(item=>{

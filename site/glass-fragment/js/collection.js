@@ -217,17 +217,35 @@ if (itemPopup) {
 }
 if (typeof collectionBtn === 'undefined') { var collectionBtn = document.getElementById("collectionBtn"); }
 if (collectionBtn) {
-  const handleOpenCollection = (e) => {
-    e.preventDefault(); e.stopPropagation(); loadCollection(); updateTotalWeightDisplay(); openCollection();
-  };
+const handleOpenCollection = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const gameArea = document.getElementById("gameArea");
+  const collectionView = document.getElementById("collectionView");
+
+  if (gameArea) gameArea.style.display = "none";
+  if (collectionView) collectionView.style.display = "flex";
+
+  loadCollection();
+  updateTotalWeightDisplay();
+  openCollection();
+};
   collectionBtn.addEventListener("touchstart", handleOpenCollection, { passive: false });
   collectionBtn.addEventListener("click", handleOpenCollection);
 }
 if (typeof closeCollection === 'undefined') { var closeCollection = document.getElementById("closeCollection"); }
 if (closeCollection) {
   const handleCloseCollection = (e) => {
-    e.preventDefault(); e.stopPropagation(); document.getElementById("collectionView").style.display = "none";
-  };
+  e.preventDefault();
+  e.stopPropagation();
+
+  const collectionView = document.getElementById("collectionView");
+  const gameArea = document.getElementById("gameArea");
+
+  if (collectionView) collectionView.style.display = "none";
+  if (gameArea) gameArea.style.display = "block";
+};
   closeCollection.addEventListener("touchstart", handleCloseCollection, { passive: false });
   closeCollection.addEventListener("click", handleCloseCollection);
 }

@@ -220,23 +220,14 @@ if (itemPopup) {
 if (typeof collectionBtn === 'undefined') { var collectionBtn = document.getElementById("collectionBtn"); }
 if (collectionBtn) {
 const handleOpenCollection = (e) => {
-  console.log("ボタンが押された、イベント発火中"); // ← これを追加
+  console.log("ボタンが押された、イベント発火中");
   e.preventDefault();
   e.stopPropagation();
 
   const gameArea = document.getElementById("gameArea");
   const collectionView = document.getElementById("collectionView");
   
-  console.log("gameArea:", gameArea, "collectionView:", collectionView); // ← これも追加
-
-  if (gameArea) gameArea.style.display = "none";
-  if (collectionView) collectionView.style.display = "flex";
-  // ...
-  
-  e.preventDefault();
-  e.stopPropagation();
-
-  const collectionView = document.getElementById("collectionView");
+  console.log("gameArea:", gameArea, "collectionView:", collectionView);
 
   if (gameArea) gameArea.style.display = "none";
   if (collectionView) collectionView.style.display = "flex";

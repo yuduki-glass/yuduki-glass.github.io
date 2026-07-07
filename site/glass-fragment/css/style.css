@@ -533,3 +533,12 @@ canvas { display:block; position:absolute; top:0; left:0; width:100%; height:100
 .rarity-badge.rarity-c { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); }
 .rarity-badge.rarity-r { background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); }
 .rarity-badge.rarity-l { background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); }
+
+/* 確実に表示領域を確保する */
+#collectionView {
+  display: none !important; /* 初期状態 */
+  position: fixed !important; /* absolute から変更 */
+  inset: 0 !important;
+  z-index: 9999 !important; /* 最前面へ */
+  background: #060b14 !important; /* 背景色を強制的に固定 */
+}

@@ -161,10 +161,10 @@ function openCollection(){
 
     const rarityClass = item.rarity ? item.rarity.toLowerCase() : "c";
 
-    if(collectedItems.includes(Number(item.id))){
+if(collectedItems.includes(Number(item.id))){
       div.innerHTML=`
         <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
-        <img src="${item.image}" style="cursor: pointer; pointer-events: none;">
+        <img src="${item.image}" onerror="this.onerror=null; this.src='assets/items/no-image.svg'; this.style.opacity='0.3';" style="cursor: pointer; pointer-events: none;">
         <h3 style="pointer-events: none;">${item.name}</h3>
       `;
       div.style.cursor = "pointer";

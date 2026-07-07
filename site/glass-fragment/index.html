@@ -1,101 +1,33 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>硝子片集め — 欠片の記録</title>
-<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="硝子片集め" />
-<link rel="manifest" href="/site.webmanifest" />
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  
-<link rel="stylesheet" href="css/style.css">
-  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硝子片集め</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="cursor-dot">
-  <svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 2 L2 20 L6.5 15.5 L10.5 22 L13 21 L9 14.5 L16 14.5 Z"
-          fill="rgba(125,211,252,0.8)" stroke="#060b14" stroke-width="1.5" stroke-linejoin="round"/>
-  </svg>
-</div>
-<div id="wrap">
-  <div id="topbar">
-    <a id="homeBtn" href="https://yuduki-glass.com/">⌂ 表紙へ戻る</a>
-    <span>拾い集めた欠片</span>
-    <span id="clock" style="font-family: 'Share Tech Mono', monospace; color: rgba(56,189,248,0.4);">00:00:00</span>
-  </div>
-  <div id="canvasWrap">
-    <div id="leaderboard">
-      <h3>▸ 記録</h3>
-      <ol id="lbList"></ol>
-      <p class="lb-empty" id="lbEmpty">— 記録なし —</p>
-    </div>
-    <div id="gameArea">
-      <canvas id="c"></canvas>
-      <div id="scanlines"></div>
-      
-      <div id="collectionView">
-        <div class="glitch">硝子片集</div>
-        <div id="collectionGrid"></div>
-        <button id="closeCollection">[ 戻る ]</button>
-      </div>
 
-      <div id="itemPopup" class="popup-overlay" style="display: none;">
-        <div class="popup-content">
-          <div id="popupImageWrap"></div>
-          <h2 id="popupName"></h2>
-          <p id="popupDesc"></p>
-          <span class="popup-hint">枠外に触れて戻る</span>
-        </div>
-      </div>
-      
-      <div id="overlay">
-        <div class="glitch">硝子片集め</div>
-        <p class="tagline">硝子片集め</p>
-        
-        <p id="titleTotalWeight" style="font-size:14px; color:#7dd3fc; margin-top:12px; font-family:'Share Tech Mono', monospace; letter-spacing:2px; text-shadow:0 0 6px rgba(56,189,248,0.4);">
-          収集した硝子の重量: 0g
-        </p>
+    <div id="wrap">
+        
+        <button id="collectionBtn" type="button">硝子片集</button>
 
-        <p class="hint" style="margin-top:20px;">動かして受け止める</p>
-        <p class="hint">触れて開始</p>
-        <button id="startBtn">[ 観測 ]</button>
-        <button id="collectionBtn">硝子片集</button>
-        <button id="resetDataBtn">[ 記録初期化 ]</button>
-        
-        <a id="ideoLink" href="https://yuduki-glass.com/" style="display:none">表紙へ戻る</a>
-      </div>
-      
-      <div id="pauseOverlay">
-        <div class="glitch">静寂</div>
-        <p class="tagline">— 記録停止中 —</p>
-        
-        <p id="clearTotalWeight" style="font-size:14px; color:#7dd3fc; margin-bottom:20px; font-family:'Share Tech Mono', monospace; letter-spacing:2px; text-shadow:0 0 6px rgba(56,189,248,0.4);">
-          収集した硝子の重量: 0g
-        </p>
+        <div id="collectionView" style="display: none;">
+            <div id="collectionGrid"></div>
+            <button id="closeCollection" type="button">閉じる</button>
+        </div>
 
-        <button id="resumeBtn" class="pause-btn">[ 再開 ]</button>
-        <a href="https://yuduki-glass.com/" class="pause-btn" style="margin-top:8px;">表紙へ戻る</a>
-      </div>
-    </div>
-  </div>
-  <div id="botbar">
-    <span>輪郭: <b id="sv">000000</b></span>
-    <span>段階: <b id="lv">01</b></span>
-    <span>欠片: <b id="lf">3</b></span>
-    <span>記録: <b id="hv">000000</b></span>
-  </div>
-</div>
+        <div id="itemPopup" class="popup-overlay" style="display: none;">
+            <div class="popup-content">
+                <div id="popupImageWrap"></div>
+                <h2 id="popupName"></h2>
+                <div id="popupDesc"></div>
+            </div>
+        </div>
 
-<script src="js/collection.js"></script>
-<script src="js/game.js"></script>
+        <script src="js/collection.js" defer></script>
+        <script src="js/game.js" defer></script>
+    </div>
 
 </body>
 </html>

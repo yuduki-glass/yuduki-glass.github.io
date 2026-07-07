@@ -150,7 +150,7 @@ function showCollectionGet(item){
 function openCollection(){
   const grid = document.getElementById("collectionGrid");
   if(!grid) return;
-  grid.innerHTML="";
+  grid.innerHTML=""; // ここで一旦リセット
 
   collectionItems.forEach(item=>{
     const div = document.createElement("div");
@@ -164,7 +164,7 @@ function openCollection(){
 if(collectedItems.includes(Number(item.id))){
       div.innerHTML=`
         <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
-        <img src="${item.image}" onerror="this.onerror=null; this.src='assets/items/no-image.svg'; this.style.opacity='0.3';" style="cursor: pointer; pointer-events: none;">
+        <img src="${item.image}" onerror="this.style.display='none'; this.parentNode.insertAdjacentHTML('beforeend', '<div style=\'font-size:10px; color:#555;\'>[画像欠落]</div>');" style="cursor: pointer; pointer-events: none;">
         <h3 style="pointer-events: none;">${item.name}</h3>
       `;
       div.style.cursor = "pointer";

@@ -236,7 +236,6 @@ const handleOpenCollection = (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  const gameArea = document.getElementById("gameArea");
   const collectionView = document.getElementById("collectionView");
 
   if (gameArea) gameArea.style.display = "none";

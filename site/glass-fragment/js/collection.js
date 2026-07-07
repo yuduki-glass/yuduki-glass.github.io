@@ -221,8 +221,13 @@ const handleOpenCollection = (e) => {
   e.preventDefault();
   e.stopPropagation();
 
+  const gameArea = document.getElementById("gameArea");
   const collectionView = document.getElementById("collectionView");
   const canvasWrap = document.getElementById("canvasWrap");
+
+  if (gameArea) {
+    gameArea.style.display = "block";
+  }
 
   if (canvasWrap) {
     canvasWrap.style.display = "none";
@@ -252,9 +257,13 @@ const handleCloseCollection = (e) => {
     collectionView.style.display = "none";
   }
   
-  if (canvasWrap) {
-    canvasWrap.style.display = "flex";
-  }
+if (gameArea) {
+  gameArea.style.display = "block";
+}
+
+if (canvasWrap) {
+  canvasWrap.style.display = "flex";
+}
 };
   closeCollection.addEventListener("touchstart", handleCloseCollection, { passive: false });
   closeCollection.addEventListener("click", handleCloseCollection);

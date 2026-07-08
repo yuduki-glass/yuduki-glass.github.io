@@ -66,7 +66,11 @@ function updateTotalWeightDisplay() {
 
 function addCollectionItem(clearedLevel) {
   const uncollectedItems = collectionItems.filter(item => !collectedItems.includes(Number(item.id)));
-  if (uncollectedItems.length === 0) return;
+  
+  // 【修正】すべて集めきっている場合の安全弁
+  if (uncollectedItems.length === 0) {
+    return { name: "全硝子片 観測完了" };
+  }
 
   const totalWeightOfUncollected = uncollectedItems.reduce((sum, item) => sum + item.weightValue, 0);
   let randomValue = Math.random() * totalWeightOfUncollected;
@@ -94,6 +98,9 @@ function addCollectionItem(clearedLevel) {
 
   saveCollection();
   updateTotalWeightDisplay();
+
+  // ▼▼▼ 【追加】選ばれたアイテムの情報をgame.jsにバトンタッチする ▼▼▼
+  return selectedItem;
 }
 
 function openCollection() {

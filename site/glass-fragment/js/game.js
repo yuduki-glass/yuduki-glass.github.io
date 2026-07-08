@@ -637,22 +637,46 @@ if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
     
-    // ── 【修正】オーバーレイ（モヤ）を先に表示する ──
     if (overlay) {
       overlay.style.display = 'flex';
       const glitch = overlay.querySelector('.glitch');
       if (glitch) glitch.textContent = '結晶共鳴';
-    }
+      
+      // ▼▼▼ 【ここから追加】クリア画面に獲得アイテム表示スペースを作る ▼▼▼
+      // 既存の古い表示があれば一旦消す
+      const oldDisplay = overlay.querySelector('.get-item-display');
+      if (oldDisplay) oldDisplay.remove();
 
-    // ── 【修正】コレクション側を呼び出し、ランダム選出＆テキスト書き換えを行わせる ──
-    if (typeof addCollectionItem === "function") {
-      addCollectionItem(level);
-    } else {
-      // フォールバック（関数がない場合）
-      const taglines = overlay ? overlay.querySelectorAll('.tagline') : [];
-      if (taglines.length > 0) {
-        taglines[0].textContent = `LEVEL ${level} CLEAR!`;
+      // 今回獲得したアイテムの情報を取得
+      // ※ addCollectionItem が獲得したアイテムのオブジェクト { name: "...", img: "..." } を返す想定です
+      if (typeof addCollectionItem === "function") {
+        const gottenItem = addCollectionItem(level); 
+        
+        if (gottenItem && gottenItem.name) {
+          // アイテム表示用のコンテナを作成
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'get-item-display';
+          itemDiv.style.cssText = 'margin: 20px 0; text-align: center; animation: popupFadeIn 0.3s ease-out;';
+
+          // 画像があれば表示
+          if (gottenItem.img) {
+            const itemImg = document.createElement('img');
+            itemImg.src = gottenItem.img;
+            itemImg.style.cssText = 'width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(56,189,248,0.6)); margin-bottom: 8px;';
+            itemDiv.appendChild(itemImg);
+          }
+
+          // アイテム名を指定
+          const itemName = document.createElement('div');
+          itemName.textContent = `【 獲得: ${gottenItem.name} 】`;
+          itemName.style.cssText = 'font-size: 15px; color: #7dd3fc; letter-spacing: 2px; text-shadow: 0 0 6px rgba(56,189,248,0.5);';
+          itemDiv.appendChild(itemName);
+
+          // クリア画面の「硝子片集」ボタンの上あたりに挿入する
+          overlay.insertBefore(itemDiv, collectionBtn);
+        }
       }
+      // ▲▲▲ 【ここまで追加】 ▲▲▲
     }
 
     if (startBtn) {

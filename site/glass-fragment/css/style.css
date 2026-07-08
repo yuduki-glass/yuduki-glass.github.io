@@ -298,9 +298,8 @@ canvas { display:block; position:absolute; top:0; left:0; }
     height: calc(100% - 64px) !important; /* 画面高さ - バーの高さ(32+32) */
     overflow: hidden;
   }
-  #gameArea {
-    width: 100% !important;
-    height: 100% !important;
+  #gameArea{
+      flex:none;
   }
 
   /* ── 硝子片集（コレクション画面）全体を画面いっぱいに広げる ── */
@@ -318,7 +317,7 @@ canvas { display:block; position:absolute; top:0; left:0; }
 
     z-index: 30 !important;
 
-    overflow: hidden;
+    overflow: auto;
     height: 100% !important;
 }
 

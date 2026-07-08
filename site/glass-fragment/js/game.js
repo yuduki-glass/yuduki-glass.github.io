@@ -889,12 +889,14 @@ if (gameArea) {
   }, { passive:false });
 
   gameArea.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (gameState !== 'playing' && gameState !== 'waiting') return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - lastTouchX;
-    lastTouchX = touch.clientX;
-    mouseX = Math.max(0, Math.min(CW, mouseX + deltaX * 1.2));
+    // ゲームプレイ中、または発射待ちのときだけスクロールを禁止してパドルを動かす
+    if (gameState === 'playing' || gameState === 'waiting') {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - lastTouchX;
+      lastTouchX = touch.clientX;
+      mouseX = Math.max(0, Math.min(CW, mouseX + deltaX * 1.2));
+    }
   }, { passive:false });
 
   if (!isMobile) {

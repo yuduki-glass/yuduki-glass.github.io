@@ -514,3 +514,88 @@ canvas { display:block; position:absolute; top:0; left:0; }
   margin-top: 16px;
   letter-spacing: 1px;
 }
+
+/* ==========================================================================
+   追加：レア度バッジ ＆ 視覚的色分けデザイン（観測・未観測共通仕様）
+   ========================================================================== */
+
+/* ── 各アイテム枠（共通の初期化・相対配置） ── */
+#collectionGrid > div {
+  position: relative !important; /* バッジを左上に絶対配置するための土台 */
+  overflow: hidden;
+}
+
+/* ── レア度バッジ（共通の土台） ── */
+.rarity-badge {
+  position: absolute !important;
+  top: 4px !important;
+  left: 4px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  padding: 3px 5px !important;
+  border-radius: 3px !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  z-index: 10 !important;
+  font-family: 'Klee One', serif;
+}
+
+/* ── 【常融 / C】静かな白・灰色のデザイン ── */
+.rarity-c {
+  background: rgba(200, 200, 200, 0.15) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(200, 200, 200, 0.3) !important;
+}
+.rarity-border-c {
+  border-color: rgba(200, 200, 200, 0.2) !important;
+}
+.rarity-text-c {
+  color: #cbd5e1 !important;
+}
+
+/* ── 【希硝 / R】透明感のあるネビュラブルーのデザイン ── */
+.rarity-r {
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.6);
+}
+/* 観測・未観測に関わらず、アイテム枠（外枠）を青く発光 */
+.rarity-border-r {
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  box-shadow: inset 0 0 6px rgba(56, 189, 248, 0.08) !important;
+}
+.rarity-text-r {
+  color: #38bdf8 !important;
+  text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
+}
+
+/* ── 【幻晶 / L】妖しく明滅する紫・ピンクのデザイン ── */
+.rarity-l {
+  background: rgba(192, 132, 252, 0.22) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(192, 132, 252, 0.5) !important;
+  text-shadow: 0 0 5px rgba(192, 132, 252, 0.8);
+}
+/* 観測・未観測に関わらず、アイテム枠（外枠）を妖しく発光＋アニメーション */
+.rarity-border-l {
+  border-color: rgba(192, 132, 252, 0.55) !important;
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.15), inset 0 0 8px rgba(192, 132, 252, 0.1) !important;
+  animation: rarityGlow 2.5s infinite alternate !important;
+}
+.rarity-text-l {
+  color: #c084fc !important;
+  text-shadow: 0 0 6px rgba(192, 132, 252, 0.6);
+}
+
+/* 幻晶（最高レア）枠用の微細な明滅アニメーション */
+@keyframes rarityGlow {
+  0% {
+    border-color: rgba(192, 132, 252, 0.35) !important;
+    box-shadow: 0 0 4px rgba(192, 132, 252, 0.05), inset 0 0 4px rgba(192, 132, 252, 0.05) !important;
+  }
+  100% {
+    border-color: rgba(192, 132, 252, 0.7) !important;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.25), inset 0 0 10px rgba(192, 132, 252, 0.15) !important;
+  }
+}

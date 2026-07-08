@@ -516,23 +516,23 @@ canvas { display:block; position:absolute; top:0; left:0; }
 }
 
 /* ==========================================================================
-   追加：レア度バッジ ＆ 視覚的色分けデザイン（観測・未観測共通仕様）
+   修正：世界観調和型・レア度色分けデザイン（オーラ発光仕様）
    ========================================================================== */
 
-/* ── 各アイテム枠（共通の初期化・相対配置） ── */
+/* ── 各アイテム枠（共通の土台） ── */
 #collectionGrid > div {
-  position: relative !important; /* バッジを左上に絶対配置するための土台 */
+  position: relative !important;
   overflow: hidden;
 }
 
-/* ── レア度バッジ（共通の土台） ── */
+/* ── レア度バッジ（共通） ── */
 .rarity-badge {
   position: absolute !important;
   top: 4px !important;
   left: 4px !important;
   font-size: 9px !important;
   line-height: 1 !important;
-  padding: 3px 5px !important;
+  padding: 3px 6px !important;
   border-radius: 3px !important;
   font-weight: bold !important;
   letter-spacing: 1px !important;
@@ -540,62 +540,64 @@ canvas { display:block; position:absolute; top:0; left:0; }
   font-family: 'Klee One', serif;
 }
 
-/* ── 【常融 / C】静かな白・灰色のデザイン ── */
+/* ── 【常融 / C】水硝子：静かに沈黙する薄青灰 ── */
 .rarity-c {
-  background: rgba(200, 200, 200, 0.15) !important;
-  color: #cbd5e1 !important;
-  border: 1px solid rgba(200, 200, 200, 0.3) !important;
+  background: rgba(71, 85, 105, 0.2) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(71, 85, 105, 0.4) !important;
 }
 .rarity-border-c {
-  border-color: rgba(200, 200, 200, 0.2) !important;
+  border-color: rgba(71, 85, 105, 0.2) !important;
 }
 .rarity-text-c {
-  color: #cbd5e1 !important;
+  color: #94a3b8 !important;
 }
 
-/* ── 【希硝 / R】透明感のあるネビュラブルーのデザイン ── */
+/* ── 【希硝 / R】月光硝子：鋭く透き通る青の輝き ── */
 .rarity-r {
-  background: rgba(56, 189, 248, 0.18) !important;
+  background: rgba(14, 165, 233, 0.15) !important;
   color: #38bdf8 !important;
-  border: 1px solid rgba(56, 189, 248, 0.4) !important;
-  text-shadow: 0 0 4px rgba(56, 189, 248, 0.6);
+  border: 1px solid rgba(14, 165, 233, 0.5) !important;
+  text-shadow: 0 0 4px rgba(14, 165, 233, 0.6);
 }
-/* 観測・未観測に関わらず、アイテム枠（外枠）を青く発光 */
 .rarity-border-r {
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  box-shadow: inset 0 0 6px rgba(56, 189, 248, 0.08) !important;
+  border-color: rgba(14, 165, 233, 0.5) !important;
+  box-shadow: 0 0 6px rgba(14, 165, 233, 0.1), inset 0 0 6px rgba(14, 165, 233, 0.05) !important;
 }
 .rarity-text-r {
   color: #38bdf8 !important;
-  text-shadow: 0 0 4px rgba(56, 189, 248, 0.5);
+  text-shadow: 0 0 4px rgba(14, 165, 233, 0.5);
 }
 
-/* ── 【幻晶 / L】妖しく明滅する紫・ピンクのデザイン ── */
+/* ── 【幻晶 / L】黎明結晶：夜明けの空のように色が移り変わる最高レア ── */
 .rarity-l {
-  background: rgba(192, 132, 252, 0.22) !important;
-  color: #c084fc !important;
-  border: 1px solid rgba(192, 132, 252, 0.5) !important;
-  text-shadow: 0 0 5px rgba(192, 132, 252, 0.8);
+  /* バッジ自体をグラデーションにして特別な存在に */
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(168, 85, 247, 0.3)) !important;
+  color: #f472b6 !important;
+  border: 1px solid rgba(236, 72, 153, 0.6) !important;
+  text-shadow: 0 0 5px rgba(236, 72, 153, 0.8);
 }
-/* 観測・未観測に関わらず、アイテム枠（外枠）を妖しく発光＋アニメーション */
 .rarity-border-l {
-  border-color: rgba(192, 132, 252, 0.55) !important;
-  box-shadow: 0 0 8px rgba(192, 132, 252, 0.15), inset 0 0 8px rgba(192, 132, 252, 0.1) !important;
-  animation: rarityGlow 2.5s infinite alternate !important;
+  /* 枠線をグラデーションのように見せるオーラアニメーション */
+  animation: auroraGlow 4s infinite alternate ease-in-out !important;
 }
 .rarity-text-l {
-  color: #c084fc !important;
-  text-shadow: 0 0 6px rgba(192, 132, 252, 0.6);
+  color: #f472b6 !important;
+  text-shadow: 0 0 6px rgba(236, 72, 153, 0.6);
 }
 
-/* 幻晶（最高レア）枠用の微細な明滅アニメーション */
-@keyframes rarityGlow {
+/* 幻晶（最高レア）用の幻想的なグラデーションオーラアニメーション */
+@keyframes auroraGlow {
   0% {
-    border-color: rgba(192, 132, 252, 0.35) !important;
-    box-shadow: 0 0 4px rgba(192, 132, 252, 0.05), inset 0 0 4px rgba(192, 132, 252, 0.05) !important;
+    border-color: rgba(168, 85, 247, 0.4) !important; /* 紫 */
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.2), inset 0 0 6px rgba(168, 85, 247, 0.1) !important;
+  }
+  50% {
+    border-color: rgba(192, 132, 252, 0.6) !important; /* 中間 */
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.3), inset 0 0 10px rgba(192, 132, 252, 0.15) !important;
   }
   100% {
-    border-color: rgba(192, 132, 252, 0.7) !important;
-    box-shadow: 0 0 12px rgba(192, 132, 252, 0.25), inset 0 0 10px rgba(192, 132, 252, 0.15) !important;
+    border-color: rgba(236, 72, 153, 0.5) !important; /* ピンク */
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.35), inset 0 0 12px rgba(236, 72, 153, 0.2) !important;
   }
 }

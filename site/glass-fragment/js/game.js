@@ -886,7 +886,11 @@ if (gameArea) {
   });
 
   gameArea.addEventListener('touchstart', e => {
-    if ((overlay && overlay.style.display !== 'none' && gameState !== 'clear') || gameState === 'idle' || gameState === 'over') return;
+    // 【修正】クリア画面、ゲームオーバー画面、タイトル画面ではゲーム自体のタッチ処理（preventDefault）を完全にスルーする
+    if ((overlay && overlay.style.display !== 'none') || gameState === 'clear' || gameState === 'idle' || gameState === 'over') {
+      return; 
+    }
+    
     e.preventDefault();
     const touch = e.touches[0];
     lastTouchX = touch.clientX;
@@ -905,7 +909,10 @@ if (gameArea) {
   }, { passive:false });
 
   if (!isMobile) {
-    gameArea.addEventListener('click', () => {
+    gameArea.addEventListener('click', e => {
+      // 【修正】クリア画面やゲームオーバー画面のボタンをクリックした時は、ポインターロック等の処理を邪魔しない
+      if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') return;
+
       if (gameState === 'playing' || gameState === 'waiting') {
         if (document.pointerLockElement !== gameArea && !userEscaped) {
           exitedIntentionally = false;

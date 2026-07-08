@@ -304,35 +304,44 @@ canvas { display:block; position:absolute; top:0; left:0; }
   }
 
   /* ── 硝子片集（コレクション画面）全体を画面いっぱいに広げる ── */
-  #collectionView {
+#collectionView {
     position: absolute;
-    inset: 0 !important; /* 画面内にぴったり合わせる */
-    padding: 10px 6px 6px 6px !important; /* 余白を最小限に */
-    display: none; /* JSでflexになる */
+    inset: 0 !important;
+    padding: 10px 6px 6px 6px !important;
+
+    display: none;
+
     flex-direction: column !important;
     justify-content: flex-start !important;
-    background: rgba(5, 10, 21, 0.98) !important;
-    
-    /* 【修正】コレクション画面が閉じているとき、
-       後ろにあるオーバーレイを阻まないよう、z-indexを調整（gameデフォルト:20） */
-    z-index: 10 !important;
-  }
+
+    background: rgba(5,10,21,.98) !important;
+
+    z-index: 30 !important;
+
+    overflow: hidden;
+}
 
   /* ！！！ここが本番：グリッド自体を縦に長く、スクロールさせる！！！ */
-  #collectionGrid {
+ #collectionGrid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important; /* 3〜4列 */
-    gap: 8px !important;
-    width: 100% !important;
-    flex: 1 !important; /* タイトルとボタンの残りの高さをすべて使う */
-    margin: 0 !important;
-    padding: 6px !important;
-    
-    /* 縦方向のスムーズなスクロールを有効化 */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important; /* iOS等の慣性スクロール */
-  }
+    grid-template-columns: repeat(auto-fill,minmax(90px,1fr)) !important;
+
+    gap:8px !important;
+
+    width:100% !important;
+
+    flex:1 !important;
+
+    min-height:0 !important;
+
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+
+    -webkit-overflow-scrolling:touch;
+
+    padding:6px !important;
+    margin:0 !important;
+}
 
   /* カード自体のサイズ調整（コンパクトに） */
   #collectionGrid > div {

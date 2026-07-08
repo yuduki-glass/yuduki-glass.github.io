@@ -659,9 +659,9 @@ if (bricks.length > 0 && bricks.every(b => !b.alive)) {
           itemDiv.style.cssText = 'margin: 20px 0; text-align: center; animation: popupFadeIn 0.3s ease-out;';
 
           // 画像があれば表示
-          if (gottenItem.img) {
+          if (gottenItem.image) {  // ← img から image に修正
             const itemImg = document.createElement('img');
-            itemImg.src = gottenItem.img;
+            itemImg.src = gottenItem.image; // ← img から image に修正
             itemImg.style.cssText = 'width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(56,189,248,0.6)); margin-bottom: 8px;';
             itemDiv.appendChild(itemImg);
           }

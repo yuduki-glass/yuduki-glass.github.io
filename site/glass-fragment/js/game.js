@@ -53,6 +53,7 @@ function resize() {
   const LB_TOP  = 48;  
 
   if (availW >= availH) {
+    // ── 横画面（PC）の処理：ここは変更なし（正方形を維持） ──
     isPortrait = false;
     canvasWrap.style.flexDirection = 'row';
     leaderboard.classList.remove('lb-top');
@@ -61,17 +62,16 @@ function resize() {
       canvasWrap.insertBefore(leaderboard, gameArea);
     }
     
-    // 横幅の限界（全体の幅 - サイドバーの160px）と、縦幅の限界、小さい方をゲームサイズにする
     const size = Math.min(availW - LB_SIDE, availH);
-    CW = size; CH = size;
+    CW = size; CH = size; // 横画面は正方形
     
     gameArea.style.width   = size + 'px';
-    gameArea.style.height = size + 'px';
+    gameArea.style.height  = size + 'px';
     canvas.width   = size;
-    canvas.height = size;
+    canvas.height  = size;
   }
-  
   else {
+    // ── 縦画面（スマホ）の処理：ここを目いっぱい使うように修正 ──
     isPortrait = true;
     canvasWrap.style.flexDirection = 'column';
     leaderboard.classList.remove('lb-left');
@@ -80,12 +80,17 @@ function resize() {
       canvasWrap.insertBefore(leaderboard, gameArea);
     }
     const lbH = leaderboard.offsetHeight || LB_TOP;
-    const size = Math.min(availW, availH - lbH);
-    CW = size; CH = size;
-    gameArea.style.width   = size + 'px';
-    gameArea.style.height = size + 'px';
-    canvas.width   = size;
-    canvas.height = size;
+    
+    // 【修正】正方形制限（Math.min）を撤廃し、縦・横それぞれ限界まで広げる
+    // ※ 下部のHUD（スコア等）の高さ分、少しだけ余裕（50pxなど）を引くと綺麗に収まります
+    const paddingBottom = 60; 
+    CW = availW; 
+    CH = availH - lbH - paddingBottom; 
+    
+    gameArea.style.width   = CW + 'px';
+    gameArea.style.height  = CH + 'px';
+    canvas.width   = CW;
+    canvas.height  = CH;
   }
 }
 resize();
@@ -112,7 +117,7 @@ let score = 0, hi = 0, lives = 3, level = 1;
 let userEscaped = false;       
 let exitedIntentionally = false; 
 let paused = false;
-let paddleX = CW / 2, mouseX = CW / 2; 
+let paddleX = window.innerWidth / 2, mouseX = window.innerWidth / 2;
 let balls = [];
 let bricks = [];
 let started = false;

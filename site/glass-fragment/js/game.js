@@ -1,4 +1,4 @@
-// ──【解決策A】重複エラーを回避する安全な宣言に差し替え ──
+// ──【解決策A】重複エラーを回避する安全な宣言に差し替え ── 
 if (typeof canvas === 'undefined') { var canvas = document.getElementById('c'); }
 if (typeof ctx === 'undefined') { var ctx = canvas ? canvas.getContext('2d') : null; }
 if (typeof canvasWrap === 'undefined') { var canvasWrap = document.getElementById('canvasWrap'); }
@@ -46,51 +46,60 @@ function triggerShake(duration) {
 }
 
 function resize() {
-  if (!canvasWrap || !leaderboard || !gameArea || !canvas) return;
+  // ── 修正：leaderboard がなくても処理を止めないようにガードを変更 ──
+  if (!canvasWrap || !gameArea || !canvas) return;
+  
   const availW = canvasWrap.clientWidth;
   const availH = canvasWrap.clientHeight;
   const LB_SIDE = 160; 
   const LB_TOP  = 48;  
 
   if (availW >= availH) {
-    // ── 横画面（PC）の処理：ここは変更なし（正方形を維持） ──
+    // ── 横画面（PC）の処理 ──
     isPortrait = false;
     canvasWrap.style.flexDirection = 'row';
-    leaderboard.classList.remove('lb-top');
-    leaderboard.classList.add('lb-left');
-    if (leaderboard.nextSibling !== gameArea) {
-      canvasWrap.insertBefore(leaderboard, gameArea);
+    
+    // leaderboard が存在するときだけクラスやDOM順序をいじる
+    if (leaderboard) {
+      leaderboard.classList.remove('lb-top');
+      leaderboard.classList.add('lb-left');
+      if (leaderboard.nextSibling !== gameArea) {
+        canvasWrap.insertBefore(leaderboard, gameArea);
+      }
     }
     
-    const size = Math.min(availW - LB_SIDE, availH);
-    CW = size; CH = size; // 横画面は正方形
+    // 記録枠が消えたので、実質は availW 全体ベースでもいいが、安全に計算
+    const sideGap = leaderboard ? LB_SIDE : 0;
+    const size = Math.min(availW - sideGap, availH);
+    CW = size; CH = size; 
     
     gameArea.style.width   = size + 'px';
     gameArea.style.height  = size + 'px';
-    canvas.width   = size;
-    canvas.height  = size;
+    canvas.width           = size;
+    canvas.height          = size;
   }
   else {
-    // ── 縦画面（スマホ）の処理：ここを目いっぱい使うように修正 ──
+    // ── 縦画面（スマホ）の処理 ──
     isPortrait = true;
     canvasWrap.style.flexDirection = 'column';
-    leaderboard.classList.remove('lb-left');
-    leaderboard.classList.add('lb-top');
-    if (leaderboard.nextSibling !== gameArea) {
-      canvasWrap.insertBefore(leaderboard, gameArea);
-    }
-    const lbH = leaderboard.offsetHeight || LB_TOP;
     
-    // 【修正】正方形制限（Math.min）を撤廃し、縦・横それぞれ限界まで広げる
-    // ※ 下部のHUD（スコア等）の高さ分、少しだけ余裕（50pxなど）を引くと綺麗に収まります
+    if (leaderboard) {
+      leaderboard.classList.remove('lb-left');
+      leaderboard.classList.add('lb-top');
+      if (leaderboard.nextSibling !== gameArea) {
+        canvasWrap.insertBefore(leaderboard, gameArea);
+      }
+    }
+    
+    const lbH = leaderboard ? (leaderboard.offsetHeight || LB_TOP) : 0;
     const paddingBottom = 60; 
     CW = availW; 
     CH = availH - lbH - paddingBottom; 
     
     gameArea.style.width   = CW + 'px';
     gameArea.style.height  = CH + 'px';
-    canvas.width   = CW;
-    canvas.height  = CH;
+    canvas.width           = CW;
+    canvas.height          = CH;
   }
 }
 resize();
@@ -107,7 +116,6 @@ function brickH()      { return 4; }
 function brickGapY()   { return 2; }
 function brickGapX()   { return 2; }
 function brickW() { 
-  // PCでもスマホでも、ゲーム画面の横幅（CW）をベースに等分割すればいいだけ
   return Math.floor((CW - (COLS - 1) * brickGapX()) / COLS); 
 }
 function brickStartX() { return Math.round((CW - (COLS * brickW() + (COLS-1) * brickGapX())) / 2); }
@@ -234,12 +242,11 @@ function updateDrops() {
 }
 
 function activateMultiball() {
-  // ── 【最適化】最大50個制限を設けて過負荷を防止 ──
   if (balls.length >= 50) return;
 
   const current = [...balls];
   for (const source of current) {
-    if (balls.length >= 50) break; // ループ内でも上限チェック
+    if (balls.length >= 50) break; 
     const spd = Math.hypot(source.vx, source.vy);
     const base = Math.atan2(source.vy, source.vx);
     const angles = [-0.35, 0.35];
@@ -307,7 +314,6 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-// ── Particles ──
 let particles = [];
 
 function spawnBrickParticles(bx, by, bw, bh) {
@@ -537,7 +543,6 @@ function update() {
 
   const py = paddleY();
   
-  // ── 【最適化】ブロックが並んでいる領域の最大Y座標をあらかじめ算出 ──
   const maxRows = Math.min(ROWS + level - 1, 10);
   const maxBrickY = brickStartY() + maxRows * (brickH() + brickGapY());
 
@@ -545,7 +550,7 @@ function update() {
     if (ball.lost) continue;
     
     ball.history.push({ x: ball.x, y: ball.y });
-    if (ball.history.length > 5) ball.history.shift(); // 軌跡数をわずかに削減（6→5）
+    if (ball.history.length > 5) ball.history.shift(); 
 
     ball.x += ball.vx;
     ball.y += ball.vy;
@@ -567,7 +572,6 @@ function update() {
       triggerShake(4); 
     }
 
-    // ── 【最適化】ボールがブロックのある最下部より上方にいるときだけ当たり判定ループを回す ──
     if (ball.y - BALL_R <= maxBrickY) {
       for (const b of bricks) {
         if (!b.alive) continue;
@@ -633,7 +637,7 @@ function update() {
     return;
   }
 
-if (bricks.length > 0 && bricks.every(b => !b.alive)) {
+  if (bricks.length > 0 && bricks.every(b => !b.alive)) {
     if (gameState === 'clear') return;
     gameState = 'clear';
     
@@ -642,41 +646,32 @@ if (bricks.length > 0 && bricks.every(b => !b.alive)) {
       const glitch = overlay.querySelector('.glitch');
       if (glitch) glitch.textContent = '結晶共鳴';
       
-      // ▼▼▼ 【ここから追加】クリア画面に獲得アイテム表示スペースを作る ▼▼▼
-      // 既存の古い表示があれば一旦消す
       const oldDisplay = overlay.querySelector('.get-item-display');
       if (oldDisplay) oldDisplay.remove();
 
-      // 今回獲得したアイテムの情報を取得
-      // ※ addCollectionItem が獲得したアイテムのオブジェクト { name: "...", img: "..." } を返す想定です
       if (typeof addCollectionItem === "function") {
         const gottenItem = addCollectionItem(level); 
         
         if (gottenItem && gottenItem.name) {
-          // アイテム表示用のコンテナを作成
           const itemDiv = document.createElement('div');
           itemDiv.className = 'get-item-display';
           itemDiv.style.cssText = 'margin: 20px 0; text-align: center; animation: popupFadeIn 0.3s ease-out;';
 
-          // 画像があれば表示
-          if (gottenItem.image) {  // ← img から image に修正
+          if (gottenItem.image) {  
             const itemImg = document.createElement('img');
-            itemImg.src = gottenItem.image; // ← img から image に修正
+            itemImg.src = gottenItem.image; 
             itemImg.style.cssText = 'width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(56,189,248,0.6)); margin-bottom: 8px;';
             itemDiv.appendChild(itemImg);
           }
 
-          // アイテム名を指定
           const itemName = document.createElement('div');
           itemName.textContent = `【 獲得: ${gottenItem.name} 】`;
           itemName.style.cssText = 'font-size: 15px; color: #7dd3fc; letter-spacing: 2px; text-shadow: 0 0 6px rgba(56,189,248,0.5);';
           itemDiv.appendChild(itemName);
 
-          // クリア画面の「硝子片集」ボタンの上あたりに挿入する
           overlay.insertBefore(itemDiv, collectionBtn);
         }
       }
-      // ▲▲▲ 【ここまで追加】 ▲▲▲
     }
 
     if (startBtn) {
@@ -733,7 +728,6 @@ function draw() {
   ctx.strokeRect(px + 0.5, py + 0.5, PW - 1, PADDLE_H - 1);
 
   if (gameState !== 'over') {
-    // ── 【最適化】すべてのボールの軌跡を一括で「一本の線」としてパス描画 ──
     ctx.lineWidth = BALL_R * 1.3;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
@@ -749,7 +743,6 @@ function draw() {
       }
     });
 
-    // ── 本体（白丸）の描画。高負荷な影（shadowBlur）の処理をここだけに限定 ──
     ctx.fillStyle = '#FFFFFF';
     ctx.shadowBlur = pierceTimer > 0 ? 30 : 18;
     ctx.shadowColor = pierceTimer > 0 ? '#ffffff' : '#00FFFF';
@@ -760,13 +753,12 @@ function draw() {
       ctx.fill();
     });
     
-    ctx.shadowBlur = 0; // ループを抜けた後、最後に一度だけリセット
+    ctx.shadowBlur = 0; 
   }
   
   ctx.restore();
 }
 
-// ── Audio ──
 let audioCtx = null;
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -850,7 +842,6 @@ function sfxDeath() {
   } catch(e) {}
 }
 
-// ── Pause ──
 function pauseGame() {
   if (paused || (gameState !== 'playing' && gameState !== 'waiting')) return;
   paused = true;
@@ -910,7 +901,6 @@ if (gameArea) {
   });
 
   gameArea.addEventListener('touchstart', e => {
-    // 【修正】クリア画面、ゲームオーバー画面、タイトル画面ではゲーム自体のタッチ処理（preventDefault）を完全にスルーする
     if ((overlay && overlay.style.display !== 'none') || gameState === 'clear' || gameState === 'idle' || gameState === 'over') {
       return; 
     }
@@ -922,7 +912,6 @@ if (gameArea) {
   }, { passive:false });
 
   gameArea.addEventListener('touchmove', e => {
-    // ゲームプレイ中、または発射待ちのときだけスクロールを禁止してパドルを動かす
     if (gameState === 'playing' || gameState === 'waiting') {
       e.preventDefault();
       const touch = e.touches[0];
@@ -934,7 +923,6 @@ if (gameArea) {
 
   if (!isMobile) {
     gameArea.addEventListener('click', e => {
-      // 【修正】クリア画面やゲームオーバー画面のボタンをクリックした時は、ポインターロック等の処理を邪魔しない
       if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') return;
 
       if (gameState === 'playing' || gameState === 'waiting') {
@@ -955,12 +943,11 @@ function handleStartAction(e) {
   e.stopPropagation();
   e.preventDefault();
   
-  // ── 【修正】文字基準ではなく、現在のgameStateが'clear'かどうかで確実に判定 ──
   if (gameState === 'clear') {
     level++;
     buildBricks();
     balls = [makeBall()];
-    if (overlay) overlay.style.display = 'none'; // ここで確実にモヤを消す
+    if (overlay) overlay.style.display = 'none'; 
     updHUD();
     
     setTimeout(() => {
@@ -969,7 +956,6 @@ function handleStartAction(e) {
       if (!isMobile) requestPointerLock();
     }, 80);
   } else {
-    // 初回スタート、またはゲームオーバーからのリトライ時
     initGame();
   }
 }
@@ -989,109 +975,58 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── 【一本化】コレクション画面を開く処理 ──
-// ── 【修正版】コレクション画面を開く処理（開閉の行き来だけを担当） ──
-// ── 【完全クリーン版】コレクション画面を開く処理（game.js） ──
 if (collectionBtn) {
   const handleCollectionOpen = (e) => {
-    // 画面のバブリング停止（stopPropagation）は一切しない
-    
-    // コレクションを開くときは、手前のゲームオーバー/クリア画面のモヤを一時的に隠す
     if (overlay) overlay.style.display = 'none';
     if (collectionView) collectionView.style.display = 'flex';
     
-    // collection.js 側の画面描画関数を安全に呼び出す
     if (typeof loadCollection === "function") loadCollection();
     if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
     if (typeof openCollection === "function") openCollection(); 
   };
-
-  // collection.js 側の addEventListener を邪魔しないよう、onclick で綺麗に相乗りする
   collectionBtn.onclick = handleCollectionOpen;
 }
 
-// ── 【完全クリーン版】コレクション画面を閉じる処理（game.js） ──
 if (closeCollection) {
   const handleCollectionClose = (e) => {
-    // もしアイテムポップアップが開いているなら、ここでは大枠の閉じる処理はスルー
     const itemPopup = document.getElementById("itemPopup");
     if (itemPopup && itemPopup.style.display === "flex") {
       return; 
     }
-    
-    // ポップアップが閉じていて、本当にコレクション画面自体を閉じるときだけ実行
     if (collectionView) collectionView.style.display = "none";
-    
-    // ゲームの状態に応じて元のモヤ（overlay）を表示し直す
     if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') {
       if (overlay) overlay.style.display = 'flex';
     }
   };
-
   closeCollection.onclick = handleCollectionClose;
   closeCollection.ontouchstart = (e) => { e.preventDefault(); handleCollectionClose(e); };
 }
 
-// ── 【追記】記録初期化ボタンの処理 ──
-// ── 【修正版】記録初期化ボタンの処理 ──
 if (resetDataBtn) {
   const handleResetData = (e) => {
     e.stopPropagation();
     if (e.type === 'touchstart') e.preventDefault();
 
     if (confirm('今までの記録をすべて消去してもいい？')) {
-      
-      // ──【連動】コレクション側のメモリとストレージを完全に初期化 ──
       if (typeof window.resetCollectionMemory === "function") {
         window.resetCollectionMemory();
-      } else {
-        localStorage.removeItem('highScore'); 
-        localStorage.removeItem('glassCollection');
-        localStorage.removeItem('glassCollectionStats');
       }
-
-      // 1. メモリ上のゲーム変数を初期化
-      score = 0;
-      hi = 0;
-      level = 1;
-      lives = 3;
-
-      // 2. 画面の表示（HUD）を初期化
-      updHUD();
-
-      // 3. タイトル画面やリセットが必要な表示の更新
-      const titleWeight = document.getElementById('titleTotalWeight');
-      if (titleWeight) titleWeight.textContent = '総重量: 0g';
-
-      const clearWeight = document.getElementById('clearTotalWeight');
-      if (clearWeight) clearWeight.textContent = '総重量: 0g';
-
-      // 4. コレクション画面の表示（DOM）をリフレッシュ
-      if (typeof loadCollection === "function") loadCollection();
-      if (typeof updateTotalWeightDisplay === "function") updateTotalWeightDisplay();
-
-      // 5. ゲームの状態を最初の状態に戻してレンダリング
-      gameState = 'idle';
-      buildBricks();
-      balls = [makeBall()];
-      draw();
-
-      alert('記録を初期化しました。');
     }
   };
-
   resetDataBtn.onclick = handleResetData;
   resetDataBtn.ontouchstart = handleResetData;
 }
 
-// ── ゲームループの開始 ──
+// ──【駆動コア】ゲームループの処理 ──
 function loop() {
   if (!paused) {
     update();
     draw();
+  } else {
+    draw(); // 一時停止中も画面が消えないように描画だけは維持
   }
   requestAnimationFrame(loop);
 }
 
-// ループの初回起動
+// 最初のループ起動
 requestAnimationFrame(loop);

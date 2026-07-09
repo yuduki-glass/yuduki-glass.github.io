@@ -442,7 +442,7 @@ canvas { display:block; position:absolute; }
 }
 
 /* ==========================================================================
-   完全同期・世界観調和カラー版
+   完全同期・世界観調和カラー版（灰青・深群青・氷晶白 泥沼発光仕様）
    ========================================================================== */
 #collectionGrid > div {
   position: relative !important;
@@ -464,59 +464,62 @@ canvas { display:block; position:absolute; }
   font-family: 'Klee One', serif;
 }
 
-/* ── 【普通 / C】常融：灰色 ── */
+/* ── 【普通 / C】常融：灰青 ── */
 .rarity-badge.rarity-c {
-  background: rgba(71, 85, 105, 0.25) !important;
-  color: #94a3b8 !important;
-  border: 1px solid rgba(71, 85, 105, 0.4) !important;
+  background: rgba(95, 112, 134, 0.15) !important;
+  color: #5F7086 !important;
+  border: 1px solid rgba(95, 112, 134, 0.4) !important;
 }
 .rarity-border-c {
-  border-color: rgba(71, 85, 105, 0.2) !important;
+  border-color: rgba(95, 112, 134, 0.3) !important;
 }
 .rarity-text-c {
-  color: #94a3b8 !important;
+  color: #5F7086 !important;
+  text-shadow: 0 0 6px rgba(95, 112, 134, 0.35) !important;
 }
 
-/* ── 【ちょいレア / R】希硝：暗めの青 ── */
+/* ── 【ちょいレア / R】希硝：深群青 ── */
 .rarity-badge.rarity-r {
-  background: rgba(29, 78, 216, 0.2) !important;
-  color: #3b82f6 !important;
-  border: 1px solid rgba(29, 78, 216, 0.5) !important;
+  background: rgba(57, 108, 255, 0.15) !important;
+  color: #396CFF !important;
+  border: 1px solid rgba(57, 108, 255, 0.5) !important;
 }
 .rarity-border-r {
-  border-color: rgba(29, 78, 216, 0.4) !important;
-  box-shadow: 0 0 6px rgba(29, 78, 216, 0.15), inset 0 0 4px rgba(29, 78, 216, 0.1) !important;
+  border-color: rgba(57, 108, 255, 0.4) !important;
+  box-shadow: 0 0 8px rgba(57, 108, 255, 0.2), inset 0 0 4px rgba(57, 108, 255, 0.1) !important;
 }
 .rarity-text-r {
-  color: #60a5fa !important;
+  color: #396CFF !important;
+  text-shadow: 0 0 10px rgba(57, 108, 255, 0.55) !important;
 }
 
-/* ── 【最高レア / L】幻晶：鮮やかな水色 ── */
+/* ── 【最高レア / L】幻晶：氷晶白 ── */
 .rarity-badge.rarity-l {
-  background: rgba(6, 182, 212, 0.3) !important;
-  color: #22d3ee !important;
-  border: 1px solid rgba(6, 182, 212, 0.7) !important;
-  text-shadow: 0 0 6px rgba(34, 211, 238, 0.8);
+  background: rgba(234, 253, 255, 0.2) !important;
+  color: #EAFDFF !important;
+  border: 1px solid rgba(234, 253, 255, 0.7) !important;
+  text-shadow: 0 0 8px rgba(234, 253, 255, 0.6);
 }
 .rarity-border-l {
-  animation: cyanPulse 3s infinite alternate ease-in-out !important;
+  animation: glassPulse 3s infinite alternate ease-in-out !important;
 }
 .rarity-text-l {
-  color: #22d3ee !important;
-  text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+  color: #EAFDFF !important;
+  text-shadow: 0 0 14px rgba(234, 253, 255, 0.8), 0 0 6px rgba(234, 253, 255, 0.4) !important;
 }
 
-@keyframes cyanPulse {
+/* 最高レア（幻晶）の枠が怪しく明滅するエフェクト */
+@keyframes glassPulse {
   0% {
-    border-color: rgba(6, 182, 212, 0.4) !important;
-    box-shadow: 0 0 8px rgba(6, 182, 212, 0.2), inset 0 0 4px rgba(6, 182, 212, 0.1) !important;
+    border-color: rgba(234, 253, 255, 0.3) !important;
+    box-shadow: 0 0 8px rgba(234, 253, 255, 0.15), inset 0 0 4px rgba(234, 253, 255, 0.1) !important;
   }
   50% {
-    border-color: rgba(34, 211, 238, 0.8) !important;
-    box-shadow: 0 0 16px rgba(34, 211, 238, 0.4), inset 0 0 10px rgba(34, 211, 238, 0.2) !important;
+    border-color: rgba(234, 253, 255, 0.7) !important;
+    box-shadow: 0 0 16px rgba(234, 253, 255, 0.45), inset 0 0 10px rgba(234, 253, 255, 0.25) !important;
   }
   100% {
-    border-color: rgba(14, 165, 233, 0.6) !important;
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.3), inset 0 0 8px rgba(14, 165, 233, 0.15) !important;
+    border-color: rgba(200, 240, 255, 0.4) !important;
+    box-shadow: 0 0 10px rgba(200, 240, 255, 0.2), inset 0 0 6px rgba(200, 240, 255, 0.15) !important;
   }
 }

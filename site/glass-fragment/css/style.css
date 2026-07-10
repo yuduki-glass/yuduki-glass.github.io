@@ -523,3 +523,75 @@ canvas { display:block; position:absolute; }
     box-shadow: 0 0 10px rgba(200, 240, 255, 0.2), inset 0 0 6px rgba(200, 240, 255, 0.15) !important;
   }
 }
+/* ==========================================================================
+   追加・改修：新SPEC（セクション分割・青発光・未観測透過）完全同期用
+   ========================================================================== */
+
+/* レア度ごとのセクション外枠 */
+.collection-section {
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 24px;
+}
+
+/* セクションのヘッダー（例：幻晶 2/5） */
+.collection-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+  color: #bae6fd;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+/* 右側の進捗（2/5 など）のフォント指定 */
+.collection-section-progress {
+  font-family: 'Share Tech Mono', monospace;
+  color: #384f6b;
+  font-size: 14px;
+}
+
+/* 獲得済みの時の青い発光エフェクト（icon.glow = blue） */
+.item-obtained img {
+  opacity: 1.0 !important;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)) !important;
+}
+
+/* 未観測の時の透過・減光ルール */
+.item-unobtained {
+  border-color: rgba(56, 189, 248, 0.05) !important;
+  background: rgba(6, 11, 20, 0.3) !important;
+}
+.item-unobtained .unknown {
+  opacity: 0.35 !important; /* icon.opacity = 0.35 */
+  filter: none !important;   /* icon.glow = none */
+}
+.item-unobtained .rarity-badge {
+  opacity: 0.25 !important; /* rarity.label.opacity = 0.25 */
+}
+.item-unobtained h3 {
+  color: rgba(56, 189, 248, 0.3) !important; /* 未観測テキストのノイズ軽減 */
+  text-shadow: none !important;
+}
+
+/* 元のコレクションレイアウトの微調整（セクション内に複数配置するためラッパーに変更） */
+#collectionView {
+  overflow-y: auto !important; /* 全体スクロールを有効化 */
+}
+.collection-grid-wrap {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+  gap: 12px;
+  width: 100%;
+}
+
+/* スマホ対応の微調整 */
+@media screen and (max-width: 1080px) {
+  .collection-grid-wrap {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
+    gap: 8px !important;
+  }
+}

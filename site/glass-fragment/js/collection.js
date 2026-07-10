@@ -67,7 +67,6 @@ function updateTotalWeightDisplay() {
 function addCollectionItem(clearedLevel) {
   const uncollectedItems = collectionItems.filter(item => !collectedItems.includes(Number(item.id)));
   
-  // 【修正】すべて集めきっている場合の安全弁
   if (uncollectedItems.length === 0) {
     return { name: "全硝子片 観測完了" };
   }
@@ -99,60 +98,135 @@ function addCollectionItem(clearedLevel) {
   saveCollection();
   updateTotalWeightDisplay();
 
-  // ▼▼▼ 【追加】選ばれたアイテムの情報をgame.jsにバトンタッチする ▼▼▼
   return selectedItem;
 }
 
+// ── 【新規・改修】新SPEC準拠 コレクション画面構築ロジック ──
 function openCollection() {
-  const grid = document.getElementById("collectionGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
+  const collectionView = document.getElementById("collectionView");
+  if (!collectionView) return;
 
-  collectionItems.forEach(item => {
-    const div = document.createElement("div");
-    const rarityClass = item.rarity ? item.rarity.toLowerCase() : "c";
-    let rarityText = item.rarity === 'R' ? "希硝" : (item.rarity === 'L' ? "幻晶" : "常融");
-
-    // 全体の枠にもレア度のクラスを付与できるようにしておきます（デザイン用）
-    div.className = `collection-item-box rarity-border-${rarityClass}`;
-
-    if (collectedItems.includes(Number(item.id))) {
-      // ── 【観測済み】の表示 ──
-      div.innerHTML = `
-        <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
-        <img src="${item.image}" onerror="this.style.display='none'; this.parentNode.classList.add('img-error');" style="cursor: pointer;">
-        <h3>${item.name}</h3>
-      `;
-      div.addEventListener('click', (e) => {
-        const itemPopup = document.getElementById("itemPopup");
-        const stats = collectionStats[item.id] || { date: "----.--.-- --:--", count: 1 };
-        document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}" onerror="this.style.display='none';">`;
-        document.getElementById("popupName").textContent = item.name;
-        document.getElementById("popupDesc").innerHTML = `
-          ${item.description}
-          <div class="popup-stats">
-            <table>
-              <tr><td>稀少度</td><td><span class="rarity-text-${rarityClass}">${rarityText}</span></td></tr>
-              <tr><td>重量</td><td>${item.weight}</td></tr>
-              <tr><td>採取日時</td><td>${stats.date}</td></tr>
-              <tr><td>再観測</td><td>${stats.count}回</td></tr>
-            </table>
-          </div>
-        `;
-        itemPopup.style.display = "flex";
-      });
+  // 古いグリッドを直接クリアするのではなく、まずは表示エリア全体のコンテナを探すか作る
+  let container = document.getElementById("collectionSectionsContainer");
+  if (!container) {
+    // 初回のみ：既存の #collectionGrid をコンテナとして流用するか、新しく挿入する
+    const oldGrid = document.getElementById("collectionGrid");
+    if (oldGrid) {
+      // 既存のグリッドのラッパーとして再定義
+      oldGrid.style.display = "none"; // 古いフラットグリッドは非表示
+      container = document.createElement("div");
+      container.id = "collectionSectionsContainer";
+      container.style.width = "100%";
+      container.style.maxWidth = "800px";
+      oldGrid.parentNode.insertBefore(container, oldGrid);
     } else {
-      // ── 【未観測】の表示（ここを修正！） ──
-      // 未観測でも、枠の上にしっかりと色分けされたレア度バッジが出るようにしました
-      div.innerHTML = `
-        <span class="rarity-badge rarity-${rarityClass}">${rarityText}</span>
-        <div class="unknown">?</div>
-        <h3>未観測</h3>
-      `;
+      return;
     }
-    grid.appendChild(div);
+  }
+  container.innerHTML = ""; // 毎回完全に初期化
+
+  // 1. レア度マッピング定義（SPEC順、ラベル同期）
+  const raritySpecs = [
+    { key: "L", label: "幻晶", badgeClass: "rarity-l", borderClass: "rarity-border-l", textClass: "rarity-text-l" },
+    { key: "R", label: "希有", badgeClass: "rarity-r", borderClass: "rarity-border-r", textClass: "rarity-text-r" },
+    { key: "C", label: "常触", badgeClass: "rarity-c", borderClass: "rarity-border-c", textClass: "rarity-text-c" }
+  ];
+
+  // 2. レア度ごとにセクションを確定論的にループ生成
+  raritySpecs.forEach(spec => {
+    // このレア度に属する全アイテムを抽出
+    const itemsInRarity = collectionItems.filter(item => item.rarity === spec.key);
+    if (itemsInRarity.length === 0) return; // 該当データがなければスキップ
+
+    // 各アイテムの獲得フラグを付与
+    const processedItems = itemsInRarity.map(item => ({
+      ...item,
+      obtained: collectedItems.includes(Number(item.id))
+    }));
+
+    // SPEC準拠ソート: 1. 獲得済みが前(true->false) / 2. ID昇順(ASC)
+    processedItems.sort((a, b) => {
+      if (a.obtained !== b.obtained) {
+        return a.obtained ? -1 : 1; // obtained == true が先
+      }
+      return a.id - b.id; // display_id ASC
+    });
+
+    // 獲得カウント計算 (RARITY_PROGRESS)
+    const obtainedCount = processedItems.filter(item => item.obtained).length;
+    const totalCount = processedItems.length;
+
+    // セクション全体のHTML構造を作成
+    const sectionEl = document.createElement("section");
+    sectionEl.className = "collection-section";
+
+    // ヘッダー（レア度名 ＆ 進捗表示）
+    const headerEl = document.createElement("div");
+    headerEl.className = "collection-section-header";
+    headerEl.innerHTML = `
+      <span>${spec.label}</span>
+      <span class="collection-section-progress">${obtainedCount}/${totalCount}</span>
+    `;
+    sectionEl.appendChild(headerEl);
+
+    // アイテムを並べるためのグリッドラッパー（CSSで定義した新しいクラス名）
+    const gridEl = document.createElement("div");
+    gridEl.className = "collection-grid-wrap";
+
+    // ソート済みのアイテムをカード化して流し込む
+    processedItems.forEach(item => {
+      const div = document.createElement("div");
+      
+      if (item.obtained) {
+        // ── 獲得済み（obtained == true）の表示 ──
+        div.className = `collection-item-box ${spec.borderClass} item-obtained`;
+        div.style.cursor = "pointer";
+        div.innerHTML = `
+          <span class="rarity-badge ${spec.badgeClass}">${spec.label}</span>
+          <img src="${item.image}" onerror="this.style.display='none'; this.parentNode.classList.add('img-error');">
+          <h3>${item.name}</h3>
+        `;
+        
+        // 詳細ポップアップのイベントリスナー
+        div.addEventListener('click', () => {
+          const itemPopup = document.getElementById("itemPopup");
+          if (!itemPopup) return;
+          
+          const stats = collectionStats[item.id] || { date: "----.--.-- --:--", count: 1 };
+          document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}" onerror="this.style.display='none';">`;
+          document.getElementById("popupName").textContent = item.name;
+          document.getElementById("popupDesc").innerHTML = `
+            ${item.description}
+            <div class="popup-stats">
+              <table>
+                <tr><td>稀少度</td><td><span class="${spec.textClass}">${spec.label}</span></td></tr>
+                <tr><td>重量</td><td>${item.weight}</td></tr>
+                <tr><td>採取日時</td><td>${stats.date}</td></tr>
+                <tr><td>再観測</td><td>${stats.count}回</td></tr>
+              </table>
+            </div>
+          `;
+          itemPopup.style.display = "flex";
+        });
+
+      } else {
+        // ── 未観測（obtained == false）の表示 ──
+        div.className = `collection-item-box item-unobtained`;
+        div.innerHTML = `
+          <span class="rarity-badge ${spec.badgeClass}">${spec.label}</span>
+          <div class="unknown">?</div>
+          <h3>未観測</h3>
+        `;
+      }
+      gridEl.appendChild(div);
+    });
+
+    sectionEl.appendChild(gridEl);
+    container.appendChild(sectionEl);
   });
-  document.getElementById("collectionView").style.display = "flex";
+
+  // 最後に表示を flex に切り替えて開く
+  collectionView.style.display = "flex";
 }
 
 // 初期化・イベント設定
@@ -168,7 +242,11 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTotalWeightDisplay();
   
   const closePopup = document.getElementById("itemPopup");
-  if (closePopup) closePopup.addEventListener("click", (e) => { if(e.target === closePopup) closePopup.style.display = "none"; });
+  if (closePopup) {
+    closePopup.addEventListener("click", (e) => { 
+      if(e.target === closePopup) closePopup.style.display = "none"; 
+    });
+  }
   
   const btn = document.getElementById("collectionBtn");
   if (btn) btn.addEventListener("click", openCollection);

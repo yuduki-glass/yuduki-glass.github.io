@@ -179,6 +179,42 @@ canvas { display:block; position:absolute; }
   margin: 24px 0;
 }
 
+/* ── 【追加】左上戻るボタンの装飾 ── */
+.collection-back-btn-wrap {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px 0 10px 0;
+  box-sizing: border-box;
+}
+
+.collection-top-back-btn {
+  background: rgba(40, 40, 40, 0.6);
+  color: #d4c4a8;
+  border: 1px solid #5a4f43;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collection-top-back-btn:hover {
+  background: rgba(70, 60, 50, 0.8);
+  border-color: #98846e;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(152, 132, 110, 0.3);
+}
+
+.collection-top-back-btn span {
+  font-size: 12px;
+}
+
 .collection-section {
   width: 100%;
   margin-bottom: 32px;

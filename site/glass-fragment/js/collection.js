@@ -125,11 +125,11 @@ function openCollection() {
   }
   container.innerHTML = ""; // 毎回完全に初期化
 
-  // ── 【新規】左上の戻るボタン（閉じる）の動的追加 ──
+// ── 【修正版】左上の戻るボタン（下のボタンと完全同期） ──
 const backBtnWrap = document.createElement("div");
 backBtnWrap.className = "collection-back-btn-wrap";
 backBtnWrap.innerHTML = `
-  <button class="collection-top-back-btn" onclick="document.getElementById('collectionView').style.display='none'">
+  <button class="collection-top-back-btn" onclick="const bottomBtn = document.getElementById('closeCollection'); if(bottomBtn) { bottomBtn.click(); } else { document.getElementById('collectionView').style.display='none'; }">
     <span>←</span> 戻る
   </button>
 `;

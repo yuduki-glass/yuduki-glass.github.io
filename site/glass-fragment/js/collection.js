@@ -125,6 +125,16 @@ function openCollection() {
   }
   container.innerHTML = ""; // 毎回完全に初期化
 
+  // ── 【新規】左上の戻るボタン（閉じる）の動的追加 ──
+const backBtnWrap = document.createElement("div");
+backBtnWrap.className = "collection-back-btn-wrap";
+backBtnWrap.innerHTML = `
+  <button class="collection-top-back-btn" onclick="document.getElementById('collectionView').style.display='none'">
+    <span>←</span> 戻る
+  </button>
+`;
+container.appendChild(backBtnWrap);
+  
   // 1. レア度マッピング定義（SPEC順、ラベル同期）
   const raritySpecs = [
     { key: "L", label: "幻晶", badgeClass: "rarity-l", borderClass: "rarity-border-l", textClass: "rarity-text-l" },

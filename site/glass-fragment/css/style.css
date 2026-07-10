@@ -1,3 +1,6 @@
+/* ==========================================================================
+   基本レイアウト & フォント設定
+   ========================================================================== */
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { 
   width:100%; 
@@ -39,24 +42,23 @@ body.hide-cursor { cursor: none; }
 }
 #homeBtn:hover { color:#7dd3fc; text-shadow: 0 0 8px rgba(56,189,248,0.6); }
 
-/* ── 修正：記録が消えたので、画面の中央にゲーム領域を完全固定 ── */
+/* ── ゲーム領域の固定 ── */
 #canvasWrap {
   flex:1; 
   overflow:hidden;
   display:flex; 
   align-items:center; 
-  justify-content:center; /* 左右中央に寄せる */
+  justify-content:center; 
   background: #060b14;
   border-top: 1px solid rgba(56, 189, 248, 0.03);
   border-bottom: 1px solid rgba(56, 189, 248, 0.03);
   width: 100%;
 }
 
-/* ── 修正：ゲームエリア単体で自立するように調整 ── */
 #gameArea {
   position:relative;
   width: 100%;
-  max-width: 800px; /* コレクションの最大幅に合わせる */
+  max-width: 800px; 
   height: 100%;
   display: flex;
   align-items: center;
@@ -84,7 +86,6 @@ body.hide-cursor { cursor: none; }
 
 canvas { display:block; position:absolute; }
 
-/* 環境エフェクト：星雲の塵が漂うような薄い膜 */
 #scanlines {
   position:absolute; inset:0; pointer-events:none; z-index:5;
   background:repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(56,189,248,0.015) 4px,rgba(56,189,248,0.015) 5px);
@@ -148,7 +149,9 @@ canvas { display:block; position:absolute; }
   box-shadow:0 0 10px rgba(56,189,248,.2);
 }
 
-/* ── 硝子片集（コレクション一覧）外枠 ── */
+/* ==========================================================================
+   硝子片集（コレクション一覧）外枠・スクロール設定
+   ========================================================================== */
 #collectionView {
   position: absolute;
   inset: 0;
@@ -160,31 +163,61 @@ canvas { display:block; position:absolute; }
   align-items: center !important;
   justify-content: flex-start;
   pointer-events: auto !important;
+  overflow-y: auto !important; /* 全体スクロールを有効化 */
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ── レスポンシブ・グリッド ── */
-#collectionGrid {
+/* スクロールバー装飾 */
+#collectionView::-webkit-scrollbar { width: 4px; }
+#collectionView::-webkit-scrollbar-track { background: rgba(56, 189, 248, 0.02); }
+#collectionView::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.15); border-radius: 2px; }
+
+/* 決定論的セクション構造用ラッパー */
+#collectionSectionsContainer {
+  width: 100%;
+  max-width: 800px;
+  margin: 24px 0;
+}
+
+.collection-section {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+/* セクションヘッダー（レア度名 ＆ 進捗） */
+.collection-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  color: #bae6fd;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+.collection-section-progress {
+  font-family: 'Share Tech Mono', monospace;
+  color: #384f6b;
+  font-size: 14px;
+  letter-spacing: 0px;
+}
+
+/* 新規グリッドシステム（SPEC完全準拠） */
+.collection-grid-wrap {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
   gap: 12px;
   width: 100%;
-  max-width: 800px;
-  margin: 24px 0;
-  padding: 10px;
-  max-height: 65vh; 
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* スクロールバー */
-#collectionGrid::-webkit-scrollbar { width: 4px; }
-#collectionGrid::-webkit-scrollbar-track { background: rgba(56, 189, 248, 0.02); }
-#collectionGrid::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.15); border-radius: 2px; }
-
-/* 各アイテムのカード枠 */
-#collectionGrid > div {
+/* 各アイテムの基本カード枠 */
+.collection-item-box {
+  position: relative !important;
+  overflow: hidden;
   border: 1px solid rgba(125, 211, 252, 0.3) !important;
-  background: rgba(6, 11, 20, 0.6) !important;
+  background: rgba(6, 11, 20, 0.7) !important;
   padding: 10px 6px !important;
   text-align: center;
   border-radius: 4px;
@@ -193,26 +226,46 @@ canvas { display:block; position:absolute; }
   align-items: center;
   justify-content: flex-start !important;
   box-sizing: border-box;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
   min-height: 120px;
   pointer-events: auto !important;
 }
 
-#collectionGrid > div[style*="pointer"] { border-color: rgba(56, 189, 248, 0.4) !important; }
-#collectionGrid > div[style*="pointer"]:hover {
+/* ── 獲得済み（item-obtained）のインタラクション ── */
+.item-obtained:hover {
   background: rgba(56, 189, 248, 0.05) !important;
   border-color: rgba(56, 189, 248, 0.8) !important;
 }
-
-#collectionGrid img, .unknown {
+.item-obtained img {
   width: 44px !important;
   height: 44px !important;
   object-fit: contain;
   display: block;
+  opacity: 1.0 !important;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)) !important; /* icon.glow = blue */
 }
 
-/* 未観測（？）の枠 */
+/* ── 未観測（item-unobtained）の減光・透過ルール ── */
+.item-unobtained {
+  border-color: rgba(56, 189, 248, 0.05) !important;
+  background: rgba(6, 11, 20, 0.3) !important;
+}
+.item-unobtained .unknown {
+  opacity: 0.35 !important; /* icon.opacity = 0.35 */
+  filter: none !important;   /* icon.glow = none */
+}
+.item-unobtained .rarity-badge {
+  opacity: 0.25 !important; /* rarity.label.opacity = 0.25 */
+}
+.item-unobtained h3 {
+  color: rgba(56, 189, 248, 0.3) !important;
+  text-shadow: none !important;
+}
+
+/* 未観測用（？）アセット代替表示 */
 .unknown {
+  width: 44px !important;
+  height: 44px !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -221,10 +274,11 @@ canvas { display:block; position:absolute; }
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.1);
   background: rgba(56, 189, 248, 0.02);
   border: 1px dashed rgba(56, 189, 248, 0.15);
+  border-radius: 4px;
 }
 
 /* コレクション内のテキスト調整 */
-#collectionGrid h3 {
+.collection-item-box h3 {
   color: #ffffff;
   font-size: 12px;
   letter-spacing: 1px;
@@ -236,121 +290,81 @@ canvas { display:block; position:absolute; }
   width: 100%;
 }
 
-/* ──────────────────────────────────────────────
-   スマートフォン向け（Galaxy S24等対応）
-   ────────────────────────────────────────────── */
-@media screen and (max-width: 1080px) {
-  html, body, #wrap {
-    height: 100% !important;
-    overflow: hidden !important; 
-    position: relative;
-  }
+/* ==========================================================================
+   完全同期・世界観調和カラーバッジ仕様（和風泥沼発光）
+   ========================================================================== */
+.rarity-badge {
+  position: absolute !important;
+  top: 4px !important;
+  left: 4px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  padding: 3px 6px !important;
+  border-radius: 3px !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  z-index: 10 !important;
+  font-family: 'Klee One', serif;
+}
 
-  #topbar, #botbar {
-    font-size: 13px;
-    letter-spacing: 1px;
-    padding: 0 12px;
-    height: 32px !important; 
-  }
+/* ── 【常触 / C】：灰青 ── */
+.rarity-badge.rarity-c {
+  background: rgba(95, 112, 134, 0.15) !important;
+  color: #5F7086 !important;
+  border: 1px solid rgba(95, 112, 134, 0.4) !important;
+}
+.rarity-border-c { border-color: rgba(95, 112, 134, 0.3) !important; }
+.rarity-text-c {
+  color: #5F7086 !important;
+  text-shadow: 0 0 6px rgba(95, 112, 134, 0.35) !important;
+}
 
-  #canvasWrap {
-    height: calc(100% - 64px) !important; 
-    overflow: hidden;
-  }
-  #gameArea{
-    flex:none;
-    max-width: 100%;
-  }
+/* ── 【希有 / R】：深群青 ── */
+.rarity-badge.rarity-r {
+  background: rgba(57, 108, 255, 0.15) !important;
+  color: #396CFF !important;
+  border: 1px solid rgba(57, 108, 255, 0.5) !important;
+}
+.rarity-border-r {
+  border-color: rgba(57, 108, 255, 0.4) !important;
+  box-shadow: 0 0 8px rgba(57, 108, 255, 0.2), inset 0 0 4px rgba(57, 108, 255, 0.1) !important;
+}
+.rarity-text-r {
+  color: #396CFF !important;
+  text-shadow: 0 0 10px rgba(57, 108, 255, 0.55) !important;
+}
 
-  #collectionView {
-    position: absolute;
-    inset: 0 !important;
-    padding: 10px 6px 6px 6px !important;
-    display: none;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    background: rgba(5,10,21,.98) !important;
-    z-index: 60 !important; 
-    overflow-y: auto !important;
-    height: 100% !important;
-    -webkit-overflow-scrolling: touch;
+/* ── 【幻晶 / L】：氷晶白 ── */
+.rarity-badge.rarity-l {
+  background: rgba(234, 253, 255, 0.2) !important;
+  color: #EAFDFF !important;
+  border: 1px solid rgba(234, 253, 255, 0.7) !important;
+  text-shadow: 0 0 8px rgba(234, 253, 255, 0.6);
+}
+.rarity-border-l { animation: glassPulse 3s infinite alternate ease-in-out !important; }
+.rarity-text-l {
+  color: #EAFDFF !important;
+  text-shadow: 0 0 14px rgba(234, 253, 255, 0.8), 0 0 6px rgba(234, 253, 255, 0.4) !important;
+}
+
+@keyframes glassPulse {
+  0% {
+    border-color: rgba(234, 253, 255, 0.3) !important;
+    box-shadow: 0 0 8px rgba(234, 253, 255, 0.15), inset 0 0 4px rgba(234, 253, 255, 0.1) !important;
   }
-
-  #collectionGrid {
-    display:grid !important;
-    grid-template-columns:repeat(auto-fill,minmax(90px,1fr)) !important;
-    gap:8px !important;
-    width:100% !important;
-    flex:1 1 auto !important;
-    min-height:0 !important;
-    height:0 !important;
-    overflow-y:auto !important;
-    overflow-x:hidden !important;
-    -webkit-overflow-scrolling:touch;
-    touch-action:pan-y;
-    padding:6px !important;
-    margin:0 !important;
+  50% {
+    border-color: rgba(234, 253, 255, 0.7) !important;
+    box-shadow: 0 0 16px rgba(234, 253, 255, 0.45), inset 0 0 10px rgba(234, 253, 255, 0.25) !important;
   }
-
-  #collectionGrid > div {
-    min-height: 105px !important;
-    padding: 8px 4px !important;
-    justify-content: flex-start !important;
+  100% {
+    border-color: rgba(200, 240, 255, 0.4) !important;
+    box-shadow: 0 0 10px rgba(200, 240, 255, 0.2), inset 0 0 6px rgba(200, 240, 255, 0.15) !important;
   }
+}
 
-  #collectionGrid img, .unknown {
-    width: 36px !important; 
-    height: 36px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .popup-content {
-    max-width: 90% !important;
-    max-height: 85% !important; 
-    overflow-y: auto; 
-    padding: 20px 10px;
-  }
-
-  #popupName { font-size: 18px; letter-spacing: 2px; }
-  #popupDesc { font-size: 14px; line-height: 1.6; }
-  .popup-stats table { font-size: 13px; }
-
-  .glitch {
-    font-size: 26px !important; 
-    letter-spacing: 6px;
-    margin-bottom: 20px;
-  }
-
-  .tagline, .hint {
-    font-size: 14px !important; 
-    letter-spacing: 1px;
-    line-height: 1.6;
-  }
-
-  #startBtn, #collectionBtn, #resetDataBtn {
-    position: relative;
-    z-index: 40 !important; 
-    padding: 14px 32px;
-    font-size: 16px;
-    width: 80%; 
-    max-width: 240px;
-    pointer-events: auto !important;
-  }
-
-  #closeCollection {
-    display: block !important;
-    width: 90% !important;
-    max-width: 300px !important;
-    margin: 10px auto !important; 
-    padding: 16px !important;
-    font-size: 18px !important;
-    flex-shrink: 0; 
-    z-index: 70 !important; 
-    pointer-events: auto !important;
-  }
-} 
-
-/* ── 詳細ポップアップ（背景の黒いモヤ） ── */
+/* ==========================================================================
+   詳細ポップアップ（モーダル）
+   ========================================================================== */
 .popup-overlay {
   position: absolute;
   inset: 0;
@@ -363,7 +377,6 @@ canvas { display:block; position:absolute; }
   justify-content: center;
 }
 
-/* ── ポップアップの中身 ── */
 .popup-content {
   background: rgba(10, 18, 32, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
@@ -442,156 +455,102 @@ canvas { display:block; position:absolute; }
 }
 
 /* ==========================================================================
-   完全同期・世界観調和カラー版（灰青・深群青・氷晶白 泥沼発光仕様）
+   スマートフォン環境最適化（1080px以下レスポンシブ）
    ========================================================================== */
-#collectionGrid > div {
-  position: relative !important;
-  overflow: hidden;
-  background: rgba(6, 11, 20, 0.7) !important;
-}
-
-.rarity-badge {
-  position: absolute !important;
-  top: 4px !important;
-  left: 4px !important;
-  font-size: 10px !important;
-  line-height: 1 !important;
-  padding: 3px 6px !important;
-  border-radius: 3px !important;
-  font-weight: bold !important;
-  letter-spacing: 1px !important;
-  z-index: 10 !important;
-  font-family: 'Klee One', serif;
-}
-
-/* ── 【普通 / C】常融：灰青 ── */
-.rarity-badge.rarity-c {
-  background: rgba(95, 112, 134, 0.15) !important;
-  color: #5F7086 !important;
-  border: 1px solid rgba(95, 112, 134, 0.4) !important;
-}
-.rarity-border-c {
-  border-color: rgba(95, 112, 134, 0.3) !important;
-}
-.rarity-text-c {
-  color: #5F7086 !important;
-  text-shadow: 0 0 6px rgba(95, 112, 134, 0.35) !important;
-}
-
-/* ── 【ちょいレア / R】希硝：深群青 ── */
-.rarity-badge.rarity-r {
-  background: rgba(57, 108, 255, 0.15) !important;
-  color: #396CFF !important;
-  border: 1px solid rgba(57, 108, 255, 0.5) !important;
-}
-.rarity-border-r {
-  border-color: rgba(57, 108, 255, 0.4) !important;
-  box-shadow: 0 0 8px rgba(57, 108, 255, 0.2), inset 0 0 4px rgba(57, 108, 255, 0.1) !important;
-}
-.rarity-text-r {
-  color: #396CFF !important;
-  text-shadow: 0 0 10px rgba(57, 108, 255, 0.55) !important;
-}
-
-/* ── 【最高レア / L】幻晶：氷晶白 ── */
-.rarity-badge.rarity-l {
-  background: rgba(234, 253, 255, 0.2) !important;
-  color: #EAFDFF !important;
-  border: 1px solid rgba(234, 253, 255, 0.7) !important;
-  text-shadow: 0 0 8px rgba(234, 253, 255, 0.6);
-}
-.rarity-border-l {
-  animation: glassPulse 3s infinite alternate ease-in-out !important;
-}
-.rarity-text-l {
-  color: #EAFDFF !important;
-  text-shadow: 0 0 14px rgba(234, 253, 255, 0.8), 0 0 6px rgba(234, 253, 255, 0.4) !important;
-}
-
-/* 最高レア（幻晶）の枠が怪しく明滅するエフェクト */
-@keyframes glassPulse {
-  0% {
-    border-color: rgba(234, 253, 255, 0.3) !important;
-    box-shadow: 0 0 8px rgba(234, 253, 255, 0.15), inset 0 0 4px rgba(234, 253, 255, 0.1) !important;
-  }
-  50% {
-    border-color: rgba(234, 253, 255, 0.7) !important;
-    box-shadow: 0 0 16px rgba(234, 253, 255, 0.45), inset 0 0 10px rgba(234, 253, 255, 0.25) !important;
-  }
-  100% {
-    border-color: rgba(200, 240, 255, 0.4) !important;
-    box-shadow: 0 0 10px rgba(200, 240, 255, 0.2), inset 0 0 6px rgba(200, 240, 255, 0.15) !important;
-  }
-}
-/* ==========================================================================
-   追加・改修：新SPEC（セクション分割・青発光・未観測透過）完全同期用
-   ========================================================================== */
-
-/* レア度ごとのセクション外枠 */
-.collection-section {
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 24px;
-}
-
-/* セクションのヘッダー（例：幻晶 2/5） */
-.collection-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
-  padding-bottom: 6px;
-  margin-bottom: 12px;
-  color: #bae6fd;
-  font-size: 15px;
-  letter-spacing: 2px;
-}
-
-/* 右側の進捗（2/5 など）のフォント指定 */
-.collection-section-progress {
-  font-family: 'Share Tech Mono', monospace;
-  color: #384f6b;
-  font-size: 14px;
-}
-
-/* 獲得済みの時の青い発光エフェクト（icon.glow = blue） */
-.item-obtained img {
-  opacity: 1.0 !important;
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)) !important;
-}
-
-/* 未観測の時の透過・減光ルール */
-.item-unobtained {
-  border-color: rgba(56, 189, 248, 0.05) !important;
-  background: rgba(6, 11, 20, 0.3) !important;
-}
-.item-unobtained .unknown {
-  opacity: 0.35 !important; /* icon.opacity = 0.35 */
-  filter: none !important;   /* icon.glow = none */
-}
-.item-unobtained .rarity-badge {
-  opacity: 0.25 !important; /* rarity.label.opacity = 0.25 */
-}
-.item-unobtained h3 {
-  color: rgba(56, 189, 248, 0.3) !important; /* 未観測テキストのノイズ軽減 */
-  text-shadow: none !important;
-}
-
-/* 元のコレクションレイアウトの微調整（セクション内に複数配置するためラッパーに変更） */
-#collectionView {
-  overflow-y: auto !important; /* 全体スクロールを有効化 */
-}
-.collection-grid-wrap {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
-  gap: 12px;
-  width: 100%;
-}
-
-/* スマホ対応の微調整 */
 @media screen and (max-width: 1080px) {
+  html, body, #wrap {
+    height: 100% !important;
+    overflow: hidden !important; 
+    position: relative;
+  }
+
+  #topbar, #botbar {
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 0 12px;
+    height: 32px !important; 
+  }
+
+  #canvasWrap {
+    height: calc(100% - 64px) !important; 
+    overflow: hidden;
+  }
+  #gameArea{
+    flex:none;
+    max-width: 100%;
+  }
+
+  #collectionView {
+    position: absolute;
+    inset: 0 !important;
+    padding: 16px 12px !important;
+    display: none;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    background: rgba(5,10,21,.98) !important;
+    z-index: 60 !important; 
+  }
+
+  /* セクション内スマホグリッド上書き */
   .collection-grid-wrap {
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
     gap: 8px !important;
+  }
+
+  .collection-item-box {
+    min-height: 105px !important;
+    padding: 8px 4px !important;
+    justify-content: flex-start !important;
+  }
+
+  .collection-item-box img, .unknown {
+    width: 36px !important; 
+    height: 36px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .popup-content {
+    max-width: 90% !important;
+    max-height: 85% !important; 
+    overflow-y: auto; 
+    padding: 20px 10px;
+  }
+
+  #popupName { font-size: 18px; letter-spacing: 2px; }
+  #popupDesc { font-size: 14px; line-height: 1.6; }
+  .popup-stats table { font-size: 13px; }
+
+  .glitch {
+    font-size: 26px !important; 
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+  }
+
+  .tagline, .hint {
+    font-size: 14px !important; 
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+
+  #startBtn, #collectionBtn, #resetDataBtn {
+    position: relative;
+    z-index: 40 !important; 
+    padding: 14px 32px;
+    font-size: 16px;
+    width: 80%; 
+    max-width: 240px;
+    pointer-events: auto !important;
+  }
+
+  #closeCollection {
+    display: block !important;
+    width: 90% !important;
+    max-width: 300px !important;
+    margin: 16px auto 10px auto !important; 
+    padding: 16px !important;
+    font-size: 18px !important;
+    flex-shrink: 0; 
+    z-index: 70 !important; 
+    pointer-events: auto !important;
   }
 }

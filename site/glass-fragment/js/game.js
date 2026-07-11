@@ -970,25 +970,22 @@ function handleStartAction(e) {
   if (overlay) overlay.style.display = 'none';
   if (pauseOverlay) pauseOverlay.style.display = 'none';
   
-  if (gameState === 'clear') {
-    level++;
-    buildBricks();
-    balls = [makeBall()];
-    updHUD();
+if (gameState === 'clear') {
+  level++;
+  buildBricks();
+  balls = [makeBall()];
+  updHUD();
     
-    setTimeout(() => {
-      gameState = 'waiting';
-      showDot(false);
-      if (!isMobile) requestPointerLock();
-    }, 80);
-  } else {
-    // 散逸（over）からのリトライ時は、一度状態を意図的な離脱にしておくことで
-    // 不意の pointerlockchange による pauseGame() 発火を防ぐ
-    exitedIntentionally = true; 
-    initGame();
-    // initGameの中で false に戻るが、タイミング安全のために少し猶予を持たせる
-    setTimeout(() => { exitedIntentionally = false; }, 100);
-  }
+  setTimeout(() => {
+    gameState = 'waiting';
+    showDot(true);
+  }, 80);
+
+} else {
+  exitedIntentionally = true; 
+  initGame();
+  setTimeout(() => { exitedIntentionally = false; }, 100);
+}
 }
 
 if (startBtn) {

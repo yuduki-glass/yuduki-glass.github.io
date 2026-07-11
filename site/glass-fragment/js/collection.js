@@ -205,9 +205,8 @@ container.appendChild(backBtnWrap);
           const stats = collectionStats[item.id] || { date: "----.--.-- --:--", count: 1 };
           document.getElementById("popupImageWrap").innerHTML = `<img src="${item.image}" onerror="this.style.display='none';">`;
           document.getElementById("popupName").textContent = item.name;
-          document.getElementById("popupDesc").innerHTML = `
-            ${item.description}
-            <div class="popup-stats">
+          document.getElementById("popupDesc").innerHTML =
+            `${item.description}<div class="popup-stats">
               <table>
                 <tr><td>稀少度</td><td><span class="${spec.textClass}">${spec.label}</span></td></tr>
                 <tr><td>重量</td><td>${item.weight}</td></tr>

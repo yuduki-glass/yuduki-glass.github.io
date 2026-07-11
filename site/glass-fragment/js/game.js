@@ -627,7 +627,7 @@ function update() {
           const glitch = overlay.querySelector('.glitch');
           if (glitch) glitch.textContent = '散逸'; 
           const taglines = overlay.querySelectorAll('.tagline');
-          if (taglines.length > 0) taglines[0].textContent = '残片R: ' + String(score).padStart(6,'0');
+          if (taglines.length > 0) taglines[0].textContent = '終端観測値: ' + String(score).padStart(6,'0');
         }
         if (startBtn) startBtn.textContent = '[ もう一度 ]';
         const ideoLink = document.getElementById('ideoLink');

@@ -969,11 +969,14 @@ function handleStartAction(e) {
   e.stopPropagation();
   e.preventDefault();
   
+  // リスタート時は、まず強制的にオーバーレイを視覚的に消す
+  if (overlay) overlay.style.display = 'none';
+  if (pauseOverlay) pauseOverlay.style.display = 'none';
+  
   if (gameState === 'clear') {
     level++;
     buildBricks();
     balls = [makeBall()];
-    if (overlay) overlay.style.display = 'none'; 
     updHUD();
     
     setTimeout(() => {
@@ -982,7 +985,12 @@ function handleStartAction(e) {
       if (!isMobile) requestPointerLock();
     }, 80);
   } else {
+    // 散逸（over）からのリトライ時は、一度状態を意図的な離脱にしておくことで
+    // 不意の pointerlockchange による pauseGame() 発火を防ぐ
+    exitedIntentionally = true; 
     initGame();
+    // initGameの中で false に戻るが、タイミング安全のために少し猶予を持たせる
+    setTimeout(() => { exitedIntentionally = false; }, 100);
   }
 }
 

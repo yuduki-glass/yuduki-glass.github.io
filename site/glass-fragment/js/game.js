@@ -471,11 +471,10 @@ function initGame() {
   started = true;
   updHUD();
   
-  setTimeout(() => {
-    gameState = 'waiting';
-    showDot(false);
-    if (!isMobile) requestPointerLock();
-  }, 80);
+setTimeout(() => {
+  gameState = 'waiting';
+  showDot(true);
+}, 80);
 } 
   
 function launch() {
@@ -483,9 +482,9 @@ function launch() {
   balls[0].vx = 3.75 * (Math.random() > 0.5 ? 1 : -1);
   balls[0].vy = -6.25;
   gameState = 'playing';
-  if (!isMobile && document.pointerLockElement !== gameArea) {
-    requestPointerLock();
-  }
+ //if (!isMobile && document.pointerLockElement !== gameArea) {
+ //   requestPointerLock();
+ // }
 }
   
 function updHUD() {
@@ -879,9 +878,8 @@ function resumeGame() {
   if (!paused) return;
   paused = false;
   if (pauseOverlay) pauseOverlay.style.display = 'none';
-  showDot(false);
+  showDot(true);
   userEscaped = false;
-  if (!isMobile) requestPointerLock();
 }
 
 if (resumeBtn) {
@@ -952,13 +950,12 @@ if (gameArea) {
       if (gameState === 'clear' || gameState === 'over' || gameState === 'idle') return;
 
       if (gameState === 'playing' || gameState === 'waiting') {
-        if (document.pointerLockElement !== gameArea && !userEscaped) {
-          exitedIntentionally = false;
-          paused = false;
-          if (pauseOverlay) pauseOverlay.style.display = 'none';
-          requestPointerLock();
-          showDot(false);
-        }
+      if (document.pointerLockElement !== gameArea && !userEscaped) {
+        exitedIntentionally = false;
+        paused = false;
+        if (pauseOverlay) pauseOverlay.style.display = 'none';
+        showDot(true);
+      }
         if (gameState === 'waiting') { launch(); }
       }
     });

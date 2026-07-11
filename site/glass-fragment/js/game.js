@@ -516,7 +516,7 @@ const ROW_BD = [
 ];
 
 function update() {
-  if (gameState === 'idle') return;
+  if (gameState === 'idle' || gameState === 'over') return;
 
   if (shakeTime > 0) shakeTime--; 
   updateParticles();
@@ -619,6 +619,10 @@ function update() {
       showDot(true);
       setTimeout(() => {
         if (overlay) {
+
+          const oldDisplay = overlay.querySelector('.get-item-display');
+          if (oldDisplay) oldDisplay.remove();
+          
           overlay.style.display = 'flex'; 
           const glitch = overlay.querySelector('.glitch');
           if (glitch) glitch.textContent = '散逸'; 

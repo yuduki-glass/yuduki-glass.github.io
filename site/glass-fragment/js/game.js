@@ -737,10 +737,28 @@ function draw() {
   ctx.fillStyle = '#050A15';
   ctx.fillRect(0, 0, CW, CH);
 
+  // 既存のグリッド描画
   ctx.strokeStyle = 'rgba(56, 189, 248, 0.025)';
   ctx.lineWidth = 0.5;
   for (let x = 0; x < CW; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
   for (let y = 0; y < CH; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
+
+  // ── ここから追加 ──
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)'; // グリッドより少し濃い青
+  ctx.lineWidth = 1;
+  
+  // 左の壁
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, CH);
+  ctx.stroke();
+  
+  // 右の壁
+  ctx.beginPath();
+  ctx.moveTo(CW, 0);
+  ctx.lineTo(CW, CH);
+  ctx.stroke();
+  // ── ここまで追加 ──
 
   bricks.forEach(b => {
     if (!b.alive) return;
@@ -751,6 +769,8 @@ function draw() {
     ctx.lineWidth = 1;
     ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
   });
+
+  // （このあとに続くエフェクトやパドルの描画処理はそのまま）
 
   drawParticles();
   drawDrops();

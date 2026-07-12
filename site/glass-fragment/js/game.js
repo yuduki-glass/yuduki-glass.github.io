@@ -935,7 +935,8 @@ if (gameArea) {
       mouseX = Math.max(0, Math.min(CW, mouseX + e.movementX));
     } else if (!isMobile) {
       const r = gameArea.getBoundingClientRect();
-      mouseX = e.clientX - r.left;
+      // gameAreaの実際の表示幅(r.width)と、ゲーム内の論理幅(CW)の比率を考慮して、正確な座標を出す
+      mouseX = (e.clientX - r.left) * (CW / r.width);
     }
   });
 

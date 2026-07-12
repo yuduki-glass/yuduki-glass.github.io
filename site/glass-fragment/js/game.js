@@ -666,39 +666,50 @@ if (bricks.length > 0 && bricks.every(b => !b.alive)) {
 
           // ── ★修正2: レア度バッジの生成と追加 ──
           // gottenItem.rarity（おそらく 'c', 'r', 'l' のいずれか）を取得
-          const rKey = (gottenItem.rarity || 'c').toLowerCase();
-          
-          // レア度に応じた表示名を設定
-          let rName = '常融';
-          if (rKey === 'r') rName = '希硝';
-          if (rKey === 'l') rName = '幻晶';
+// 全硝子片観測完了は専用演出
+if (gottenItem.name === "全硝子片 観測完了") {
 
-          // バッジ要素を作成
-          const badgeSpan = document.createElement('span');
-          badgeSpan.className = `rarity-badge rarity-${rKey}`;
-          badgeSpan.textContent = rName;
-          // 獲得画面中央に綺麗に並べるためのスタイル調整
-          badgeSpan.style.cssText = 'position: relative !important; display: inline-block; margin-bottom: 12px; padding: 3px 10px !important; font-size: 11px !important;';
-          itemDiv.appendChild(badgeSpan);
-          // ──────────────────────────────────────
+  const itemName = document.createElement('div');
+  itemName.textContent = `【 ${gottenItem.name} 】`;
+  itemName.style.cssText =
+    'font-size:15px; letter-spacing:2px; font-weight:600; color:#eafcff;';
+  itemDiv.appendChild(itemName);
 
-          if (gottenItem.image) {  
-            const itemImg = document.createElement('img');
-            itemImg.src = gottenItem.image; 
-            // レア度に応じた枠線アニメーション・カラークラスを付与
-            itemImg.className = `rarity-border-${rKey}`;
-            itemImg.style.cssText = 'width: 56px; height: 56px; object-fit: contain; margin: 0 auto 8px auto; display: block;';
-            itemDiv.appendChild(itemImg);
-          }
+} else {
 
-          const itemName = document.createElement('div');
-          itemName.textContent = `【 獲得: ${gottenItem.name} 】`;
-          // レア度に応じたテキストカラークラスを付与
-          itemName.className = `rarity-text-${rKey}`;
-          itemName.style.cssText = 'font-size: 15px; letter-spacing: 2px; font-weight: 600;';
-          itemDiv.appendChild(itemName);
+  const rKey = (gottenItem.rarity || 'c').toLowerCase();
 
-          overlay.insertBefore(itemDiv, collectionBtn);
+  // レア度に応じた表示名を設定
+  let rName = '常融';
+  if (rKey === 'r') rName = '希硝';
+  if (rKey === 'l') rName = '幻晶';
+
+  // バッジ要素を作成
+  const badgeSpan = document.createElement('span');
+  badgeSpan.className = `rarity-badge rarity-${rKey}`;
+  badgeSpan.textContent = rName;
+  badgeSpan.style.cssText =
+    'position: relative !important; display: inline-block; margin-bottom: 12px; padding: 3px 10px !important; font-size: 11px !important;';
+  itemDiv.appendChild(badgeSpan);
+
+  if (gottenItem.image) {
+    const itemImg = document.createElement('img');
+    itemImg.src = gottenItem.image;
+    itemImg.className = `rarity-border-${rKey}`;
+    itemImg.style.cssText =
+      'width: 56px; height: 56px; object-fit: contain; margin: 0 auto 8px auto; display: block;';
+    itemDiv.appendChild(itemImg);
+  }
+
+  const itemName = document.createElement('div');
+  itemName.textContent = `【 獲得: ${gottenItem.name} 】`;
+  itemName.className = `rarity-text-${rKey}`;
+  itemName.style.cssText =
+    'font-size: 15px; letter-spacing: 2px; font-weight: 600;';
+  itemDiv.appendChild(itemName);
+}
+
+overlay.insertBefore(itemDiv, collectionBtn);
         }
       }
     }

@@ -128,11 +128,11 @@ body {
   top: var(--glass-offset);
   left: var(--glass-offset);
   
+  /* 画面端の余白を引いたサイズ */
   width: calc(100vw - (var(--glass-offset) * 2));
   height: calc(100vh - (var(--glass-offset) * 2)); 
   
   z-index: 0;
-
   overflow: hidden;
   background-color: transparent;
   
@@ -144,10 +144,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 8px 8px 10px 2px rgba(0, 0, 0, 0.2);
 
-  /* ★【大改造】位置ズレの根本治療
-    .glass-layer が `var(--glass-offset)` 分だけ右下にズレて配置されているので、
-    マスクの中心点を同じ分だけ「左上（マイナス方向）」に補正する。
-    さらに、フチのはみ出しを防ぐためにマスク径を59pxに微調整。
+  /* ★ pointermove（clientX/Y）を使うことで、スクロールしても
+    ブラウザの表示画面（Viewport）に対する相対位置で常にマスクがくり抜かれる。
   */
   mask-image: radial-gradient(
     circle 59px at calc(var(--mouse-x) - var(--glass-offset)) calc(var(--mouse-y) - var(--glass-offset)),
@@ -159,16 +157,16 @@ body {
   );
 }
 
-/* 1. 立体レンズ：marginを消して、calcで中心点を引く */
+/* 1. 立体レンズ：指やマウスに完全に追従する輪郭 */
 .mouse-glow {
-  position: fixed; 
+  position: fixed; /* ─── 絶対に fixed を維持 ─── */
   top: 0;
   left: 0;
   width: 120px;
   height: 120px;
   
-  /* ★レンズは画面全体（0, 0基準）を動くので、ここは引き算を維持。
-    マウス座標のままだとレンズの左上が基準になってしまうので、半径（60px）分だけ左上にずらして中心を合わせる。
+  /* 画面全体（0, 0）基準で動くため、変な余白の引き算は不要。
+    単純にレンズの半径（60px）だけ引いて中心を合わせる。
   */
   transform: translate3d(
     calc(var(--mouse-x, -999px) - 60px), 
@@ -182,9 +180,8 @@ body {
     inset 0 0 15px rgba(255, 255, 255, 0.2),
     0 10px 30px rgba(0, 0, 0, 0.12);
   
-  /* ★最重要：コンテンツ（z-index: 10）の上にレンズを重ねる */
-  z-index: 11; 
-  pointer-events: none;
+  z-index: 11; /* コンテンツより上、だけど pointer-events: none で操作を邪魔しない */
+  pointer-events: none; /* スマホでタップを貫通させるために絶対必須 */
 }
 
 /* ==========================================================================

@@ -1,40 +1,20 @@
-document.addEventListener('DOMContentLoaded', () => {
-  
-  /* ==========================================================================
-     1. MOUSE GLOW & MASK（マウス追従・ガラスくり抜きエフェクト）
+/* ==========================================================================
+     1. MOUSE GLOW & MASK（マウス・タッチ追従エフェクト）
      ========================================================================== */
   const glassLayer = document.querySelector('.glass-layer');
   const mouseGlow = document.querySelector('.mouse-glow');
 
-if (glassLayer || mouseGlow) {
+  if (glassLayer || mouseGlow) {
+    const updateGlowPosition = (x, y) => {
+      document.documentElement.style.setProperty('--mouse-x', `${x}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${y}px`);
+    };
 
-  const updateGlowPosition = (x, y) => {
-    document.documentElement.style.setProperty('--mouse-x', `${x}px`);
-    document.documentElement.style.setProperty('--mouse-y', `${y}px`);
-  };
-
-
-  // PC：マウス追従
-  window.addEventListener('mousemove', (e) => {
-    updateGlowPosition(e.clientX, e.clientY);
-  });
-
-
-  // スマホ：指の移動追従
-  window.addEventListener('touchmove', (e) => {
-
-    const touch = e.touches[0];
-
-    updateGlowPosition(
-      touch.clientX,
-      touch.clientY
-    );
-
-  }, {
-    passive: true
-  });
-
-}
+    // PCのマウス、スマホのタッチ操作（スワイプ）の両方をこれ1本でリアルタイムに検知する
+    window.addEventListener('pointermove', (e) => {
+      updateGlowPosition(e.clientX, e.clientY);
+    });
+  }
 
   /* ==========================================================================
      2. INTERSECTION OBSERVER（スクロール連動アニメーション）

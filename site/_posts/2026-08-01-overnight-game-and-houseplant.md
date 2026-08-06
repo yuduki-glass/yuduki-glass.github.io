@@ -1,7 +1,7 @@
 ---
 layout: "post"
 title: "一晩で遊び終えたゲームと鉢植え"
-date: 2026-08-01
+date: "2026-08-01"
 category: "エッセイ"
 tags: ["ゲーム","植物","徹夜","思い出","中古ゲーム"]
 slug: "overnight-game-and-houseplant"

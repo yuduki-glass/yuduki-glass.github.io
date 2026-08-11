@@ -1,10 +1,10 @@
 ---
 layout: "post"
-title: "アンパンマンの向き"
+title: "いつもより少しだけ駅を見ていた"
 date: "2026-08-06"
 category: "小さな美学"
 tags: ["観察","違和感","配置","駅前","アンパンマン"]
-slug: "the-angle-of-anpanman"
+slug: "looking-toward-the-station"
 excerpt: "駅前の写真屋のショーケースで、いつもと違う方向を向いていたアンパンマンを眺めながら、そこから妙な連想が広がっていく。"
 image: ""
 

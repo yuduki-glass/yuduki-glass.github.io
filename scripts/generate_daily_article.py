@@ -1,4 +1,4 @@
-"""Generate one JST-dated Jekyll post using OpenAI Responses (stdlib only)."""
+"""Generate one JST-dated Jekyll post using Gemini's free tier (stdlib only)."""
 import argparse
 from datetime import datetime, timedelta, timezone
 import json
@@ -12,17 +12,12 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 JST = timezone(timedelta(hours=9), "Asia/Tokyo")
-DEFAULT_MODEL = "gpt-5.4-mini"
-ENDPOINT = "https://api.openai.com/v1/responses"
-BILLING_ERRORS = {
-    "insufficient_quota", "credit_balance_exhausted", "organization_spend_limit_exceeded",
-    "project_spend_limit_exceeded", "organization_usage_limit_exceeded",
-}
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
+ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
 SCHEMA = {
-    "type": "object",
-    "properties": {key: {"type": "string"} for key in ("title", "excerpt", "body")},
+    "type": "OBJECT",
+    "properties": {key: {"type": "STRING"} for key in ("title", "excerpt", "body")},
     "required": ["title", "excerpt", "body"],
-    "additionalProperties": False,
 }
 
 
@@ -38,11 +33,10 @@ def log(message):
 
 
 def request_article(day, model, api_key):
+    if not re.fullmatch(r"gemini-[a-z0-9.-]+", model):
+        raise ArticleError("Gemini API", "Invalid GEMINI_MODEL identifier")
     payload = {
-        "model": model,
-        "store": False,
-        "max_output_tokens": 6000,
-        "instructions": (
+        "systemInstruction": {"parts": [{"text": (
             "あなたは日本語ブログの編集者です。初心者が試せる、生成AIを日常の文章作成や"
             "考えの整理に使う具体的な方法を一つ選び、1200〜2000字の記事を書いてください。"
             "導入、H2見出し、具体的な手順、コピーできる依頼文の例、結果の確認方法を含めます。"
@@ -51,20 +45,22 @@ def request_article(day, model, api_key):
             "個人情報を入力しないこと、出力を確認することも自然に説明してください。"
             "titleは具体的な日本語タイトル、excerptは短い日本語要約、bodyはMarkdown本文。"
             "本文にH1、front matter、HTML、Liquid構文を含めないでください。"
-        ),
-        "input": f"日本時間の投稿日は{day}です。今日の記事を1本作成してください。",
-        "text": {"format": {
-            "type": "json_schema", "name": "daily_article", "strict": True, "schema": SCHEMA,
-        }},
+        )}]},
+        "contents": [{"role": "user", "parts": [{
+            "text": f"日本時間の投稿日は{day}です。今日の記事を1本作成してください。",
+        }]}],
+        "generationConfig": {
+            "candidateCount": 1, "maxOutputTokens": 6000,
+            "responseMimeType": "application/json", "responseSchema": SCHEMA,
+        },
     }
-    req = Request(ENDPOINT, data=json.dumps(payload).encode("utf-8"), headers={
-        "Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+    req = Request(f"{ENDPOINT}/{model}:generateContent", data=json.dumps(payload).encode("utf-8"), headers={
+        "x-goog-api-key": api_key, "Content-Type": "application/json",
     })
     for attempt in range(3):
         try:
             with urlopen(req, timeout=120) as response:
                 data = json.load(response)
-                log(f"OpenAI request_id={response.headers.get('x-request-id', 'unknown')}")
             break
         except HTTPError as exc:
             try:
@@ -73,33 +69,31 @@ def request_article(day, model, api_key):
                 error = {}
             # API messages may echo an invalid key. Redact before logging.
             detail = str(error.get("message", exc.reason)).replace(api_key, "[REDACTED]")
-            code = str(error.get("code", "unknown")).replace(api_key, "[REDACTED]")
-            message = (f"HTTP {exc.code}; code={code}; {detail}; "
-                       f"request_id={exc.headers.get('x-request-id', 'unknown')}")
-            billing_error = code in BILLING_ERRORS or error.get("type") == "insufficient_quota"
-            retry = (exc.code in (408, 409, 429) or exc.code >= 500) and not billing_error
+            code = str(error.get("status", "unknown")).replace(api_key, "[REDACTED]")
+            message = f"HTTP {exc.code}; status={code}; {detail}"
+            # 429 may be a daily/zero free quota. Never upgrade billing or switch providers.
+            retry = exc.code in (408, 500, 502, 503, 504)
             if not retry or attempt == 2:
-                raise ArticleError("OpenAI API", message) from exc
-            log(f"OpenAI API retry {attempt + 1}/2: {message}")
+                raise ArticleError("Gemini API", message) from exc
+            log(f"Gemini API retry {attempt + 1}/2: {message}")
         except (URLError, TimeoutError, OSError) as exc:
             if attempt == 2:
-                raise ArticleError("OpenAI API", f"Network/timeout: {exc}") from exc
-            log(f"OpenAI API network/timeout; retry {attempt + 1}/2")
+                raise ArticleError("Gemini API", f"Network/timeout: {exc}") from exc
+            log(f"Gemini API network/timeout; retry {attempt + 1}/2")
         except (ValueError, UnicodeError) as exc:
-            raise ArticleError("OpenAI API", "Response was not valid JSON") from exc
+            raise ArticleError("Gemini API", "Response was not valid JSON") from exc
         time.sleep(5 * (2 ** attempt))
-    if not isinstance(data, dict) or data.get("status") != "completed":
-        detail = data.get("incomplete_details") if isinstance(data, dict) else "invalid response"
-        raise ArticleError("Article generation", f"Response did not complete: {detail}")
-    chunks = []
-    for item in data.get("output", []):
-        if item.get("type") != "message":
-            continue
-        for content in item.get("content", []):
-            if content.get("type") == "refusal":
-                raise ArticleError("Article generation", "Model refused the request")
-            if content.get("type") == "output_text":
-                chunks.append(content.get("text", ""))
+    if not isinstance(data, dict):
+        raise ArticleError("Article generation", "Invalid response object")
+    candidates = data.get("candidates", [])
+    if not candidates:
+        raise ArticleError("Article generation", f"No candidate; promptFeedback={data.get('promptFeedback')}")
+    candidate = candidates[0]
+    if candidate.get("finishReason") != "STOP":
+        raise ArticleError("Article generation", f"Incomplete/blocked response: {candidate.get('finishReason')}")
+    chunks = [part.get("text", "") for part in candidate.get("content", {}).get("parts", [])
+              if not part.get("thought")]
+    log(f"Gemini modelVersion={data.get('modelVersion', model)}; usage={data.get('usageMetadata', {})}")
     try:
         article = json.loads("".join(chunks))
     except (ValueError, TypeError) as exc:
@@ -167,10 +161,10 @@ def generate(root, now=None):
             raise ArticleError("Article generation", f"Existing post is invalid: {relative}")
         log(f"Skipped generation: {relative} already exists; build/deploy will continue")
         return relative, False
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
-        raise ArticleError("OpenAI API", "Missing OPENAI_API_KEY repository Actions secret")
-    model = os.environ.get("OPENAI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+        raise ArticleError("Gemini API", "Missing GEMINI_API_KEY repository Actions secret")
+    model = os.environ.get("GEMINI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
     log(f"Generating {day} (Asia/Tokyo), model={model}")
     article = request_article(day, model, api_key)
     save_article(path, render_article(article, day))
@@ -189,7 +183,7 @@ def main():
                 handle.write(f"article_path={relative}\ncreated={str(created).lower()}\n")
     except (ArticleError, OSError) as exc:
         stage = exc.stage if isinstance(exc, ArticleError) else "Markdown save"
-        message = str(exc).replace(os.environ.get("OPENAI_API_KEY") or "\0", "[REDACTED]")
+        message = str(exc).replace(os.environ.get("GEMINI_API_KEY") or "\0", "[REDACTED]")
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title={stage} failed::{escaped}", file=sys.stderr)
         return 1

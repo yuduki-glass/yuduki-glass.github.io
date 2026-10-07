@@ -6,7 +6,7 @@ PCやCodexを起動しておく必要はありません。mainへの通常のpus
 ## 初回設定
 
 1. この変更をGitHubのデフォルトブランチ `main` に反映します。
-2. リポジトリの **Settings → Secrets and variables → Actions → Secrets → New repository secret** で、名前 `OPENAI_API_KEY`、値にOpenAI APIキーを登録します。キーを記事・コード・ログに書かないでください。OpenAI側のAPI課金、残高、モデル利用権限も必要です。ChatGPTの契約とは別です。
+2. [Google AI Studio](https://aistudio.google.com/api-keys) で、課金アカウントを紐付けていない **Free Tier** プロジェクトのAPIキーを作成します。リポジトリの **Settings → Secrets and variables → Actions → Secrets → New repository secret** で、名前 `GEMINI_API_KEY`、値にそのキーを登録します。キーを記事・コード・ログに書かないでください。無料運用を維持するため、そのプロジェクトで課金を有効にしないでください。
 3. **Settings → Actions → General** でActions、および使用する `actions/*` と `ruby/setup-ruby` を許可します。workflow内でbuildジョブに `contents: write`、deployジョブに `pages: write` と `id-token: write` を明示しています。組織ポリシーで書き込みが禁止されていないことを確認してください。PR作成権限や個人アクセストークンは不要です。
 4. **Settings → Rules → Rulesets**（またはBranchesの保護設定）で、`github-actions[bot]` のmainへの通常pushを許可できることを確認します。PR必須・署名必須などでbotの直接pushが拒否される設定では、この最小構成は動きません。無条件に保護を解除するのでなく、管理方針に合う許可を設定してください。
 5. **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にします。既存の独自ドメイン設定は維持します。**Settings → Environments → github-pages** はmainからのdeployを許可し、無人運用では毎回の承認を要求しない設定が必要です。
@@ -14,7 +14,7 @@ PCやCodexを起動しておく必要はありません。mainへの通常のpus
 ## 手動テストと成功確認
 
 **Actions → Build and Deploy Jekyll site → Run workflow → Branch: main** を選びます。
-`generate_article` をtrueにして実行すると、本番の記事生成・API課金・commit/push・公開まで行います。
+`generate_article` をtrueにして実行すると、無料枠を使用する本番の記事生成・commit/push・公開まで行います。
 
 次を確認します。
 
@@ -29,7 +29,7 @@ PCやCodexを起動しておく必要はありません。mainへの通常のpus
 
 ## 処理と重複防止
 
-同じworkflow execution内で、最新mainのcheckout → Pythonテスト → OpenAI API → Markdown保存 → 既存Ruby/Jekyll build → HTML検証 → 記事だけcommit → push → artifact upload → Pages deployを行います。壊れた記事をmainに残さないため、buildをcommitより先にしています。
+同じworkflow execution内で、最新mainのcheckout → Pythonテスト → Gemini API → Markdown保存 → 既存Ruby/Jekyll build → HTML検証 → 記事だけcommit → push → artifact upload → Pages deployを行います。壊れた記事をmainに残さないため、buildをcommitより先にしています。
 
 `GITHUB_TOKEN` のpushが別workflowを起動することには依存しません。通常push・スケジュール・手動実行を共通concurrency groupで直列化し、進行中の公開をキャンセルしません。待機後のcheckoutも最新mainを読みます。人間が生成中にmainを更新してpush競合が起きた場合は、強制pushや自動マージをせず明示的に失敗します。再実行で最新mainからやり直します。
 
@@ -48,21 +48,28 @@ ActionsのJekyll buildでは環境変数 `TZ: Asia/Tokyo` を設定し、日付�
 - 現在：`17 0 * * *` → 毎日09:17 JST
 - 変更例：`30 12 * * *` → 毎日21:30 JST
 
-GitHub Actionsのscheduleは定刻ぴったりの実行や毎日の配送を保証しません。負荷による遅延・欠落、ActionsやOpenAIの障害・利用制限では投稿されないことがあります。公開リポジトリでは長期間の活動停止でscheduleが無効になる場合もあります。Phase 1は1日1回の起動と一時的なAPI障害の最大3回の試行を実装し、外部障害の常時復旧システムは持ちません。
+GitHub Actionsのscheduleは定刻ぴったりの実行や毎日の配送を保証しません。負荷による遅延・欠落、ActionsやGeminiの障害・利用制限では投稿されないことがあります。公開リポジトリでは長期間の活動停止でscheduleが無効になる場合もあります。Phase 1は1日1回の起動と一時的なAPI障害の最大3回の試行を実装し、外部障害の常時復旧システムは持ちません。
 
-モデルは **Settings → Secrets and variables → Actions → Variables → New repository variable** に `OPENAI_MODEL` を登録すると変更できます。未指定は `gpt-5.4-mini`。Responses APIとStructured Outputsをサポートするモデルを指定し、変更後は手動テストしてください。APIパラメータ互換性のないモデルへは名前の変更だけでは移行できません。
+モデルは **Settings → Secrets and variables → Actions → Variables → New repository variable** に `GEMINI_MODEL` を登録すると変更できます。未指定は `gemini-3.5-flash-lite`。無料枠・generateContent・構造化出力の対応を公式資料と該当プロジェクトで確認し、変更後は手動テストしてください。有料モデルや別プロバイダーへの自動フォールバックはありません。
 
-2026-10-07に公式モデル資料でResponses API・Structured Outputs対応を確認しました。既定モデルは標準のテキスト料金が入力100万トークンあたり$0.75、出力$4.50で、本文生成に必要な能力と費用のバランスを採用理由としています。1記事の費用は実際のトークン数で変わります。出力上限は6000トークンです。Python標準ライブラリのHTTPクライアントを使い、pip依存はありません。
+2026-10-07に公式資料で既定モデルの無料枠（入力・出力とも無料）と構造化出力の対応を確認しました。高性能モデルより低コストのFlash-Liteを優先します。出力上限は6000トークン、候補数は1。検索・画像生成・キャッシュ等の追加機能を使わず、Python標準ライブラリから `generateContent` を呼びます。APIキーはURLに含めず `x-goog-api-key` ヘッダーへ渡します。pip依存はありません。
 
-- [OpenAI GPT-5.4 mini](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
-- [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+無料枠のRPM・TPM・RPDはプロジェクト・モデルにより異なり、現在の値はAI Studioで確認します。日次枠は太平洋時間の午前0時にリセットされます。1日1記事は通常1リクエストですが、障害時の再試行や手動テストも枠を使用します。無料サービスの利用可能性・将来の無料枠・毎日の成功は保証されません。無料枠では入力・出力がGoogleの製品改善に利用される場合があるため、公開用の一般的な依頼文だけを送信します。
+
+0円運用は、Google側のプロジェクトをFree Tierのまま維持することが前提です。生成用APIキーから課金設定を確認・変更する機能はありません。人間がそのプロジェクトの課金を有効化した場合、コードだけでは従量課金を防げません。GitHub側は公開リポジトリの標準ランナーを使用します。既存独自ドメインの維持費はこのAPI無料枠とは別です。
+
+- [Geminiモデル](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite)
+- [Gemini料金](https://ai.google.dev/gemini-api/docs/pricing)
+- [Geminiレート制限](https://ai.google.dev/gemini-api/docs/rate-limits)
+- [Gemini課金とFree Tier](https://ai.google.dev/gemini-api/docs/billing)
+- [generateContent API仕様](https://ai.google.dev/api/generate-content)
 - [GitHub scheduleの動作と制約](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 
 ## 失敗箇所の見方
 
 | 失敗 | Actionsログと対応 |
 | --- | --- |
-| OpenAI API | `OpenAI API failed`。HTTPステータス・エラーコード・request ID。401はキー、403/404はモデル権限やモデル名、429は残高・利用制限、5xxはAPI側を確認。一時エラーのみ最大3回試行し、キーは表示しません。 |
+| Gemini API | `Gemini API failed`。HTTPステータス・APIのstatus・メッセージ。400/403はキーやアクセス条件、404はモデル名、429は無料枠・利用制限、5xxはAPI側を確認。一時的な通信障害・408・500/502/503/504のみ最大3回試行し、キーは表示しません。 |
 | 記事生成 | `Article generation failed`。未完了・拒否・不正JSON・短すぎる本文など。記事を保存せず失敗。モデル設定を確認して再実行。 |
 | Markdown保存 | `Markdown save failed`。パス・ディスク・権限を確認。部分的な記事を公開しません。 |
 | commit | `Commit generated article` / `Commit failed`。Gitログを確認。対象記事だけステージします。 |
@@ -71,11 +78,11 @@ GitHub Actionsのscheduleは定刻ぴったりの実行や毎日の配送を保�
 | HTML検証 | `Verify generated article HTML`。記事の出力URL、title/H1、本文、トップ・archives・sitemap掲載を確認。 |
 | Pages公開 | deployジョブの `Deploy to GitHub Pages`。Pages source、environment承認、pages/id-token権限を確認。記事push済みなら再実行しても同日の記事は増えません。 |
 
-## OpenAIの残高・上限エラーからの復旧
+## 無料枠の上限エラーからの復旧
 
-`credit_balance_exhausted` は登録したAPIキーの組織でクレジット残高が尽きていることを示します。Secretの読み取り失敗とは異なり、APIへの接続後に返るエラーです。[OpenAI Billing](https://platform.openai.com/settings/organization/billing/) で該当組織の残高を追加し、反映後にActionsから `generate_article: true` でRun workflowを実行してください。キーの組織と残高を追加した組織が一致する必要があります。
+`429 RESOURCE_EXHAUSTED` は無料枠等の上限です。APIから返る説明とAI Studioの利用量を確認してください。日次上限の場合はリセットを待ち、一時的な分単位の制限なら間隔を空けて手動再実行できます。枠が0・モデルが利用不可の場合は、Free Tierの提供状況と対象モデルを確認してください。課金を有効化して回避しません。
 
-残高不足、組織・プロジェクトの利用上限、`insufficient_quota` は再試行で解消しないため、1回で停止します。一時的なレート制限やサーバーエラーのみ再試行します。[OpenAI公式エラーコード](https://developers.openai.com/api/docs/guides/error-codes) に対応方法があります。
+日次上限で無駄なリクエストを重ねないよう、429は1回で停止します。記事がpush済みで公開だけ失敗した場合、同日再実行はAPIを呼ばず再公開します。旧プロバイダー用のSecret・モデル変数はこのworkflowから参照しません。
 
 ## ローカル検証（API課金なし）
 

@@ -25,9 +25,8 @@ def response(data):
 
 
 def completed():
-    return {"status": "completed", "output": [
-        {"type": "reasoning"}, {"type": "message", "content": [
-            {"type": "output_text", "text": json.dumps(article())}]}]}
+    return {"modelVersion": g.DEFAULT_MODEL, "candidates": [{"finishReason": "STOP", "content": {"parts": [
+        {"thought": True, "text": "Not article JSON"}, {"text": json.dumps(article())}]}}]}
 
 
 class GeneratorTests(unittest.TestCase):
@@ -36,27 +35,29 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY"), article())
         req = call.call_args.args[0]
         data = json.loads(req.data)
-        self.assertEqual(req.full_url, g.ENDPOINT)
-        self.assertEqual(data["text"]["format"]["type"], "json_schema")
-        self.assertFalse(data["store"])
+        self.assertEqual(req.full_url, g.ENDPOINT + '/' + g.DEFAULT_MODEL + ':generateContent')
+        self.assertEqual(data["generationConfig"]["responseMimeType"], "application/json")
+        self.assertEqual(req.get_header("X-goog-api-key"), "TEST_KEY")
+        self.assertNotIn("TEST_KEY", req.full_url)
+        self.assertNotIn("tools", data)
 
     def test_jst_day_and_rerun_skips_without_secret(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             now = datetime(2026, 10, 6, 16, tzinfo=timezone.utc)
-            with patch.dict(os.environ, {"OPENAI_API_KEY": "TEST_KEY"}), patch.object(g, "request_article", return_value=article()) as request:
+            with patch.dict(os.environ, {"GEMINI_API_KEY": "TEST_KEY"}), patch.object(g, "request_article", return_value=article()) as request:
                 path, created = g.generate(root, now)
                 self.assertTrue(created)
                 self.assertEqual(path, "site/_posts/2026-10-07-daily-ai.md")
                 original = (root / path).read_bytes()
-                with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+                with patch.dict(os.environ, {"GEMINI_API_KEY": ""}):
                     self.assertEqual(g.generate(root, now), (path, False))
                 request.assert_called_once()
                 self.assertEqual((root / path).read_bytes(), original)
 
     def test_missing_key_creates_no_file(self):
-        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
-            with self.assertRaisesRegex(g.ArticleError, "Missing OPENAI_API_KEY"):
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"GEMINI_API_KEY": ""}):
+            with self.assertRaisesRegex(g.ArticleError, "Missing GEMINI_API_KEY"):
                 g.generate(Path(temp))
             self.assertEqual(list(Path(temp).rglob("*.md")), [])
 
@@ -85,9 +86,10 @@ class GeneratorTests(unittest.TestCase):
 
     def test_incomplete_refusal_and_invalid_json_fail(self):
         cases = [
-            {"status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"}},
-            {"status": "completed", "output": [{"type": "message", "content": [{"type": "refusal"}]}]},
-            {"status": "completed", "output": []},
+            {"candidates": [{"finishReason": "MAX_TOKENS"}]},
+            {"candidates": [{"finishReason": "SAFETY"}]},
+            {"promptFeedback": {"blockReason": "SAFETY"}},
+            {"candidates": [{"finishReason": "STOP", "content": {"parts": [{"text": "bad json"}]}}]},
         ]
         for data in cases:
             with self.subTest(data=data), patch.object(g, "urlopen", return_value=response(data)):
@@ -104,42 +106,43 @@ class GeneratorTests(unittest.TestCase):
                 g.validate_article(data)
 
     def test_api_auth_failure_is_redacted_and_not_retried(self):
-        error = HTTPError(g.ENDPOINT, 401, "Unauthorized", {}, io.BytesIO(
-            b'{"error":{"code":"invalid_api_key","message":"Invalid TEST_KEY"}}'))
+        error = HTTPError(g.ENDPOINT, 403, "Forbidden", {}, io.BytesIO(
+            b'{"error":{"status":"PERMISSION_DENIED","message":"Invalid TEST_KEY"}}'))
         with patch.object(g, "urlopen", side_effect=error) as call, patch.object(g.time, "sleep") as sleep:
             with self.assertRaises(g.ArticleError) as caught:
                 g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY")
-            self.assertEqual(caught.exception.stage, "OpenAI API")
+            self.assertEqual(caught.exception.stage, "Gemini API")
             self.assertNotIn("TEST_KEY", str(caught.exception))
             call.assert_called_once()
             sleep.assert_not_called()
 
     def test_transient_http_retry_then_success(self):
-        error = HTTPError(g.ENDPOINT, 429, "Rate limited", {}, io.BytesIO(b'{}'))
+        error = HTTPError(g.ENDPOINT, 503, "Unavailable", {}, io.BytesIO(b'{}'))
         with patch.object(g, "urlopen", side_effect=[error, response(completed())]) as call, patch.object(g.time, "sleep"):
             self.assertEqual(g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY"), article())
             self.assertEqual(call.call_count, 2)
 
-    def test_billing_errors_fail_once_without_retry(self):
-        for code in ("credit_balance_exhausted", "insufficient_quota", "organization_spend_limit_exceeded",
-                     "project_spend_limit_exceeded", "organization_usage_limit_exceeded", "future_billing_code"):
-            payload = {"error": {"code": code, "message": "Add credits or review limits"}}
-            if code == "future_billing_code":
-                payload["error"]["type"] = "insufficient_quota"
-            error = HTTPError(g.ENDPOINT, 429, "Quota", {}, io.BytesIO(json.dumps(payload).encode()))
-            with self.subTest(code=code), patch.object(g, "urlopen", side_effect=error) as call, patch.object(g.time, "sleep") as sleep:
-                with self.assertRaises(g.ArticleError) as caught:
-                    g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY")
-                self.assertIn(code, str(caught.exception))
-                self.assertEqual(caught.exception.stage, "OpenAI API")
-                call.assert_called_once()
-                sleep.assert_not_called()
+    def test_free_quota_fails_once_without_fallback(self):
+        payload = {"error": {"status": "RESOURCE_EXHAUSTED", "message": "Free tier daily limit exceeded"}}
+        error = HTTPError(g.ENDPOINT, 429, "Quota", {}, io.BytesIO(json.dumps(payload).encode()))
+        with patch.object(g, "urlopen", side_effect=error) as call, patch.object(g.time, "sleep") as sleep:
+            with self.assertRaises(g.ArticleError) as caught:
+                g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY")
+            self.assertIn("RESOURCE_EXHAUSTED", str(caught.exception))
+            self.assertEqual(caught.exception.stage, "Gemini API")
+            call.assert_called_once()
+            sleep.assert_not_called()
+
+    def test_model_cannot_change_endpoint(self):
+        with patch.object(g, "urlopen") as call, self.assertRaises(g.ArticleError):
+            g.request_article("2026-10-07", "../other?key=bad", "TEST_KEY")
+        call.assert_not_called()
 
     def test_network_retry_is_bounded(self):
         with patch.object(g, "urlopen", side_effect=URLError("offline")) as call, patch.object(g.time, "sleep"):
             with self.assertRaises(g.ArticleError) as caught:
                 g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY")
-            self.assertEqual(caught.exception.stage, "OpenAI API")
+            self.assertEqual(caught.exception.stage, "Gemini API")
             self.assertEqual(call.call_count, 3)
 
 

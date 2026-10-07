@@ -120,6 +120,21 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY"), article())
             self.assertEqual(call.call_count, 2)
 
+    def test_billing_errors_fail_once_without_retry(self):
+        for code in ("credit_balance_exhausted", "insufficient_quota", "organization_spend_limit_exceeded",
+                     "project_spend_limit_exceeded", "organization_usage_limit_exceeded", "future_billing_code"):
+            payload = {"error": {"code": code, "message": "Add credits or review limits"}}
+            if code == "future_billing_code":
+                payload["error"]["type"] = "insufficient_quota"
+            error = HTTPError(g.ENDPOINT, 429, "Quota", {}, io.BytesIO(json.dumps(payload).encode()))
+            with self.subTest(code=code), patch.object(g, "urlopen", side_effect=error) as call, patch.object(g.time, "sleep") as sleep:
+                with self.assertRaises(g.ArticleError) as caught:
+                    g.request_article("2026-10-07", g.DEFAULT_MODEL, "TEST_KEY")
+                self.assertIn(code, str(caught.exception))
+                self.assertEqual(caught.exception.stage, "OpenAI API")
+                call.assert_called_once()
+                sleep.assert_not_called()
+
     def test_network_retry_is_bounded(self):
         with patch.object(g, "urlopen", side_effect=URLError("offline")) as call, patch.object(g.time, "sleep"):
             with self.assertRaises(g.ArticleError) as caught:

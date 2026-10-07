@@ -71,6 +71,12 @@ GitHub Actionsのscheduleは定刻ぴったりの実行や毎日の配送を保�
 | HTML検証 | `Verify generated article HTML`。記事の出力URL、title/H1、本文、トップ・archives・sitemap掲載を確認。 |
 | Pages公開 | deployジョブの `Deploy to GitHub Pages`。Pages source、environment承認、pages/id-token権限を確認。記事push済みなら再実行しても同日の記事は増えません。 |
 
+## OpenAIの残高・上限エラーからの復旧
+
+`credit_balance_exhausted` は登録したAPIキーの組織でクレジット残高が尽きていることを示します。Secretの読み取り失敗とは異なり、APIへの接続後に返るエラーです。[OpenAI Billing](https://platform.openai.com/settings/organization/billing/) で該当組織の残高を追加し、反映後にActionsから `generate_article: true` でRun workflowを実行してください。キーの組織と残高を追加した組織が一致する必要があります。
+
+残高不足、組織・プロジェクトの利用上限、`insufficient_quota` は再試行で解消しないため、1回で停止します。一時的なレート制限やサーバーエラーのみ再試行します。[OpenAI公式エラーコード](https://developers.openai.com/api/docs/guides/error-codes) に対応方法があります。
+
 ## ローカル検証（API課金なし）
 
 リポジトリルートで `python -B -m unittest discover -s scripts -p 'test_generate_daily_article.py' -v`。

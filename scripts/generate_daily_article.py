@@ -14,6 +14,10 @@ from urllib.request import Request, urlopen
 JST = timezone(timedelta(hours=9), "Asia/Tokyo")
 DEFAULT_MODEL = "gpt-5.4-mini"
 ENDPOINT = "https://api.openai.com/v1/responses"
+BILLING_ERRORS = {
+    "insufficient_quota", "credit_balance_exhausted", "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded", "organization_usage_limit_exceeded",
+}
 SCHEMA = {
     "type": "object",
     "properties": {key: {"type": "string"} for key in ("title", "excerpt", "body")},
@@ -72,7 +76,8 @@ def request_article(day, model, api_key):
             code = str(error.get("code", "unknown")).replace(api_key, "[REDACTED]")
             message = (f"HTTP {exc.code}; code={code}; {detail}; "
                        f"request_id={exc.headers.get('x-request-id', 'unknown')}")
-            retry = (exc.code in (408, 409, 429) or exc.code >= 500) and code != "insufficient_quota"
+            billing_error = code in BILLING_ERRORS or error.get("type") == "insufficient_quota"
+            retry = (exc.code in (408, 409, 429) or exc.code >= 500) and not billing_error
             if not retry or attempt == 2:
                 raise ArticleError("OpenAI API", message) from exc
             log(f"OpenAI API retry {attempt + 1}/2: {message}")

@@ -3,49 +3,119 @@ name: Build and Deploy Jekyll site
 on:
   push:
     branches: [ main ]
+  schedule:
+    # UTC 00:17 = Japan 09:17. Avoid the busy start of the hour.
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+    inputs:
+      generate_article:
+        description: 'Generate daily AI article (false = build/deploy only)'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
+# Serialize ordinary pushes, scheduled generation and manual recovery together.
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: ./site
-
     steps:
-      - name: Checkout
+      - name: Checkout latest main
         uses: actions/checkout@v4
+        with:
+          # A queued/re-run job must see previously committed daily posts.
+          ref: main
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Test article generator
+        working-directory: .
+        run: python -B -m unittest discover -s scripts -p 'test_generate_daily_article.py' -v
+
+      - name: Generate and save daily article
+        id: article
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.generate_article)
+        working-directory: .
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.4-mini' }}
+        run: python -B scripts/generate_daily_article.py
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2
+          ruby-version: '3.2'
           bundler-cache: false
 
       - name: Install dependencies
         run: bundle install
 
       - name: Build site
+        env:
+          JEKYLL_ENV: production
+          TZ: Asia/Tokyo
         run: bundle exec jekyll build
+
+      - name: Verify generated article HTML
+        if: steps.article.outputs.article_path != ''
+        working-directory: .
+        env:
+          ARTICLE_PATH: ${{ steps.article.outputs.article_path }}
+        run: python -B scripts/verify_daily_article.py "$ARTICLE_PATH"
+
+      # Commit only after build/HTML validation. GITHUB_TOKEN pushes do not need
+      # to trigger another workflow: this execution uploads and deploys the build.
+      - name: Commit generated article
+        if: steps.article.outputs.created == 'true'
+        working-directory: .
+        env:
+          ARTICLE_PATH: ${{ steps.article.outputs.article_path }}
+        run: |
+          trap 'echo "::error title=Commit failed::Could not commit the generated article"' ERR
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$ARTICLE_PATH"
+          git diff --cached --check
+          git commit -m "Add daily AI article $(basename "$ARTICLE_PATH" .md)"
+
+      - name: Push generated article
+        if: steps.article.outputs.created == 'true'
+        working-directory: .
+        run: |
+          trap 'echo "::error title=Push failed::Check contents permission, main branch rules, or concurrent pushes. Re-run all jobs after resolving."' ERR
+          git push origin HEAD:main
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site/_site
 
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
-
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4

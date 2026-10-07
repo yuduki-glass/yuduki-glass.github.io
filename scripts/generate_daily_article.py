@@ -117,9 +117,34 @@ def validate_article(article):
             raise ArticleError("Article generation", f"Unexpected HTML in {key}")
     if any("\n" in article[key] or "\r" in article[key] for key in ("title", "excerpt")):
         raise ArticleError("Article generation", "Metadata must be single-line")
-    if not re.search(r"^## ", article["body"], re.M) or re.search(r"^# ", article["body"], re.M):
-        raise ArticleError("Article generation", "Body must use H2 headings, without H1")
+    article["body"], has_heading = normalize_headings(article["body"])
+    if not has_heading:
+        raise ArticleError("Article generation", "Body must contain section headings")
     return article
+
+
+def normalize_headings(body):
+    """The post layout owns H1. Normalize prose headings, never fenced examples."""
+    lines = []
+    fence = None
+    has_heading = False
+    for line in body.splitlines():
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if marker:
+            token = marker[1]
+            if fence is None:
+                fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence) and not line[marker.end():].strip():
+                fence = None
+            lines.append(line)
+            continue
+        if fence is None:
+            heading = re.match(r"^ {0,3}(#{1,2})[ \t\u3000]+(.+)$", line)
+            if heading:
+                line = "## " + heading[2]
+                has_heading = True
+        lines.append(line)
+    return "\n".join(lines), has_heading
 
 
 def render_article(article, day):

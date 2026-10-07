@@ -138,6 +138,21 @@ class GeneratorTests(unittest.TestCase):
             g.request_article("2026-10-07", "../other?key=bad", "TEST_KEY")
         call.assert_not_called()
 
+    def test_model_h1_becomes_h2_but_code_examples_stay_intact(self):
+        value = article()
+        value['body'] = value['body'].replace('## メモの整理', '# メモの整理')
+        value['body'] += '\n\n```markdown\n# 入力例\n```\n\n##\u3000確認方法\n原文と確認。'
+        normalized = g.validate_article(value)['body']
+        self.assertTrue(normalized.startswith('## メモの整理'))
+        self.assertIn('```markdown\n# 入力例\n```', normalized)
+        self.assertIn('## 確認方法', normalized)
+
+    def test_code_heading_does_not_count_as_article_structure(self):
+        value = article()
+        value['body'] = value['body'].replace('## メモの整理', 'メモの整理') + '\n```\n## 例だけ\n```'
+        with self.assertRaisesRegex(g.ArticleError, 'section headings'):
+            g.validate_article(value)
+
     def test_network_retry_is_bounded(self):
         with patch.object(g, "urlopen", side_effect=URLError("offline")) as call, patch.object(g.time, "sleep"):
             with self.assertRaises(g.ArticleError) as caught:

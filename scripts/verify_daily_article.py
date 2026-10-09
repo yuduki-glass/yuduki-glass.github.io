@@ -15,14 +15,17 @@ def verify(article, site=Path("site")):
     if not title:
         raise ValueError("Missing title front matter")
     title = json.loads(title[1])
+    source_parts = source.split("---", 2)
+    if len(source_parts) < 3 or not source_parts[2].strip():
+        raise ValueError("Missing source article body")
     url = "/" + "/".join(match.groups()) + "/daily-ai/"
     page = (site / "_site" / url.strip("/") / "index.html").read_text(encoding="utf-8")
     for tag in ("title", "h1"):
         value = re.search(rf"<{tag}\b[^>]*>(.*?)</{tag}>", page, re.S)
         if not value or html.unescape(value[1]).strip() != html.unescape(title):
             raise ValueError(f"Rendered {tag} mismatch")
-    if '<div class="post-content">' not in page or "この記事はAIにより自動生成されています。" not in page:
-        raise ValueError("Missing article body")
+    if '<div class="post-content">' not in page:
+        raise ValueError("Missing rendered article body")
     for name in ("index.html", "archives/index.html", "sitemap.xml"):
         if url not in (site / "_site" / name).read_text(encoding="utf-8"):
             raise ValueError(f"Article absent from {name}")

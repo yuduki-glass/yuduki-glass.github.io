@@ -11,6 +11,18 @@ layout: default
   {% assign w = page.date | date: "%w" %}
   {{ page.date | date: "%Y.%m.%d" }} ({{ "日月火水木金土" | slice: w, 1 }})
 </p>
+
+{% assign hero_path = page.image %}
+{% if hero_path == nil or hero_path == "" %}
+  {% capture daily_ai_hero %}/assets/images/daily-ai/{{ page.date | date: "%Y-%m-%d" }}.webp{% endcapture %}
+  {% assign daily_ai_hero_file = site.static_files | where: "path", daily_ai_hero | first %}
+  {% if daily_ai_hero_file %}
+    {% assign hero_path = daily_ai_hero %}
+  {% endif %}
+{% endif %}
+{% if hero_path and hero_path != "" %}
+  <img class="post-hero" src="{{ hero_path | relative_url }}" alt="{{ page.title | escape }}" loading="eager" decoding="async">
+{% endif %}
   </header>
 
   <div class="post-content">

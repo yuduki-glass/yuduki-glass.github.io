@@ -1,0 +1,31 @@
+name: Test Base64 image staging
+
+on:
+  push:
+    branches: [ test/base64-image-transfer ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-image-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+
+      - name: Decode staged WebP
+        run: |
+          base64 --decode image-staging/test-1200x630.webp.b64 > /tmp/test-1200x630.webp
+
+      - name: Validate binary and checksum
+        run: |
+          file /tmp/test-1200x630.webp
+          test "$(sha256sum /tmp/test-1200x630.webp | cut -d' ' -f1)" = "b8c2ada388b5995ce4be00351958ef2d51867279af59f61baa349096693a18ab"
+          python - <<'PY'
+          from pathlib import Path
+          data = Path('/tmp/test-1200x630.webp').read_bytes()
+          assert data[:4] == b'RIFF'
+          assert data[8:12] == b'WEBP'
+          print(f'Validated WebP: {len(data)} bytes')
+          PY

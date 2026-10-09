@@ -3,6 +3,8 @@ name: Test Base64 image staging
 on:
   push:
     branches: [ test/base64-image-transfer ]
+    paths:
+      - 'image-staging/chunktest/READY'
 
 permissions:
   contents: read
@@ -11,27 +13,15 @@ jobs:
   validate-image-staging:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout test branch
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Join and decode staged WebP chunks
         run: |
           cat image-staging/chunktest/part*.b64 > /tmp/test.b64
           base64 --decode /tmp/test.b64 > /tmp/test-1200x630.webp
-
       - name: Validate binary and checksum
         run: |
-          file /tmp/test-1200x630.webp
+          file /tmp/test-1200x630.webp | grep -q '1200x630'
           test "$(sha256sum /tmp/test-1200x630.webp | cut -d' ' -f1)" = "97e2485022aa1a1d82d28d94d72de0e48834b65dd4220f37cdb8fb706c6ff772"
-          python - <<'PY'
-          from pathlib import Path
-          from PIL import Image
-          p = Path('/tmp/test-1200x630.webp')
-          data = p.read_bytes()
-          assert data[:4] == b'RIFF' and data[8:12] == b'WEBP'
-          with Image.open(p) as im:
-              im.load()
-              assert im.size == (1200, 630)
-              assert im.format == 'WEBP'
-          print(f'Validated chunked WebP: {len(data)} bytes, 1200x630')
-          PY
+          test "$(head -c 4 /tmp/test-1200x630.webp)" = "RIFF"
+          test "$(dd if=/tmp/test-1200x630.webp bs=1 skip=8 count=4 2>/dev/null)" = "WEBP"
+          echo 'Chunked WebP validation passed'

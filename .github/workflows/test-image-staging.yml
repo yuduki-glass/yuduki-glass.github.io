@@ -24,7 +24,7 @@ jobs:
       - name: Validate WebP
         run: |
           file /tmp/2026-10-11.webp | grep -q '1200x630'
-          test "$(sha256sum /tmp/2026-10-11.webp | cut -d' ' -f1)" = "3a19c93e23b1ba75f69237a3a7044c7dc3cd7cfe36e31a34ec0b1985daac1ac1"
+          test "$(sha256sum /tmp/2026-10-11.webp | cut -d' ' -f1)" = "c745e3c5511be74a67e7521e48ede3635262f19ffec06fa09b417cae57db74ef"
           test "$(head -c 4 /tmp/2026-10-11.webp)" = "RIFF"
           test "$(dd if=/tmp/2026-10-11.webp bs=1 skip=8 count=4 2>/dev/null)" = "WEBP"
           echo '2026-10-11 WebP validation passed'

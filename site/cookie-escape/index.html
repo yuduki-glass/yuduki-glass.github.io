@@ -13,6 +13,7 @@
 
 .strength-actions{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:6px;margin-top:5px}.strength-actions .tune{border-radius:8px;min-height:40px}.max-strength{background:#c7b0fa16;border:1px solid #c7b0fa38;border-radius:8px;color:var(--pink);font-size:11px;padding:9px 10px;cursor:pointer;min-height:40px}.max-strength:disabled{opacity:.4;cursor:default}.upgrade-row{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:6px;align-items:stretch;margin-top:8px}.upgrade-row .item{margin-top:0}.upgrade-row .item .symbol{display:none}.upgrade-row .item{gap:6px;padding:10px}.upgrade-row .item .price{font-size:11px}.upgrade-row .details strong{font-size:13px}
 .buff-note.bonus-active{border:1px solid;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:600;min-height:44px}
+.balance{overflow-wrap:anywhere}.price{white-space:normal;overflow-wrap:anywhere;max-width:45%}.rates b{overflow-wrap:anywhere}.manual{overflow-wrap:anywhere}
 </style>
 </head>
 <body><main>
@@ -109,7 +110,8 @@ function clickValue(){return Math.min(CAP,(Math.pow(2,save.touch)*memoryMultipli
 function nebulaRate(){return unlocked(3)?Math.pow(stableProduction()/1e6,.35)*.008:0;}
 function grant(n){save.fragments=Math.min(CAP,save.fragments+n);save.total=Math.min(CAP,save.total+n);save.runTotal=Math.min(CAP,save.runTotal+n);}
 function checkAchievements(){const added=[];for(const a of ACHIEVEMENTS)if(!save.achievements.includes(a.id)&&a.test(save)){save.achievements.push(a.id);added.push(a.name);}return added;}
-function fmt(n){if(!Number.isFinite(n))return '上限';if(n<1000)return n<10?n.toLocaleString('ja-JP',{maximumFractionDigits:1}):Math.floor(n).toLocaleString('ja-JP');const units=[[1e24,'秭'],[1e20,'垓'],[1e16,'京'],[1e12,'兆'],[1e8,'億'],[1e4,'万']];for(const [v,u] of units)if(n>=v&&n<1e28)return (n/v).toLocaleString('ja-JP',{maximumFractionDigits:2})+u;if(n>=1e28)return n.toExponential(2);return Math.floor(n).toLocaleString('ja-JP');}
+const NUMBER_UNITS=['','万','億','兆','京','垓','𥝱','穣','溝','澗','正','載','極','恒河沙','阿僧祇','那由他','不可思議','無量大数'];
+function fmt(n){if(!Number.isFinite(n))return '上限';if(n<10000)return n<10?n.toLocaleString('ja-JP',{maximumFractionDigits:1}):Math.floor(n).toLocaleString('ja-JP');if(n>=1e72)return fmt(n/1e68)+'無量大数';let index=NUMBER_UNITS.length-1;while(index>0&&n<Math.pow(10,index*4))index--;let coefficient=n/Math.pow(10,index*4);if(coefficient>=9999.995&&index<NUMBER_UNITS.length-1){index++;coefficient=n/Math.pow(10,index*4);}return coefficient.toLocaleString('ja-JP',{maximumFractionDigits:2})+NUMBER_UNITS[index];}
 function say(s){$('toast').textContent=s;}
 function persist(){save.at=Date.now();try{localStorage.setItem(KEY,JSON.stringify(save));storageOK=true;}catch(e){storageOK=false;}$('saveNote').textContent=storageOK?'音なし。光を見送っても、生産は続きます。':'保存できない環境です。ページを閉じると進行状況が失われる場合があります。';}
 function addPassive(seconds,offline=false){seconds=Math.max(0,Math.min(28800,seconds));if(!seconds)return;const now=Date.now(),rate=stableProduction();let extra=0;if(!offline&&buff.type==='production')extra=Math.min(seconds,Math.max(0,(buff.until-(now-seconds*1000))/1000))*rate*6;const nr=nebulaRate();grant(Math.min(CAP,rate*seconds+extra));save.nebula=Math.min(CAP,save.nebula+nr*seconds);checkAchievements();}

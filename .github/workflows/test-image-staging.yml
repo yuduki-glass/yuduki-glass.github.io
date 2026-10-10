@@ -4,7 +4,7 @@ on:
   push:
     branches: [ test/base64-image-transfer ]
     paths:
-      - 'image-staging/2026-10-10/READY'
+      - 'image-staging/2026-10-01/READY'
 
 permissions:
   contents: write
@@ -18,25 +18,25 @@ jobs:
 
       - name: Join and decode WebP chunks
         run: |
-          cat image-staging/2026-10-10/part*.b64 > /tmp/2026-10-10.b64
-          base64 --decode /tmp/2026-10-10.b64 > /tmp/2026-10-10.webp
+          cat image-staging/2026-10-01/part*.b64 > /tmp/2026-10-01.b64
+          base64 --decode /tmp/2026-10-01.b64 > /tmp/2026-10-01.webp
 
       - name: Validate WebP
         run: |
-          file /tmp/2026-10-10.webp | grep -q '1200x630'
-          test "$(sha256sum /tmp/2026-10-10.webp | cut -d' ' -f1)" = "802f66b15eca5b8f7f9dc9ad756203bb8172dfbed1e145b8f22e42542c518d30"
-          test "$(head -c 4 /tmp/2026-10-10.webp)" = "RIFF"
-          test "$(dd if=/tmp/2026-10-10.webp bs=1 skip=8 count=4 2>/dev/null)" = "WEBP"
-          echo '2026-10-10 WebP validation passed'
+          file /tmp/2026-10-01.webp | grep -q '1200x630'
+          test "$(sha256sum /tmp/2026-10-01.webp | cut -d' ' -f1)" = "5b31ac7015edafceedb5ae7d74c941dedb7a39eb5eedfd230bc29809d04aef43"
+          test "$(head -c 4 /tmp/2026-10-01.webp)" = "RIFF"
+          test "$(dd if=/tmp/2026-10-01.webp bs=1 skip=8 count=4 2>/dev/null)" = "WEBP"
+          echo '2026-10-01 WebP validation passed'
 
       - name: Commit validated image to main
         run: |
           git fetch origin main
           git checkout main
           mkdir -p site/assets/images/daily-ai
-          cp /tmp/2026-10-10.webp site/assets/images/daily-ai/2026-10-10.webp
+          cp /tmp/2026-10-01.webp site/assets/images/daily-ai/2026-10-01.webp
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/assets/images/daily-ai/2026-10-10.webp
-          git diff --cached --quiet || git commit -m "Add validated header image for 2026-10-10 AI post"
+          git add site/assets/images/daily-ai/2026-10-01.webp
+          git diff --cached --quiet || git commit -m "Add validated header image for 2026-10-01 AI post"
           git push origin main

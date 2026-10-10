@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172725"><title>クッキー工場からの大脱走 | 結月硝子</title>
+<style>
+:root{color-scheme:dark;--bg:#142422;--panel:#20332f;--ink:#f4ecdc;--muted:#b1c0af;--accent:#ffd28c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}main{max-width:1050px;margin:auto;padding:24px}a{color:var(--muted)}header{display:flex;justify-content:space-between;align-items:center;gap:12px}small,.muted{color:var(--muted)}h1{font-size:clamp(23px,4vw,38px);margin:14px 0 8px;letter-spacing:.04em}h2{font-size:19px;margin-top:0}p{line-height:1.7}.intro{margin:0 0 20px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.stat,.panel{border:1px solid #4b6155;border-radius:16px;background:var(--panel);padding:16px}.stat strong{display:block;color:var(--accent);font-size:24px;font-variant-numeric:tabular-nums}.stage{position:relative;overflow:hidden;border-radius:18px;border:1px solid #607260;background:#263a34}canvas{display:block;width:100%;aspect-ratio:900/390;touch-action:manipulation}.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#10221fbf;text-align:center;padding:20px}.overlay[hidden]{display:none}.overlay>div{max-width:430px}.overlay h2{font-size:28px}.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 22px}button{border:1px solid #6d806b;background:#324a3c;color:var(--ink);padding:13px 18px;border-radius:10px;font:inherit;cursor:pointer;min-height:48px}button.primary{background:var(--accent);color:#33271d;border-color:var(--accent);font-weight:700}button:disabled{opacity:.45;cursor:default}button:focus-visible,canvas:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.controls .primary{flex:1}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.shop{display:grid;gap:10px}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #40594b;padding-top:12px}.item b{display:block}.item small{display:block;line-height:1.6}.item button{min-width:116px}.note{font-size:13px;color:var(--muted);margin-top:18px}#toast{min-height:24px;color:var(--accent);font-size:14px}.badge{font-size:12px;border:1px solid #6d806b;border-radius:30px;padding:6px 10px}footer{margin-top:24px;font-size:12px;color:var(--muted)}@media(max-width:640px){main{padding:16px}.grid{grid-template-columns:1fr}.stat{padding:12px}.stat strong{font-size:20px}canvas{aspect-ratio:600/390}.badge{display:none}.item button{min-width:104px;padding:10px}.overlay h2{font-size:22px}.overlay p{font-size:14px}}
+</style>
+</head>
+<body><main>
+<header><a href="https://yuduki-glass.com/">← 結月硝子の表紙へ</a><span class="badge">PLAYABLE PROTOTYPE · 01</span></header>
+<small>COOKIE ESCAPE / 夜勤明けの逃走劇</small>
+<h1>クッキー工場からの大脱走</h1>
+<p class="intro muted">走って、拾って、工場を育てる。脱走しているのに、なぜか設備投資が止まらない。</p>
+<div class="stats"><div class="stat"><small>クッキー残高</small><strong id="balance">0</strong></div><div class="stat"><small>工場の生産 / 秒</small><strong id="rate">0</strong></div><div class="stat"><small>最高走行距離</small><strong id="best">0 m</strong></div></div>
+<div class="stage"><canvas id="game" width="900" height="390" tabindex="0" aria-label="ランゲーム。タップまたはスペースキーでジャンプ"></canvas><div class="overlay" id="overlay"><div><small id="kicker">門は開いた。今がチャンス。</small><h2 id="headline">焼かれる前に、走れ。</h2><p id="summary">タップ / スペースでジャンプ。<br>クッキーと金色の歯車を集めよう。</p><button class="primary" id="start">脱走する</button></div></div></div>
+<div class="controls"><button class="primary" id="jump">ジャンプ ↗</button><button id="pause" disabled>一時停止</button><button id="finish" disabled>工場へ帰る</button></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="grid"><section class="panel"><h2>小さなクッキー工場</h2><p class="muted">逃走中も生産。閉じている間も最大8時間分を回収。</p><div class="shop" id="factory"></div><button id="bake" style="margin-top:16px;width:100%">手焼きで +1 枚</button></section>
+<section class="panel"><h2>次の脱走の準備</h2><p class="muted">歯車は走って集める。放置だけでは身につかない。</p><p>金色の歯車：<b id="gears">0</b> 個</p><div class="shop" id="upgrades"></div></section></div>
+<p class="note">遊び方：自動で走る → ジャンプで障害物を避ける → 集めたクッキーで生産設備を買う。歯車で回収倍率・ジャンプ・お守りを強化。衝突すると終了、拾った報酬は持ち帰れる。</p>
+<footer>進行状況はこのブラウザに自動保存。端末間の共有はありません。音なし・追加通信なし。 <span id="saveNote"></span></footer>
+</main>
+<script>
+'use strict';
+const KEY='yuduki-cookie-escape-v1',MAX=1e12;
+const defs=[{name:'小さなオーブン',base:25,rate:1},{name:'自動焼きライン',base:160,rate:6},{name:'夜勤の焼き職人',base:900,rate:30}];
+let save={cookies:0,gears:0,owned:[0,0,0],boost:0,jump:0,shield:0,best:0,at:Date.now()};
+let storageOK=true;
+const num=n=>Number.isFinite(n)&&n>=0;
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&num(s.cookies)&&num(s.gears)&&Array.isArray(s.owned)&&s.owned.length===3&&s.owned.every(n=>Number.isInteger(n)&&n>=0&&n<=100)&&['boost','jump','shield','best','at'].every(k=>num(s[k]))){save={...save,...s};save.cookies=Math.min(MAX,save.cookies);save.boost=Math.min(10,Math.floor(save.boost));save.jump=Math.min(3,Math.floor(save.jump));save.shield=Math.min(1,Math.floor(save.shield));}}catch(e){storageOK=false;}
+const $=id=>document.getElementById(id),fmt=n=>Math.floor(n).toLocaleString('ja-JP');
+function production(){return defs.reduce((n,d,i)=>n+d.rate*save.owned[i],0)}
+function persist(){save.at=Date.now();try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){storageOK=false;$('saveNote').textContent='保存できない環境のため、終了すると進行状況が失われます。'}}
+function say(text){$('toast').textContent=text}
+const offline=Math.min(28800,Math.max(0,(Date.now()-save.at)/1000))*production();save.cookies=Math.min(MAX,save.cookies+offline);if(offline>=1)say('おかえり。工場が '+fmt(offline)+' 枚焼いておいたよ。');
+const prices=i=>Math.ceil(defs[i].base*Math.pow(1.18,save.owned[i]));
+function render(){ $('balance').textContent=fmt(save.cookies);$('rate').textContent=fmt(production());$('best').textContent=fmt(save.best)+' m';$('gears').textContent=fmt(save.gears);
+ defs.forEach((d,i)=>{const b=$('buy'+i);b.disabled=save.cookies<prices(i)||save.owned[i]>=100;b.textContent=save.owned[i]>=100?'最大':fmt(prices(i))+' 枚';$('owned'+i).textContent='所有 '+save.owned[i]+' 台 · +'+d.rate+' 枚 / 秒';});
+ upgradeDefs.forEach((d,i)=>{const level=save[d.key],b=$('up'+i);b.disabled=level>=d.max||save.gears<d.cost(level);b.textContent=level>=d.max?'最大':d.cost(level)+' 歯車';$('level'+i).textContent=d.desc(level);});}
+defs.forEach((d,i)=>{const row=document.createElement('div');row.className='item';row.innerHTML='<div><b>'+d.name+'</b><small id="owned'+i+'"></small></div><button id="buy'+i+'"></button>';$('factory').append(row);$('buy'+i).onclick=()=>{if(save.owned[i]>=100||save.cookies<prices(i))return;save.cookies-=prices(i);save.owned[i]++;persist();render();say(d.name+'を増設。逃げるために働く、不思議な循環。');};});
+const upgradeDefs=[{key:'boost',name:'回収ポーチ',max:10,cost:l=>3+l*3,desc:l=>'Lv.'+l+' · 回収量 ×'+(1+l*.5).toFixed(1)},{key:'jump',name:'軽やかな靴',max:3,cost:l=>5+l*5,desc:l=>'Lv.'+l+' · ジャンプ力 +'+l*6+'%'},{key:'shield',name:'焦げないお守り',max:1,cost:()=>12,desc:l=>l?'毎回1度だけ衝突を防ぐ':'衝突を1度防ぐ（永続）'}];
+upgradeDefs.forEach((d,i)=>{const row=document.createElement('div');row.className='item';row.innerHTML='<div><b>'+d.name+'</b><small id="level'+i+'"></small></div><button id="up'+i+'"></button>';$('upgrades').append(row);$('up'+i).onclick=()=>{const l=save[d.key],cost=d.cost(l);if(l>=d.max||save.gears<cost)return;save.gears-=cost;save[d.key]++;persist();render();say('強化完了。次の脱走から有効。');};});
+$('bake').onclick=()=>{save.cookies=Math.min(MAX,save.cookies+1);render();persist();};
+if(!storageOK)$('saveNote').textContent='保存データを読み込めませんでした。';
+const canvas=$('game'),ctx=canvas.getContext('2d');let W=900,H=390,ground=315;
+let state='ready',run=null,last=performance.now(),bankClock=0,drawClock=0;
+function resize(){const narrow=window.innerWidth<640;W=narrow?600:900;canvas.width=W;canvas.height=H;}resize();window.addEventListener('resize',resize);
+function start(){run={distance:0,time:0,earned:0,gears:0,y:ground-44,vy:0,obstacles:[],pickups:[],particles:[],spawn:1.4,nextGear:5,shield:save.shield,inv:0,mult:1+save.boost*.5,jumpPower:640*(1+save.jump*.06)};state='running';$('overlay').hidden=true;$('pause').disabled=false;$('finish').disabled=false;$('pause').textContent='一時停止';say('金色の歯車はジャンプで回収。空中ではもう一度跳べないよ。');}
+function jump(){if(state!=='running')return;if(run.y>=ground-44-.5){run.vy=-run.jumpPower;}}
+function end(reason){if(!run||state==='ended')return;state='ended';save.best=Math.max(save.best,Math.floor(run.distance));persist();render();$('overlay').hidden=false;$('kicker').textContent='本日の逃走記録';$('headline').textContent=reason;$('summary').textContent=fmt(run.distance)+' m / 回収 '+fmt(run.earned)+' 枚 / 歯車 '+run.gears+' 個。報酬は残高に反映済み。';$('start').textContent='もう一度、脱走する';$('pause').disabled=true;$('finish').disabled=true;}
+function togglePause(){if(state==='running'){state='paused';$('pause').textContent='再開';}else if(state==='paused'){state='running';$('pause').textContent='一時停止';}}
+$('start').onclick=start;$('jump').onclick=jump;$('pause').onclick=togglePause;$('finish').onclick=()=>end('帰還。設備投資の時間だ。');canvas.addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&!['BUTTON','INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();if(!e.repeat)jump();}if(e.code==='KeyP'&&!e.repeat)togglePause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state==='running')togglePause();persist();}else{const delta=Math.min(28800,Math.max(0,(Date.now()-save.at)/1000));save.cookies=Math.min(MAX,save.cookies+delta*production());persist();render();last=performance.now();}});window.addEventListener('pagehide',persist);
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function spawn(speed){const x=W+40,h=32+Math.random()*24,w=28+Math.random()*18;run.obstacles.push({x,y:ground-h,w,h});for(let i=0;i<3;i++)run.pickups.push({x:x-40+i*40,y:ground-105-Math.sin(i*Math.PI/2)*28,gear:false});if(run.time>=run.nextGear){run.pickups.push({x:x+25,y:ground-168,gear:true});run.nextGear=run.time+7+Math.random()*3;}run.spawn=1.45+Math.random()*.75;}
+function update(dt){if(state!=='running')return;const r=run,speed=Math.min(480,250+r.time*2.1);r.time+=dt;r.distance+=speed*dt/15;r.inv=Math.max(0,r.inv-dt);r.vy+=1750*dt;r.y+=r.vy*dt;if(r.y>ground-44){r.y=ground-44;r.vy=0}r.spawn-=dt;if(r.spawn<=0)spawn(speed);
+ const player={x:94,y:r.y+5,w:31,h:35};for(const o of r.obstacles){o.x-=speed*dt;if(hit(player,o)&&r.inv<=0){if(r.shield){r.shield=0;r.inv=1.8;o.x=-100;say('お守りが焦げを引き受けた。あと一発で終了。');}else{end('こんがり。今日はここまで。');return;}}}r.obstacles=r.obstacles.filter(o=>o.x>-70);
+ for(const p of r.pickups){p.x-=speed*dt;if(!p.got&&hit(player,{x:p.x-13,y:p.y-13,w:26,h:26})){p.got=true;if(p.gear){r.gears++;save.gears++}else{const amount=Math.round(5*r.mult*(1+Math.floor(r.distance/100)*.2));r.earned+=amount;save.cookies=Math.min(MAX,save.cookies+amount);}for(let i=0;i<5;i++)r.particles.push({x:p.x,y:p.y,vx:(Math.random()-.5)*150,vy:-Math.random()*140,life:.55,gear:p.gear});}}r.pickups=r.pickups.filter(p=>p.x>-30&&!p.got);for(const p of r.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=250*dt;p.life-=dt}r.particles=r.particles.filter(p=>p.life>0);
+}
+function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function cookie(x,y,size,runner=false){ctx.save();ctx.translate(x,y);if(runner){const step=state==='running'&&run.y>=ground-44?Math.sin(run.time*17)*6:0;ctx.strokeStyle='#e1b071';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,16);ctx.lineTo(-13+step,24);ctx.moveTo(9,16);ctx.lineTo(13-step,24);ctx.stroke()}ctx.fillStyle='#e7ba7a';ctx.strokeStyle='#b87d43';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,size,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#79513a';[[-.45,-.4],[.5,-.35],[-.35,.45],[.4,.5],[0,-.65]].forEach(([a,b])=>{ctx.beginPath();ctx.arc(a*size,b*size,size*.13,0,7);ctx.fill()});if(runner){ctx.fillStyle='#322f26';ctx.beginPath();ctx.arc(-5,-2,2,0,7);ctx.arc(6,-2,2,0,7);ctx.fill();ctx.beginPath();ctx.arc(1,4,5,0,Math.PI);ctx.strokeStyle='#6b4534';ctx.lineWidth=2;ctx.stroke()}ctx.restore()}
+function draw(){const t=run?run.distance:drawClock*8;const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#263d39');grad.addColorStop(1,'#849477');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.fillStyle='#eee2bd';ctx.beginPath();ctx.arc(W-100,65,26,0,7);ctx.fill();ctx.fillStyle='#eee2bd40';[[70,48],[250,73],[420,32],[610,90]].forEach(([x,y])=>ctx.fillRect(x,y,2,2));
+ for(let i=0;i<7;i++){const x=i*185-(t*5%185);roundRect(x,150,120,165,6,'#29483e');roundRect(x+20,100,21,90,2,'#29483e');for(let j=0;j<3;j++)roundRect(x+14+j*33,185,18,28,2,'#e8c47a55');}ctx.fillStyle='#172d27';ctx.fillRect(0,ground,W,H-ground);ctx.fillStyle='#a4aa83';ctx.fillRect(0,ground,W,4);for(let i=0;i<20;i++)roundRect(i*65-(t*15%65),ground+32,32,3,1,'#425c43');
+ if(run){for(const o of run.obstacles){roundRect(o.x,o.y,o.w,o.h,4,'#c07554');ctx.strokeStyle='#efa880';ctx.lineWidth=2;ctx.strokeRect(o.x+5,o.y+5,o.w-10,o.h-10);}for(const p of run.pickups){if(p.gear){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(drawClock);ctx.fillStyle='#ffd86e';for(let i=0;i<8;i++){ctx.rotate(Math.PI/4);ctx.fillRect(-3,-17,6,9);}ctx.beginPath();ctx.arc(0,0,12,0,7);ctx.fill();ctx.fillStyle='#5b6443';ctx.beginPath();ctx.arc(0,0,5,0,7);ctx.fill();ctx.restore()}else cookie(p.x,p.y,10);}for(const p of run.particles){ctx.globalAlpha=p.life/.55;ctx.fillStyle=p.gear?'#ffdf7a':'#edc58b';ctx.fillRect(p.x,p.y,4,4)}ctx.globalAlpha=1;
+ if(!(run.inv>0&&Math.floor(drawClock*12)%2))cookie(111,run.y+20,21,true);
+ roundRect(16,16,210,62,10,'#132924dd');ctx.fillStyle='#f5ebd5';ctx.font='bold 18px system-ui';ctx.fillText(fmt(run.distance)+' m  ·  '+fmt(run.earned)+' 枚',28,41);ctx.font='13px system-ui';ctx.fillStyle='#d2cba9';ctx.fillText('歯車 '+run.gears+'  /  お守り '+(run.shield?'あり':'なし'),28,63);
+ }else cookie(111,ground-24,21);
+ if(state==='paused'){ctx.fillStyle='#10221faa';ctx.fillRect(0,0,W,H);ctx.fillStyle='#f4ecdc';ctx.font='bold 28px system-ui';ctx.textAlign='center';ctx.fillText('ひと休み',W/2,H/2);ctx.font='16px system-ui';ctx.fillText('「再開」で続ける',W/2,H/2+32);ctx.textAlign='left';}}
+function frame(now){const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;drawClock+=dt;if(!document.hidden){save.cookies=Math.min(MAX,save.cookies+production()*dt);update(dt);bankClock+=dt;if(bankClock>.25){render();bankClock=0}draw();}requestAnimationFrame(frame)}
+render();persist();setInterval(()=>{if(!document.hidden)persist()},5000);requestAnimationFrame(frame);
+</script>
+</body></html>

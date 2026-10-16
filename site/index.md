@@ -54,23 +54,29 @@ title: 結月硝子
   if (!input || !results) return;
 
   const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, ' ').trim();
+  const plainFold = (value) => value.toLocaleLowerCase('ja-JP');
 
   const appendHighlighted = (parent, text, terms) => {
-    if (!terms.length) {
+    const folded = plainFold(text);
+    const ranges = [];
+
+    terms.forEach((term) => {
+      const needle = plainFold(term);
+      if (!needle) return;
+      let from = 0;
+      while (from < folded.length) {
+        const index = folded.indexOf(needle, from);
+        if (index === -1) break;
+        ranges.push([index, index + needle.length]);
+        from = index + needle.length;
+      }
+    });
+
+    if (!ranges.length) {
       parent.append(document.createTextNode(text));
       return;
     }
-    const normalizedText = normalize(text);
-    let ranges = [];
-    terms.forEach((term) => {
-      let from = 0;
-      while (from < normalizedText.length) {
-        const index = normalizedText.indexOf(term, from);
-        if (index === -1) break;
-        ranges.push([index, index + term.length]);
-        from = index + Math.max(term.length, 1);
-      }
-    });
+
     ranges.sort((a, b) => a[0] - b[0]);
     const merged = [];
     ranges.forEach((range) => {
@@ -78,6 +84,7 @@ title: 結月硝子
       if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
       else merged.push(range.slice());
     });
+
     let cursor = 0;
     merged.forEach(([start, end]) => {
       if (start > cursor) parent.append(document.createTextNode(text.slice(cursor, start)));
@@ -93,13 +100,15 @@ title: 結月硝子
 
   const makeExcerpt = (text, terms) => {
     const clean = text.replace(/\s+/g, ' ').trim();
-    const normalized = normalize(clean);
-    let hit = normalized.length;
+    const folded = plainFold(clean);
+    let hit = clean.length;
+
     terms.forEach((term) => {
-      const index = normalized.indexOf(term);
+      const index = folded.indexOf(plainFold(term));
       if (index !== -1) hit = Math.min(hit, index);
     });
-    if (hit === normalized.length) hit = 0;
+
+    if (hit === clean.length) hit = 0;
     const start = Math.max(0, hit - 55);
     const end = Math.min(clean.length, start + 180);
     return `${start > 0 ? '…' : ''}${clean.slice(start, end)}${end < clean.length ? '…' : ''}`;

@@ -90,8 +90,11 @@ title: 結月硝子
       if (start > cursor) parent.append(document.createTextNode(text.slice(cursor, start)));
       const mark = document.createElement('mark');
       mark.textContent = text.slice(start, end);
-      mark.style.padding = '0 .12em';
-      mark.style.borderRadius = '.2em';
+      mark.style.padding = '0 .16em';
+      mark.style.borderRadius = '.28em';
+      mark.style.background = 'rgba(132, 151, 190, .24)';
+      mark.style.color = 'inherit';
+      mark.style.boxShadow = 'inset 0 -1px 0 rgba(92, 111, 151, .18)';
       parent.append(mark);
       cursor = end;
     });

@@ -32,6 +32,70 @@ title: 結月硝子
   </div>
 </div>
 
+<div class="home-search" role="search" style="margin: 2.5rem 0 3rem;">
+  <label for="home-search-input" style="display:block; margin-bottom:.65rem; color:var(--color-text-muted);">記録を探す</label>
+  <input id="home-search-input" type="search" placeholder="記事内の単語を入力" autocomplete="off" style="width:100%; padding:.85rem 1rem; border:1px solid rgba(53,80,107,.22); border-radius:12px; background:rgba(255,255,255,.32); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:var(--color-text-main); font:inherit; outline:none;">
+  <p id="home-search-status" aria-live="polite" style="min-height:1.5em; margin:.6rem 0 0; color:var(--color-text-muted); font-size:.9rem;"></p>
+  <ul id="home-search-results" style="list-style:none; padding:0; margin:1rem 0 0;"></ul>
+</div>
+
+<div id="home-search-data" hidden>
+{% for post in site.posts %}
+  <div class="home-search-source" data-title="{{ post.title | strip_html | escape }}" data-url="{{ post.url | relative_url }}" data-date="{{ post.date | date: '%Y.%m.%d' }}" data-search="{{ post.title | strip_html | escape }} {{ post.content | strip_html | strip_newlines | escape }} {{ post.tags | join: ' ' | escape }}"></div>
+{% endfor %}
+</div>
+
+<script>
+(() => {
+  const input = document.getElementById('home-search-input');
+  const status = document.getElementById('home-search-status');
+  const results = document.getElementById('home-search-results');
+  const sources = Array.from(document.querySelectorAll('.home-search-source'));
+  if (!input || !results) return;
+
+  const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, ' ').trim();
+
+  input.addEventListener('input', () => {
+    const query = normalize(input.value);
+    results.innerHTML = '';
+    if (!query) {
+      status.textContent = '';
+      return;
+    }
+
+    const terms = query.split(' ').filter(Boolean);
+    const matches = sources.filter((source) => {
+      const text = normalize(source.dataset.search || '');
+      return terms.every((term) => text.includes(term));
+    });
+
+    status.textContent = `${matches.length}件の記事が見つかりました`;
+    matches.slice(0, 20).forEach((source) => {
+      const li = document.createElement('li');
+      li.style.margin = '.75rem 0';
+      const date = document.createElement('span');
+      date.textContent = `${source.dataset.date} — `;
+      date.style.color = 'var(--color-text-muted)';
+      date.style.fontSize = '.9rem';
+      const link = document.createElement('a');
+      link.href = source.dataset.url;
+      link.textContent = source.dataset.title;
+      li.append(date, link);
+      results.appendChild(li);
+    });
+
+    if (matches.length > 20) {
+      const li = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = `/archives/?q=${encodeURIComponent(input.value)}`;
+      link.textContent = `残り${matches.length - 20}件も見る →`;
+      li.appendChild(link);
+      results.appendChild(li);
+    }
+  });
+})();
+</script>
+
 <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.05); margin: 3rem 0;">
 
 <h2 class="section-title">最初に読む記事</h2>

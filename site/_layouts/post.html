@@ -29,6 +29,32 @@ layout: default
     {{ content }}
   </div>
 
+  {% assign related_count = 0 %}
+  {% if page.tags and page.tags.size > 0 %}
+  <section class="related-posts" aria-labelledby="related-posts-title">
+    <h2 id="related-posts-title">この記録に近いもの</h2>
+    <ul>
+    {% for candidate in site.posts %}
+      {% if candidate.url != page.url and related_count < 3 %}
+        {% assign shared = false %}
+        {% for tag in page.tags %}
+          {% if candidate.tags contains tag %}
+            {% assign shared = true %}
+          {% endif %}
+        {% endfor %}
+        {% if shared %}
+          <li>
+            <span class="related-post-date">{{ candidate.date | date: "%Y.%m.%d" }}</span>
+            <a href="{{ candidate.url | relative_url }}">{{ candidate.title }}</a>
+          </li>
+          {% assign related_count = related_count | plus: 1 %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
   <hr>
 
   <p>
@@ -67,11 +93,51 @@ layout: default
   display: none;
 }
 
+.related-posts {
+  margin: 3.5rem 0 2.5rem;
+  padding: 1.5rem 1.6rem;
+  border: 1px solid rgba(53,80,107,.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,.22);
+}
+
+.related-posts h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.related-posts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.related-posts li {
+  margin: .7rem 0;
+  line-height: 1.6;
+}
+
+.related-post-date {
+  display: inline-block;
+  margin-right: .7rem;
+  color: var(--color-text-muted);
+  font-size: .85rem;
+}
+
 @media (max-width: 768px) {
   .post-hero {
     width: 100%;
     margin: 0 0 2rem;
     border-radius: 10px;
+  }
+
+  .related-posts {
+    padding: 1.2rem;
+  }
+
+  .related-post-date {
+    display: block;
+    margin: 0 0 .15rem;
   }
 }
 </style>

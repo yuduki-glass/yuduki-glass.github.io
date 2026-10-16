@@ -1,0 +1,53 @@
+/* Realistic cut edge for the moving opening in the frosted glass. */
+.mouse-glow {
+  border: 0;
+  background: transparent;
+  box-shadow:
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, .58),
+    inset -1.5px -1.5px 2px rgba(55, 72, 91, .22),
+    inset 0 0 0 1px rgba(255, 255, 255, .16),
+    1px 1.5px 2px rgba(44, 57, 72, .13),
+    -1px -1px 1.5px rgba(255, 255, 255, .28),
+    0 5px 12px rgba(42, 53, 66, .055);
+}
+
+/* The cut face catches light unevenly, like a few millimetres of glass thickness. */
+.mouse-glow::before,
+.mouse-glow::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.mouse-glow::before {
+  inset: 1px;
+  border: 1px solid rgba(72, 91, 111, .13);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, .34),
+    inset -1px -1px 0 rgba(35, 49, 64, .11);
+}
+
+.mouse-glow::after {
+  inset: -1px;
+  border: 1px solid transparent;
+  background:
+    conic-gradient(
+      from 315deg,
+      rgba(255, 255, 255, .55) 0deg,
+      rgba(255, 255, 255, .18) 58deg,
+      rgba(255, 255, 255, 0) 128deg,
+      rgba(48, 65, 83, .16) 205deg,
+      rgba(48, 65, 83, .08) 250deg,
+      rgba(255, 255, 255, .34) 330deg,
+      rgba(255, 255, 255, .55) 360deg
+    ) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1.25px;
+  opacity: .72;
+  filter: blur(.12px);
+}

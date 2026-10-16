@@ -1,6 +1,5 @@
 /* Seamless procedural background for 結月硝子.
-   Pale blue / lavender remain the base palette, but the surface now behaves
-   more like 梨地ガラス: irregular fine relief instead of a flat white veil. */
+   Pale blue / lavender remain the base palette, with a stronger 梨地ガラス relief. */
 
 .bg-base {
   background-color: #dfe7f2;
@@ -9,45 +8,41 @@
     radial-gradient(ellipse 76% 64% at 90% 18%, rgba(204, 190, 230, .84) 0%, rgba(204, 190, 230, .34) 46%, transparent 75%),
     radial-gradient(ellipse 72% 58% at 25% 88%, rgba(164, 207, 232, .76) 0%, rgba(164, 207, 232, .28) 49%, transparent 77%),
     radial-gradient(ellipse 78% 66% at 84% 84%, rgba(186, 184, 224, .76) 0%, rgba(186, 184, 224, .27) 49%, transparent 79%),
-    radial-gradient(ellipse 54% 44% at 49% 48%, rgba(245, 247, 251, .62) 0%, rgba(245, 247, 251, .18) 48%, transparent 78%),
-    linear-gradient(145deg, #dbe7f3 0%, #ebe8f1 47%, #d8deee 100%);
+    radial-gradient(ellipse 54% 44% at 49% 48%, rgba(248, 249, 252, .70) 0%, rgba(248, 249, 252, .22) 48%, transparent 78%),
+    linear-gradient(145deg, #dbe7f3 0%, #eeebf3 47%, #d8deee 100%);
   background-size: cover;
   background-repeat: no-repeat;
 }
 
-/* Broad colour variation + two independent seamless noise scales.
-   The first noise is coarse enough to read as shallow pits; the second adds
-   finer grain so the texture does not look like digital speckle. */
+/* Stronger relief: coarse pits are lit more aggressively, while a second fine
+   noise layer keeps the surface from turning into large cloudy blobs. */
 .bg-svg {
   background-image:
     radial-gradient(ellipse 58% 40% at 15% 25%, rgba(116, 176, 216, .25) 0%, transparent 72%),
     radial-gradient(ellipse 52% 44% at 84% 38%, rgba(158, 143, 204, .24) 0%, transparent 74%),
-    radial-gradient(ellipse 64% 46% at 43% 79%, rgba(236, 242, 249, .18) 0%, transparent 76%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cdefs%3E%3Cfilter id='relief' x='-15%25' y='-15%25' width='130%25' height='130%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018' numOctaves='4' seed='23' stitchTiles='stitch' result='n'/%3E%3CfeDiffuseLighting in='n' surfaceScale='5.2' diffuseConstant='.78' lighting-color='%23d9e5f2' result='lit'%3E%3CfeDistantLight azimuth='225' elevation='42'/%3E%3C/feDiffuseLighting%3E%3CfeBlend in='n' in2='lit' mode='soft-light'/%3E%3C/filter%3E%3C/filter id='unused'/%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='%238fa2bd' filter='url(%23relief)' opacity='.72'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.095' numOctaves='3' seed='41' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='.55 0 0 0 .18  0 .60 0 0 .22  0 0 .72 0 .30  0 0 0 .62 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='.42'/%3E%3C/svg%3E");
-  background-size: auto, auto, auto, 280px 280px, 128px 128px;
-  background-position: center, center, center, 0 0, 37px 19px;
+    radial-gradient(ellipse 64% 46% at 43% 79%, rgba(240, 244, 250, .22) 0%, transparent 76%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cdefs%3E%3Cfilter id='relief' x='-18%25' y='-18%25' width='136%25' height='136%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.022' numOctaves='5' seed='23' stitchTiles='stitch' result='n'/%3E%3CfeDiffuseLighting in='n' surfaceScale='10.5' diffuseConstant='1.08' lighting-color='%23e5edf6' result='lit'%3E%3CfeDistantLight azimuth='225' elevation='36'/%3E%3C/feDiffuseLighting%3E%3CfeSpecularLighting in='n' surfaceScale='7.5' specularConstant='.48' specularExponent='13' lighting-color='%23ffffff' result='spec'%3E%3CfeDistantLight azimuth='225' elevation='48'/%3E%3C/feSpecularLighting%3E%3CfeBlend in='n' in2='lit' mode='multiply' result='base'/%3E%3CfeBlend in='base' in2='spec' mode='screen'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='%23899db9' filter='url(%23relief)' opacity='.88'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='112' viewBox='0 0 112 112'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.13' numOctaves='4' seed='41' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='.62 0 0 0 .13  0 .66 0 0 .16  0 0 .78 0 .24  0 0 0 .78 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='.58'/%3E%3C/svg%3E");
+  background-size: auto, auto, auto, 280px 280px, 112px 112px;
+  background-position: center, center, center, 0 0, 31px 17px;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
-  opacity: .72;
+  opacity: .86;
   mix-blend-mode: multiply;
   animation: none;
   will-change: auto;
 }
 
-/* Less white haze than the first procedural version. The colour remains airy,
-   but the relief can now survive through the glass layer. */
 .bg-light-glow {
   background:
-    radial-gradient(ellipse 72% 52% at 82% 18%, rgba(244, 247, 252, .20) 0%, rgba(244, 247, 252, .06) 48%, transparent 76%),
-    radial-gradient(ellipse 66% 58% at 18% 82%, rgba(235, 243, 250, .14) 0%, transparent 72%),
-    radial-gradient(ellipse 48% 38% at 48% 52%, rgba(214, 204, 237, .13) 0%, transparent 76%);
+    radial-gradient(ellipse 72% 52% at 82% 18%, rgba(248, 250, 253, .26) 0%, rgba(248, 250, 253, .08) 48%, transparent 76%),
+    radial-gradient(ellipse 66% 58% at 18% 82%, rgba(240, 246, 251, .18) 0%, transparent 72%),
+    radial-gradient(ellipse 48% 38% at 48% 52%, rgba(220, 211, 240, .15) 0%, transparent 76%);
 }
 
-/* The old glass layer brightened everything by 12%, which washed out the new
-   procedural background. Keep the blur and desaturation, but stop bleaching it. */
+/* Slightly whiter than the previous pass, but well below the old 1.12 washout. */
 .glass-layer {
-  backdrop-filter: blur(7px) grayscale(18%) brightness(1.01) contrast(1.035);
-  -webkit-backdrop-filter: blur(7px) grayscale(18%) brightness(1.01) contrast(1.035);
+  backdrop-filter: blur(7px) grayscale(19%) brightness(1.045) contrast(1.04);
+  -webkit-backdrop-filter: blur(7px) grayscale(19%) brightness(1.045) contrast(1.04);
 }
 
 @media (max-width: 768px) {
@@ -57,18 +52,18 @@
       radial-gradient(ellipse 94% 58% at 97% 27%, rgba(204, 190, 230, .80) 0%, rgba(204, 190, 230, .31) 49%, transparent 78%),
       radial-gradient(ellipse 92% 55% at 18% 83%, rgba(164, 207, 232, .72) 0%, rgba(164, 207, 232, .24) 51%, transparent 79%),
       radial-gradient(ellipse 96% 60% at 91% 89%, rgba(186, 184, 224, .72) 0%, rgba(186, 184, 224, .24) 51%, transparent 81%),
-      radial-gradient(ellipse 76% 42% at 50% 50%, rgba(245, 247, 251, .54) 0%, rgba(245, 247, 251, .14) 49%, transparent 81%),
-      linear-gradient(155deg, #dbe7f3 0%, #eae7f0 47%, #d8deee 100%);
+      radial-gradient(ellipse 76% 42% at 50% 50%, rgba(248, 249, 252, .62) 0%, rgba(248, 249, 252, .18) 49%, transparent 81%),
+      linear-gradient(155deg, #dbe7f3 0%, #edeaf2 47%, #d8deee 100%);
   }
 
   .bg-svg {
-    background-size: auto, auto, auto, 240px 240px, 112px 112px;
-    opacity: .75;
+    background-size: auto, auto, auto, 238px 238px, 96px 96px;
+    opacity: .89;
   }
 
   .glass-layer {
-    backdrop-filter: blur(6px) grayscale(16%) brightness(1.01) contrast(1.04);
-    -webkit-backdrop-filter: blur(6px) grayscale(16%) brightness(1.01) contrast(1.04);
+    backdrop-filter: blur(6px) grayscale(18%) brightness(1.05) contrast(1.045);
+    -webkit-backdrop-filter: blur(6px) grayscale(18%) brightness(1.05) contrast(1.045);
   }
 }
 

@@ -55,6 +55,56 @@ title: 結月硝子
 
   const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, ' ').trim();
 
+  const appendHighlighted = (parent, text, terms) => {
+    if (!terms.length) {
+      parent.append(document.createTextNode(text));
+      return;
+    }
+    const normalizedText = normalize(text);
+    let ranges = [];
+    terms.forEach((term) => {
+      let from = 0;
+      while (from < normalizedText.length) {
+        const index = normalizedText.indexOf(term, from);
+        if (index === -1) break;
+        ranges.push([index, index + term.length]);
+        from = index + Math.max(term.length, 1);
+      }
+    });
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    ranges.forEach((range) => {
+      const last = merged[merged.length - 1];
+      if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+      else merged.push(range.slice());
+    });
+    let cursor = 0;
+    merged.forEach(([start, end]) => {
+      if (start > cursor) parent.append(document.createTextNode(text.slice(cursor, start)));
+      const mark = document.createElement('mark');
+      mark.textContent = text.slice(start, end);
+      mark.style.padding = '0 .12em';
+      mark.style.borderRadius = '.2em';
+      parent.append(mark);
+      cursor = end;
+    });
+    if (cursor < text.length) parent.append(document.createTextNode(text.slice(cursor)));
+  };
+
+  const makeExcerpt = (text, terms) => {
+    const clean = text.replace(/\s+/g, ' ').trim();
+    const normalized = normalize(clean);
+    let hit = normalized.length;
+    terms.forEach((term) => {
+      const index = normalized.indexOf(term);
+      if (index !== -1) hit = Math.min(hit, index);
+    });
+    if (hit === normalized.length) hit = 0;
+    const start = Math.max(0, hit - 55);
+    const end = Math.min(clean.length, start + 180);
+    return `${start > 0 ? '…' : ''}${clean.slice(start, end)}${end < clean.length ? '…' : ''}`;
+  };
+
   input.addEventListener('input', () => {
     const query = normalize(input.value);
     results.innerHTML = '';
@@ -72,15 +122,29 @@ title: 結月硝子
     status.textContent = `${matches.length}件の記事が見つかりました`;
     matches.slice(0, 20).forEach((source) => {
       const li = document.createElement('li');
-      li.style.margin = '.75rem 0';
+      li.style.margin = '0 0 1.15rem';
+      li.style.padding = '0 0 1rem';
+      li.style.borderBottom = '1px solid rgba(53,80,107,.10)';
+
+      const meta = document.createElement('div');
+      meta.style.marginBottom = '.25rem';
       const date = document.createElement('span');
       date.textContent = `${source.dataset.date} — `;
       date.style.color = 'var(--color-text-muted)';
       date.style.fontSize = '.9rem';
       const link = document.createElement('a');
       link.href = source.dataset.url;
-      link.textContent = source.dataset.title;
-      li.append(date, link);
+      appendHighlighted(link, source.dataset.title || '', terms);
+      meta.append(date, link);
+
+      const excerpt = document.createElement('p');
+      excerpt.style.margin = '.35rem 0 0';
+      excerpt.style.fontSize = '.92rem';
+      excerpt.style.lineHeight = '1.75';
+      excerpt.style.color = 'var(--color-text-muted)';
+      appendHighlighted(excerpt, makeExcerpt(source.dataset.search || '', terms), terms);
+
+      li.append(meta, excerpt);
       results.appendChild(li);
     });
 

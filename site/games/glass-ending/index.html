@@ -37,7 +37,7 @@ header p:last-child{display:none}
 .pad button{min-height:34px}
 .touch>.primary{min-height:65px}
 }
-@media(max-width:759px){.pad{display:none}.touch{justify-content:flex-end;background:#0c1523cc}.touch>.primary{min-height:48px;min-width:110px}.stage{touch-action:none}#joystick{display:block}}#joystick{display:none;position:absolute;z-index:4;width:112px;height:112px;left:20px;bottom:14px;pointer-events:none;touch-action:none;opacity:.75}#joystick .ring{position:absolute;inset:0;border:2px solid #a6d9df88;border-radius:50%;background:radial-gradient(circle,#547b8755,#172e3e88);box-shadow:0 0 22px #8cced32a,inset 0 0 15px #8cced322}#joystick .nub{position:absolute;left:34px;top:34px;width:44px;height:44px;border-radius:50%;border:2px solid #c7e9e9;background:linear-gradient(135deg,#a2cfd4,#37546a);box-shadow:0 2px 14px #0008}#joystick.active{opacity:1}@media(max-width:759px) and (max-height:650px){#joystick{width:90px;height:90px;bottom:8px}#joystick .nub{width:36px;height:36px;left:27px;top:27px}}.move-controls{display:flex;gap:6px}.move-controls #pace{border-color:#8baeb5;color:#cde7ea}@media(max-width:759px){.move-controls button{min-height:48px;padding:8px;font-size:13px}} </style></head><body><header><p>結月硝子 PRESENTS · DARK FANTASY RPG</p><h1>硝子の終焉</h1><p>第一章　灰の記憶と、最後の灯火</p></header><main class="wrap"><div class="hud"><span>主人公 <strong id="stats">Lv 1　HP 40/40</strong></span><span>記憶の欠片 <strong id="shards">0</strong></span><span>所持品 <strong id="items">なし</strong></span><span>目的 <strong id="quest">老人に話しかける</strong></span></div><div class="stage"><canvas id="field" width="768" height="432" aria-label="探索フィールド"></canvas><div class="caption" id="place"></div><div id="joystick"><div class="ring"></div><div class="nub"></div></div><div id="overlay"><h2>死なない世界で、何を失うのか。</h2><p>世界から死が消えて三百年。人は生き続け、愛した人の名前を忘れる。<br>あなたは、妹の記憶を取り戻すために旅立つ。</p><button class="primary" id="start">物語を始める</button><button id="continue" class="hidden">保存した物語を続ける</button></div></div><section class="panel"><div class="speaker" id="speaker">語り手</div><div class="dialogue" id="dialogue">移動：画面下の方向キー（長押し可） / 矢印キー　会話：話すボタン<br>光る場所に近づいて調べよう。自動保存対応。</div><div class="actions" id="actions"><button id="interact">調べる / 話す</button><button id="save">保存</button><button id="reset">最初から</button></div></section><div class="touch"><div class="pad"><span class="empty"></span><button data-dir="up">▲</button><span class="empty"></span><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><div class="move-controls"><button id="pace">歩く</button><button class="primary" id="touchAct">話す / 調べる</button></div></div><div class="footer">※ 第一章のプレイアブル版。探索、会話分岐、ターン制戦闘、複数の結末、ローカルセーブを実装。音声は端末の設定に依存しません。</div></main>
+@media(max-width:759px){.pad{display:none}.touch{justify-content:flex-end;background:#0c1523cc}.touch>.primary{min-height:48px;min-width:110px}.stage{touch-action:none}#joystick{display:block}}#joystick{display:none;position:absolute;z-index:4;width:112px;height:112px;left:20px;bottom:14px;pointer-events:none;touch-action:none;opacity:.75}#joystick .ring{position:absolute;inset:0;border:2px solid #a6d9df88;border-radius:50%;background:radial-gradient(circle,#547b8755,#172e3e88);box-shadow:0 0 22px #8cced32a,inset 0 0 15px #8cced322}#joystick .nub{position:absolute;left:34px;top:34px;width:44px;height:44px;border-radius:50%;border:2px solid #c7e9e9;background:linear-gradient(135deg,#a2cfd4,#37546a);box-shadow:0 2px 14px #0008}#joystick.active{opacity:1}@media(max-width:759px) and (max-height:650px){#joystick{width:90px;height:90px;bottom:8px}#joystick .nub{width:36px;height:36px;left:27px;top:27px}}.move-controls{display:flex;gap:6px}.move-controls #pace{border-color:#8baeb5;color:#cde7ea}@media(max-width:759px){.move-controls button{min-height:48px;padding:8px;font-size:13px}} .stage #world3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.stage #field{position:relative;z-index:0}.stage #joystick{z-index:4}.stage .caption{z-index:5}.stage #overlay{z-index:7} </style></head><body><header><p>結月硝子 PRESENTS · DARK FANTASY RPG</p><h1>硝子の終焉</h1><p>第一章　灰の記憶と、最後の灯火</p></header><main class="wrap"><div class="hud"><span>主人公 <strong id="stats">Lv 1　HP 40/40</strong></span><span>記憶の欠片 <strong id="shards">0</strong></span><span>所持品 <strong id="items">なし</strong></span><span>目的 <strong id="quest">老人に話しかける</strong></span></div><div class="stage"><canvas id="field" width="768" height="432" aria-label="探索フィールド"></canvas><div class="caption" id="place"></div><div id="joystick"><div class="ring"></div><div class="nub"></div></div><div id="overlay"><h2>死なない世界で、何を失うのか。</h2><p>世界から死が消えて三百年。人は生き続け、愛した人の名前を忘れる。<br>あなたは、妹の記憶を取り戻すために旅立つ。</p><button class="primary" id="start">物語を始める</button><button id="continue" class="hidden">保存した物語を続ける</button></div></div><section class="panel"><div class="speaker" id="speaker">語り手</div><div class="dialogue" id="dialogue">移動：画面下の方向キー（長押し可） / 矢印キー　会話：話すボタン<br>光る場所に近づいて調べよう。自動保存対応。</div><div class="actions" id="actions"><button id="interact">調べる / 話す</button><button id="save">保存</button><button id="reset">最初から</button></div></section><div class="touch"><div class="pad"><span class="empty"></span><button data-dir="up">▲</button><span class="empty"></span><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><div class="move-controls"><button id="pace">歩く</button><button class="primary" id="touchAct">話す / 調べる</button></div></div><div class="footer">※ 第一章のプレイアブル版。探索、会話分岐、ターン制戦闘、複数の結末、ローカルセーブを実装。音声は端末の設定に依存しません。</div></main>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),c=$('field'),g=c.getContext('2d'),W=24,H=13,T=32,key='yuduki-glass-ending-v1';
@@ -91,7 +91,7 @@ if(s.hp<=0){mode='walk';s.hp=s.maxHp;s.x=11;s.y=6;save();update();say('語り手
 update();say('門を守る影','影 HP '+battle.hp+'/'+battle.max+'　あなた HP '+s.hp+'/'+s.maxHp+'\n'+log,[{label:'斬る',run:()=>battleTurn('attack')},{label:'祈る（HP回復）',run:()=>battleTurn('heal')},{label:'防御',run:()=>battleTurn('guard')}]);}
 function endingChoice(){mode='ending';say('塔の声','「妹の記憶を戻すには、世界に死を返さねばならない。\nだが、死を拒めば、誰も失わずに済む。代わりに誰も、愛した人を覚えていられない」',[{label:'死を世界に返す',run:()=>end('dawn')},{label:'忘却の世界を守る',run:()=>end('ash')},{label:'自分の記憶を差し出す',run:()=>end('glass')}]);}
 function end(type){s.ending=type;save();update();const texts={dawn:['黎明の結末','最初の葬列が村を通った日、老人は妻の墓の前で微笑んだ。\n妹はあなたの名を呼んだ。\n人は再び死ぬようになった。だからこそ、今日という日を抱きしめた。'],ash:['灰の結末','世界は今日も穏やかだった。\n老人は二人分の夕食を作り、少女は誰かを探し続けた。\n妹はあなたを見て、丁寧に頭を下げた。\n誰も死なない。誰も覚えていない。'],glass:['硝子の結末',s.mercy>=2?'妹は記憶を取り戻した。老人は妻の名前を口にした。\n世界は変わらなかった。代わりに、あなたの名前だけが全員の記憶から消えた。\nそれでも少女は、あなたが座っていた場所に毎日花を置いた。':'妹は記憶を取り戻した。世界は変わらなかった。\nあなたの名は誰の記憶にも残らなかった。\n塔の窓辺に、一輪の硝子の花だけが咲いた。']};let [title,txt]=texts[type];say(title,txt,[{label:'物語を最初から読む',run:()=>{start();}},{label:'第二章へ進む',run:nextChapter},{label:'この結末を記録する',run:()=>{save();say('終幕','結末を保存した。第二章へは塔の門から進める。');mode='walk';}}]);}
-function draw(){g.clearRect(0,0,c.width,c.height);camX=mobile?Math.max(0,Math.min(768-c.width,(s?s.x*T+16:384)-c.width/2)):0;camY=mobile?Math.max(0,Math.min(432-c.height,(s?s.y*T+16:216)-c.height/2)):0;g.save();g.translate(-camX,-camY);let time=Date.now()/1000;const rand=(x,y,n=0)=>{let v=Math.sin(x*127.1+y*311.7+n*71.3)*43758.5453;return v-Math.floor(v);};
+function draw(){if(window.__glass3DReady){requestAnimationFrame(draw);return;}g.clearRect(0,0,c.width,c.height);camX=mobile?Math.max(0,Math.min(768-c.width,(s?s.x*T+16:384)-c.width/2)):0;camY=mobile?Math.max(0,Math.min(432-c.height,(s?s.y*T+16:216)-c.height/2)):0;g.save();g.translate(-camX,-camY);let time=Date.now()/1000;const rand=(x,y,n=0)=>{let v=Math.sin(x*127.1+y*311.7+n*71.3)*43758.5453;return v-Math.floor(v);};
 for(let y=0;y<H;y++)for(let x=0;x<W;x++){
 const X=x*T,Y=y*T,wall=map[y][x]==='#',r=rand(x,y);
 if(wall){
@@ -148,5 +148,72 @@ if(s)cloak(s.x*T+16,s.y*T+16,'hero',time);
 g.restore();requestAnimationFrame(draw);}
 document.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(mode!=='walk')return;let k=e.key.toLowerCase();if(k==='arrowup'||k==='w')walk(0,-1);else if(k==='arrowdown'||k==='s')walk(0,1);else if(k==='arrowleft'||k==='a')walk(-1,0);else if(k==='arrowright'||k==='d')walk(1,0);else if(k==='e'||k==='enter')interact();});document.querySelectorAll('[data-dir]').forEach(b=>{let timer=null,delay=null;const move=()=>{let d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];walk(...d);};const stop=()=>{clearInterval(timer);clearTimeout(delay);timer=null;delay=null;};b.addEventListener('pointerdown',e=>{e.preventDefault();stop();b.setPointerCapture(e.pointerId);move();delay=setTimeout(()=>{timer=setInterval(move,40);},260);});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,stop));});$('pace').onclick=()=>{pace=pace==='walk'?'run':'walk';$('pace').textContent=pace==='walk'?'歩く':'走る';$('pace').setAttribute('aria-pressed',pace==='run');};const joy=$('joystick'),nub=joy.querySelector('.nub');let joyPointer=null,joyOrigin=null,joyTimer=null,joyMoved=false,joyDir=null;const joyReset=()=>{clearInterval(joyTimer);joyTimer=null;joyPointer=null;joyOrigin=null;joyDir=null;joy.classList.remove('active');nub.style.transform='translate(0px,0px)';};const joyStep=()=>{if(!joyDir||mode!=='walk'||choices.length)return;walk(joyDir[0],joyDir[1]);};const joyUpdate=e=>{if(joyPointer!==e.pointerId||!joyOrigin)return;let dx=e.clientX-joyOrigin.x,dy=e.clientY-joyOrigin.y,dist=Math.hypot(dx,dy),max=34,scale=dist>max?max/dist:1;nub.style.transform='translate('+(dx*scale)+'px,'+(dy*scale)+'px)';if(dist>9){joyMoved=true;let next=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];if(!joyDir||next[0]!==joyDir[0]||next[1]!==joyDir[1]){joyDir=next;joyStep();}}else joyDir=null;};if(mobile){c.addEventListener('pointerdown',e=>{if(mode!=='walk'||choices.length||joyPointer!==null)return;joyPointer=e.pointerId;joyMoved=false;joyOrigin={x:e.clientX,y:e.clientY};const r=c.getBoundingClientRect(),stage=c.parentElement.getBoundingClientRect();joy.style.left=Math.max(8,Math.min(stage.width-120,e.clientX-stage.left-56))+'px';joy.style.top=Math.max(8,Math.min(stage.height-120,e.clientY-stage.top-56))+'px';joy.style.bottom='auto';joy.classList.add('active');c.setPointerCapture(e.pointerId);joyUpdate(e);joyTimer=setInterval(joyStep,40);});c.addEventListener('pointermove',joyUpdate);['pointerup','pointercancel','lostpointercapture'].forEach(ev=>c.addEventListener(ev,e=>{if(joyPointer!==e.pointerId)return;if(ev==='pointerup'&&!joyMoved){const rect=c.getBoundingClientRect(),tx=Math.floor(((e.clientX-rect.left)/rect.width*c.width+camX)/T),ty=Math.floor(((e.clientY-rect.top)/rect.height*c.height+camY)/T);const a=actors.find(a=>a.x===tx&&a.y===ty);if(a&&Math.abs(a.x-s.x)+Math.abs(a.y-s.y)<=1)interact();}joyReset();}));}
 c.addEventListener('pointerup',e=>{if(mobile)return;if(mode!=='walk'||choices.length)return;const rect=c.getBoundingClientRect();const tx=Math.floor(((e.clientX-rect.left)/rect.width*c.width+camX)/T),ty=Math.floor(((e.clientY-rect.top)/rect.height*c.height+camY)/T);const a=actors.find(a=>a.x===tx&&a.y===ty);if(a&&Math.abs(a.x-s.x)+Math.abs(a.y-s.y)<=1)interact();});$('touchAct').onclick=interact;$('start').onclick=()=>start();let old=load();if(old){$('continue').classList.remove('hidden');$('continue').onclick=()=>{start(old);if(old.ending){say('記録','以前の結末：'+old.ending+'。新たな旅は「最初から」で始められる。');}};}buttons();draw();
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+if(!window.THREE||!window.__glassView)return;
+try{
+const THREE=window.THREE,stage=document.querySelector('.stage'),canvas=document.getElementById('field'),view=window.__glassView;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=false;
+renderer.domElement.id='world3d';stage.insertBefore(renderer.domElement,canvas.nextSibling);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1019);scene.fog=new THREE.FogExp2(0x111925,.035);
+const camera=new THREE.OrthographicCamera(-7,7,5,-5,.1,120);
+scene.add(new THREE.HemisphereLight(0x9db4c8,0x202028,1.3));
+const moon=new THREE.DirectionalLight(0xb3c7dc,1.8);moon.position.set(-5,13,8);scene.add(moon);
+const amber=new THREE.PointLight(0xffba72,12,9);amber.position.set(7,3,6);scene.add(amber);
+const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
+const stone=[mat(0x293440),mat(0x313b48),mat(0x3b4550)],ground=[mat(0x202c31),mat(0x273237),mat(0x2c363a)],path=mat(0x43464a),roof=mat(0x242c3c),metal=mat(0x9bb6bd,.5),glow=new THREE.MeshBasicMaterial({color:0xb1e9e4}),wood=mat(0x3b302f);
+const box=new THREE.BoxGeometry(1,1,1),cone=new THREE.ConeGeometry(1,1,5),sphere=new THREE.SphereGeometry(1,8,6);
+const world=new THREE.Group();scene.add(world);
+const hash=(x,y,n=0)=>{let v=Math.sin(x*127.1+y*311.7+n*71.3)*43758.5453;return v-Math.floor(v)};
+function cube(parent,x,y,z,w,h,d,m){const o=new THREE.Mesh(box,m);o.position.set(x,y,z);o.scale.set(w,h,d);parent.add(o);return o;}
+function ball(parent,x,y,z,r,m){let o=new THREE.Mesh(sphere,m);o.position.set(x,y,z);o.scale.set(r,r,r);parent.add(o);return o;}
+function makeWorld(chapter){
+while(world.children.length)world.remove(world.children[0]);
+const map=view().map;
+for(let y=0;y<13;y++)for(let x=0;x<24;x++){
+const X=x-11.5,Z=y-6,wall=map[y][x]==='#',r=hash(x,y);
+cube(world,X,-.14,Z,1,.25,1,wall?stone[Math.floor(r*3)]:((y===6||y===10||x===11||x===20)?path:ground[Math.floor(r*3)]));
+if(wall){cube(world,X,.55,Z,1,1.35,1,stone[Math.floor(r*3)]);cube(world,X,1.26,Z,1.06,.12,1.06,stone[2]);}
+else{
+if(r>.72){cube(world,X-.25,.016,Z+.16,.23,.025,.16,stone[1]);cube(world,X+.2,.015,Z-.25,.17,.02,.11,stone[2]);}
+if(hash(x,y,4)>.90){let grass=mat(chapter===2?0x53616a:0x45594d);cube(world,X+.25,.08,Z+.2,.06,.22,.07,grass);}
+}}
+const structures=chapter===2?[[4,3,2,2],[17,4,2,2],[12,8,2,2]]:[[4,3,2,2],[16,4,2,2],[11,8,2,2]];
+structures.forEach(([x,y,w,d],i)=>{let X=x-11.5,Z=y-6;cube(world,X,.7,Z,w,1.4,d,stone[i%3]);cube(world,X,1.55,Z,w+.25,.38,d+.25,roof);cube(world,X,1.15,Z+d/2+.02,.4,.65,.08,wood);cube(world,X,.72,Z+d/2+.08,.22,.22,.04,mat(0xa08a63));});
+[[1,2],[8,2],[22,2],[16,11]].forEach(([x,y])=>{let X=x-11.5,Z=y-6;cube(world,X,.55,Z,.28,1.1,.3,wood);let t=new THREE.Mesh(cone,mat(chapter===2?0x48545c:0x263f3b));t.position.set(X,1.4,Z);t.scale.set(.8,1.35,.8);world.add(t);});
+[[7,10],[17,6]].forEach(([x,y])=>{let X=x-11.5,Z=y-6;cube(world,X,.85,Z,.12,1.7,.12,metal);ball(world,X,1.72,Z,.19,new THREE.MeshBasicMaterial({color:0xffcc87}));const light=new THREE.PointLight(0xffb56e,4,4);light.position.set(X,1.75,Z);world.add(light);});
+}
+const avatarMaterials={hero:{body:mat(0x324b65),head:mat(0xc6b5a7),hair:mat(0x252b3a),cape:mat(0x23354a)},elder:{body:mat(0x655b65),head:mat(0xbca994),hair:mat(0xc6c3bb),cape:mat(0x51444c)},child:{body:mat(0x6a7895),head:mat(0xd4b9a8),hair:mat(0x7a7995),cape:mat(0x4c526c)}};
+function person(type){let p=new THREE.Group(),m=avatarMaterials[type]||avatarMaterials.child;
+cube(p,0,.65,0,.45,.68,.30,m.body);cube(p,0,1.22,0,.35,.39,.34,m.head);cube(p,0,1.47,-.03,.39,.15,.38,m.hair);cube(p,0,.36,-.12,.48,.64,.14,m.cape);
+cube(p,-.17,.16,.05,.13,.34,.16,m.body);cube(p,.17,.16,.05,.13,.34,.16,m.body);
+cube(p,-.30,.72,0,.14,.54,.17,m.body);cube(p,.30,.72,0,.14,.54,.17,m.body);
+if(type==='hero'){cube(p,.43,.58,.07,.055,1,.07,metal);cube(p,.43,.17,.07,.25,.08,.11,mat(0xbca67d));}
+if(type==='elder'){cube(p,-.4,.56,.13,.06,1.15,.06,wood);cube(p,0,1.08,.19,.24,.18,.12,m.hair);}
+return p;}
+const player=person('hero');scene.add(player);let npcs=[],lastChapter=0,clock=new THREE.Clock();
+function rebuild(ch){makeWorld(ch);npcs.forEach(o=>scene.remove(o));npcs=[];view().actors.forEach(a=>{let o;if(a.id==='elder'||a.id==='child'||a.id==='keeper'){o=person(a.id==='elder'?'elder':'child');}else{o=new THREE.Group();const core=cube(o,0,.65,0,.7,1.3,.55,a.id==='gate'||a.id==='seal'?stone[2]:metal);if(a.id==='flower'||a.id==='altar'){core.scale.set(.4,.5,.4);ball(o,0,1.1,0,.24,glow);}else{cube(o,0,1.3,0,.85,.14,.62,stone[1]);}}o.position.set(a.x-11.5,0,a.y-6);scene.add(o);npcs.push(o);});}
+function frame(){
+requestAnimationFrame(frame);const data=view(),s=data.s;
+if(!s){renderer.render(scene,camera);return;}
+if(lastChapter!==s.chapter){lastChapter=s.chapter;rebuild(lastChapter);}
+const t=clock.getElapsedTime(),targetX=s.x-11.5,targetZ=s.y-6;
+player.position.x+=(targetX-player.position.x)*.22;player.position.z+=(targetZ-player.position.z)*.22;
+player.position.y=Math.sin(t*2.5)*.035;
+const aspect=Math.max(.6,stage.clientWidth/Math.max(1,stage.clientHeight)),height=aspect<1?8.2:9.7;
+camera.left=-height*aspect/2;camera.right=height*aspect/2;camera.top=height/2;camera.bottom=-height/2;camera.updateProjectionMatrix();
+const look=new THREE.Vector3(player.position.x,0,player.position.z);
+const desired=new THREE.Vector3(look.x+6.8,11.5,look.z+9.3);
+camera.position.lerp(desired,.12);camera.lookAt(look.x,.1,look.z);
+renderer.setSize(Math.max(1,stage.clientWidth),Math.max(1,stage.clientHeight),false);
+renderer.render(scene,camera);
+}
+window.__glass3DReady=true;canvas.style.opacity='0';frame();
+}catch(e){console.warn('3D unavailable; 2D fallback',e);window.__glass3DReady=false;}
 })();
 </script></body></html>

@@ -81,7 +81,32 @@ if(s.hp<=0){mode='walk';s.hp=s.maxHp;s.x=11;s.y=6;save();update();say('語り手
 update();say('門を守る影','影 HP '+battle.hp+'/'+battle.max+'　あなた HP '+s.hp+'/'+s.maxHp+'\n'+log,[{label:'斬る',run:()=>battleTurn('attack')},{label:'祈る（HP回復）',run:()=>battleTurn('heal')},{label:'防御',run:()=>battleTurn('guard')}]);}
 function endingChoice(){mode='ending';say('塔の声','「妹の記憶を戻すには、世界に死を返さねばならない。\nだが、死を拒めば、誰も失わずに済む。代わりに誰も、愛した人を覚えていられない」',[{label:'死を世界に返す',run:()=>end('dawn')},{label:'忘却の世界を守る',run:()=>end('ash')},{label:'自分の記憶を差し出す',run:()=>end('glass')}]);}
 function end(type){s.ending=type;save();update();const texts={dawn:['黎明の結末','最初の葬列が村を通った日、老人は妻の墓の前で微笑んだ。\n妹はあなたの名を呼んだ。\n人は再び死ぬようになった。だからこそ、今日という日を抱きしめた。'],ash:['灰の結末','世界は今日も穏やかだった。\n老人は二人分の夕食を作り、少女は誰かを探し続けた。\n妹はあなたを見て、丁寧に頭を下げた。\n誰も死なない。誰も覚えていない。'],glass:['硝子の結末',s.mercy>=2?'妹は記憶を取り戻した。老人は妻の名前を口にした。\n世界は変わらなかった。代わりに、あなたの名前だけが全員の記憶から消えた。\nそれでも少女は、あなたが座っていた場所に毎日花を置いた。':'妹は記憶を取り戻した。世界は変わらなかった。\nあなたの名は誰の記憶にも残らなかった。\n塔の窓辺に、一輪の硝子の花だけが咲いた。']};let [title,txt]=texts[type];say(title,txt,[{label:'物語を最初から読む',run:()=>{start();}},{label:'この結末を記録する',run:()=>{save();say('終幕','結末を保存した。画面を更新しても記録は残る。');}}]);}
-function draw(){g.clearRect(0,0,c.width,c.height);camX=mobile?Math.max(0,Math.min(768-c.width,(s?s.x*T+16:384)-c.width/2)):0;camY=mobile?Math.max(0,Math.min(432-c.height,(s?s.y*T+16:216)-c.height/2)):0;g.save();g.translate(-camX,-camY);let time=Date.now()/1000;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let wall=map[y][x]==='#';g.fillStyle=wall?((x+y)%3===0?'#202c3d':'#253244'):((x*13+y*7)%9===0?'#1a2b37':'#152330');g.fillRect(x*T,y*T,T,T);if(wall){g.fillStyle='#435066';g.fillRect(x*T,y*T,T,2);g.fillStyle='#0c1521';g.fillRect(x*T+30,y*T,2,T);}else if((x*7+y*11)%17===0){g.fillStyle='#546878';g.fillRect(x*T+8,y*T+20,3,2);}}
+function draw(){g.clearRect(0,0,c.width,c.height);camX=mobile?Math.max(0,Math.min(768-c.width,(s?s.x*T+16:384)-c.width/2)):0;camY=mobile?Math.max(0,Math.min(432-c.height,(s?s.y*T+16:216)-c.height/2)):0;g.save();g.translate(-camX,-camY);let time=Date.now()/1000;const rand=(x,y,n=0)=>{let v=Math.sin(x*127.1+y*311.7+n*71.3)*43758.5453;return v-Math.floor(v);};
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+const X=x*T,Y=y*T,wall=map[y][x]==='#',r=rand(x,y);
+if(wall){
+g.fillStyle=['#273344','#303c4c','#354454'][Math.floor(r*3)];g.fillRect(X,Y,32,32);
+g.fillStyle='#4d5a65';g.fillRect(X,Y,32,2);g.fillStyle='#141e2a';g.fillRect(X,Y+29,32,3);
+g.fillStyle='#53606a';g.fillRect(X+(r>.5?15:7),Y+3,1,26);
+g.fillStyle='#1b2735';g.fillRect(X,Y+15,32,2);
+if(rand(x,y,2)>.6){g.fillStyle='#66747c';g.fillRect(X+8,Y+8,7,1);g.fillRect(X+12,Y+9,1,4);}
+if(map[y+1]?.[x]==='.') {g.fillStyle='#171e2b';g.fillRect(X,Y+27,32,5);g.fillStyle='#7c786f';g.fillRect(X,Y+27,32,2);}
+}else{
+const path=(y===6||y===10||x===11||x===20)&&r>.13;
+g.fillStyle=path?'#39434a':r>.45?'#202f35':'#1b2a31';g.fillRect(X,Y,32,32);
+if(path){g.fillStyle='#536068';g.fillRect(X+2,Y+2,27,1);g.fillRect(X+1,Y+29,28,1);g.fillStyle='#29353d';g.fillRect(X+Math.floor(r*9),Y+13,20,1);}
+else{g.fillStyle='#344a48';g.fillRect(X+5+r*9,Y+20,2,5);g.fillRect(X+15,Y+7+r*5,1,4);}
+if(rand(x,y,3)>.73){g.fillStyle='#69747a';g.fillRect(X+6,Y+17,4,2);g.fillRect(X+10,Y+19,2,1);}
+if(rand(x,y,4)>.84){g.fillStyle='#8c938a';g.fillRect(X+23,Y+9,1,5);g.fillRect(X+20,Y+12,6,1);}
+}
+}
+function decoration(x,y,type){let X=x*T,Y=y*T;
+if(type==='tree'){g.fillStyle='#101b24';g.fillRect(X+13,Y+12,7,20);g.fillStyle='#253c3e';g.beginPath();g.arc(X+16,Y+11,13,0,Math.PI*2);g.fill();g.fillStyle='#375052';g.beginPath();g.arc(X+11,Y+7,8,0,Math.PI*2);g.fill();g.fillStyle='#4c6260';g.fillRect(X+7,Y+8,5,2);}
+if(type==='rubble'){g.fillStyle='#56616a';g.fillRect(X+4,Y+20,14,7);g.fillStyle='#889197';g.fillRect(X+6,Y+19,12,2);g.fillStyle='#394752';g.fillRect(X+18,Y+23,8,5);}
+if(type==='lamp'){g.fillStyle='#4a4a50';g.fillRect(X+14,Y+3,3,26);g.fillStyle='#b6a37c';g.fillRect(X+10,Y+1,11,3);g.fillStyle='#e7c482';g.fillRect(X+12,Y+5,7,8);g.fillStyle='#f7d18c22';g.beginPath();g.arc(X+16,Y+9,18,0,Math.PI*2);g.fill();}
+if(type==='crack'){g.strokeStyle='#5a676a';g.lineWidth=1;g.beginPath();g.moveTo(X+5,Y+9);g.lineTo(X+13,Y+14);g.lineTo(X+10,Y+23);g.lineTo(X+22,Y+28);g.stroke();}
+}
+[[1,2,'tree'],[2,10,'tree'],[8,2,'tree'],[22,2,'tree'],[16,11,'tree'],[5,10,'rubble'],[9,4,'rubble'],[14,8,'rubble'],[20,5,'rubble'],[7,10,'lamp'],[17,6,'lamp'],[12,3,'crack'],[4,7,'crack'],[18,10,'crack']].forEach(([x,y,type])=>{if(map[y][x]==='.')decoration(x,y,type);});
 for(let i=0;i<55;i++){let x=(i*137+time*(i%3+1)*5)%768,y=(i*83+time*(i%5+1)*8)%432;g.fillStyle='#b2bfcb55';g.fillRect(x,y,2,2);}
 function shadow(x,y){g.fillStyle='#03081199';g.beginPath();g.ellipse(x,y+13,11,4,0,0,Math.PI*2);g.fill();}
 function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(Math.round(x),Math.round(y),w,h);}
@@ -97,7 +122,11 @@ rect(-3,-8,2,1,'#272638');rect(2,-8,2,1,'#272638');
 if(elder){rect(-4,-5,8,4,'#ddd1c6');rect(-6,-18,12,3,'#e2d8d1');rect(-8,0,2,12,'#b4a38b');}
 if(child){rect(-7,-16,4,14,hair);rect(4,-16,4,14,hair);rect(-4,3,8,2,'#d2c2d0');}
 if(hero){rect(-8,-16,16,3,'#19293c');rect(-3,0,6,3,'#b9d6da');rect(7,-5,2,16,'#b9e9ed');rect(6,-8,4,4,'#dcebef');rect(-9,7,3,5,'#708ca3');}
-rect(-7,11,14,1,trim);g.restore();}
+rect(-7,11,14,1,trim);
+if(hero){rect(-6,-4,2,12,'#9eb6c4');rect(4,-4,2,12,'#263547');rect(-4,-1,8,1,'#d3c8b1');rect(-1,0,2,4,'#d3b782');rect(-7,-13,2,5,'#4a5367');rect(5,-13,2,5,'#4a5367');rect(-5,-18,10,2,'#596e80');rect(-5,8,3,4,'#344759');rect(2,8,3,4,'#344759');rect(8,-3,1,12,'#f0fbff');rect(7,6,4,2,'#9fb6bf');}
+if(elder){rect(-6,-11,2,5,'#eee0d1');rect(4,-11,2,5,'#c8bcb1');rect(-4,-2,8,2,'#d5c5b3');rect(-3,0,6,3,'#a58f7d');rect(-7,5,2,7,'#4a3f49');rect(5,5,2,7,'#4a3f49');rect(-9,-2,2,16,'#bca991');rect(-10,-4,4,3,'#d2bf9f');}
+if(child){rect(-8,-12,2,13,'#686985');rect(6,-12,2,13,'#686985');rect(-5,4,10,2,'#c3a9bb');rect(-3,6,6,3,'#8d7896');rect(-5,-17,10,2,'#b0a4bd');rect(-3,-6,2,1,'#a8879a');}
+g.restore();}
 function marker(x,y,t){g.fillStyle='#e6c98c';g.globalAlpha=.6+.4*Math.sin(t*3);g.fillRect(x-1,y-27,3,3);g.globalAlpha=1;}
 actors.forEach(a=>{let cx=a.x*T+16,cy=a.y*T+16;
 if(a.id==='elder'||a.id==='child'){cloak(cx,cy,a.id,time);marker(cx,cy,time);}

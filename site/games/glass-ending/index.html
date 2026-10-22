@@ -164,14 +164,18 @@ const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1019);scene.f
 const camera=new THREE.OrthographicCamera(-7,7,5,-5,.1,120);
 scene.add(new THREE.HemisphereLight(0x9db4c8,0x202028,1.3));
 const moon=new THREE.DirectionalLight(0xb3c7dc,1.8);moon.position.set(-5,13,8);scene.add(moon);
-const amber=new THREE.PointLight(0xffba72,12,9);amber.position.set(7,3,6);scene.add(amber);
+const amber=new THREE.PointLight(0xffba72,7,9);amber.position.set(7,3,6);scene.add(amber);
 const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
 const stone=[mat(0x293440),mat(0x313b48),mat(0x3b4550)],ground=[mat(0x202c31),mat(0x273237),mat(0x2c363a)],path=mat(0x43464a),roof=mat(0x242c3c),metal=mat(0x9bb6bd,.5),glow=new THREE.MeshBasicMaterial({color:0xb1e9e4}),wood=mat(0x3b302f);
-const box=new THREE.BoxGeometry(1,1,1),cone=new THREE.ConeGeometry(1,1,5),sphere=new THREE.SphereGeometry(1,8,6);
+const box=new THREE.BoxGeometry(1,1,1),cone=new THREE.ConeGeometry(1,1,5),sphere=new THREE.SphereGeometry(1,12,8),cylinder=new THREE.CylinderGeometry(1,1,1,9),plane=new THREE.PlaneGeometry(1,1);
 const world=new THREE.Group();scene.add(world);
 const hash=(x,y,n=0)=>{let v=Math.sin(x*127.1+y*311.7+n*71.3)*43758.5453;return v-Math.floor(v)};
 function cube(parent,x,y,z,w,h,d,m){const o=new THREE.Mesh(box,m);o.position.set(x,y,z);o.scale.set(w,h,d);parent.add(o);return o;}
 function ball(parent,x,y,z,r,m){let o=new THREE.Mesh(sphere,m);o.position.set(x,y,z);o.scale.set(r,r,r);parent.add(o);return o;}
+function column(parent,x,y,z,r,h,m){const o=new THREE.Mesh(cylinder,m);o.position.set(x,y,z);o.scale.set(r,h,r);parent.add(o);return o;}
+const iron=mat(0x202a31,.45),bone=mat(0xaaa69e),gold=mat(0xa58c60,.55),cloth=mat(0x7a8192),hairLight=mat(0xa49a9e),eye=mat(0x20272d),water=mat(0x2e3f49,.3);
+function grave(parent,x,z){cube(parent,x,.31,z,.42,.62,.18,stone[2]);cube(parent,x,.66,z,.48,.11,.22,stone[1]);cube(parent,x,.36,z+.1,.1,.33,.03,bone);cube(parent,x,.41,z+.12,.24,.07,.03,bone);}
+function fence(parent,x,z){for(let j=0;j<3;j++){const px=x+(j-1)*.35;column(parent,px,.43,z,.023,.85,iron);const spike=new THREE.Mesh(cone,iron);spike.position.set(px,.92,z);spike.scale.set(.065,.15,.065);parent.add(spike);}cube(parent,x,.38,z,1,.035,.035,iron);cube(parent,x,.72,z,1,.035,.035,iron);}
 function makeWorld(chapter){
 while(world.children.length)world.remove(world.children[0]);
 const map=view().map;
@@ -180,22 +184,63 @@ const X=x-11.5,Z=y-6,wall=map[y][x]==='#',r=hash(x,y);
 cube(world,X,-.14,Z,1,.25,1,wall?stone[Math.floor(r*3)]:((y===6||y===10||x===11||x===20)?path:ground[Math.floor(r*3)]));
 if(wall){cube(world,X,.55,Z,1,1.35,1,stone[Math.floor(r*3)]);cube(world,X,1.26,Z,1.06,.12,1.06,stone[2]);}
 else{
-if(r>.72){cube(world,X-.25,.016,Z+.16,.23,.025,.16,stone[1]);cube(world,X+.2,.015,Z-.25,.17,.02,.11,stone[2]);}
+if(r>.72){cube(world,X-.25,.016,Z+.16,.23,.025,.16,stone[1]);cube(world,X+.2,.015,Z-.25,.17,.02,.11,stone[2]);}if(r>.87){const puddle=new THREE.Mesh(plane,water);puddle.rotation.x=-Math.PI/2;puddle.position.set(X,.012,Z);puddle.scale.set(.43,.29,1);world.add(puddle);}
 if(hash(x,y,4)>.90){let grass=mat(chapter===2?0x53616a:0x45594d);cube(world,X+.25,.08,Z+.2,.06,.22,.07,grass);}
 }}
 const structures=chapter===2?[[4,3,2,2],[17,4,2,2],[12,8,2,2]]:[[4,3,2,2],[16,4,2,2],[11,8,2,2]];
-structures.forEach(([x,y,w,d],i)=>{let X=x-11.5,Z=y-6;cube(world,X,.7,Z,w,1.4,d,stone[i%3]);cube(world,X,1.55,Z,w+.25,.38,d+.25,roof);cube(world,X,1.15,Z+d/2+.02,.4,.65,.08,wood);cube(world,X,.72,Z+d/2+.08,.22,.22,.04,mat(0xa08a63));});
+structures.forEach(([x,y,w,d],i)=>{let X=x-11.5,Z=y-6;cube(world,X,.65,Z,w,1.3,d,stone[i%3]);cube(world,X,1.37,Z,w+.18,.16,d+.18,roof);for(let j=-1;j<=1;j++){cube(world,X+j*.46,1.46,Z,w*.15,.07,d+.25,stone[1]);}cube(world,X,1.03,Z+d/2+.02,.4,.6,.08,wood);cube(world,X,.73,Z+d/2+.08,.22,.22,.04,gold);for(let j=-1;j<=1;j++){cube(world,X+j*.47,.46,Z+d/2+.04,.07,.75,.09,stone[2]);}});
 [[1,2],[8,2],[22,2],[16,11]].forEach(([x,y])=>{let X=x-11.5,Z=y-6;cube(world,X,.55,Z,.28,1.1,.3,wood);let t=new THREE.Mesh(cone,mat(chapter===2?0x48545c:0x263f3b));t.position.set(X,1.4,Z);t.scale.set(.8,1.35,.8);world.add(t);});
+[[5,7],[8,9],[15,10],[20,8]].forEach(([x,y])=>{if(view().map[y]?.[x]==='.')grave(world,x-11.5,y-6);});
+[[2,7],[3,7],[4,7],[18,8],[19,8]].forEach(([x,y])=>{if(view().map[y]?.[x]==='.')fence(world,x-11.5,y-6);});
 [[7,10],[17,6]].forEach(([x,y])=>{let X=x-11.5,Z=y-6;cube(world,X,.85,Z,.12,1.7,.12,metal);ball(world,X,1.72,Z,.19,new THREE.MeshBasicMaterial({color:0xffcc87}));const light=new THREE.PointLight(0xffb56e,4,4);light.position.set(X,1.75,Z);world.add(light);});
 }
 const avatarMaterials={hero:{body:mat(0x324b65),head:mat(0xc6b5a7),hair:mat(0x252b3a),cape:mat(0x23354a)},elder:{body:mat(0x655b65),head:mat(0xbca994),hair:mat(0xc6c3bb),cape:mat(0x51444c)},child:{body:mat(0x6a7895),head:mat(0xd4b9a8),hair:mat(0x7a7995),cape:mat(0x4c526c)}};
-function person(type){let p=new THREE.Group(),m=avatarMaterials[type]||avatarMaterials.child;
-cube(p,0,.65,0,.45,.68,.30,m.body);cube(p,0,1.22,0,.35,.39,.34,m.head);cube(p,0,1.47,-.03,.39,.15,.38,m.hair);cube(p,0,.36,-.12,.48,.64,.14,m.cape);
-cube(p,-.17,.16,.05,.13,.34,.16,m.body);cube(p,.17,.16,.05,.13,.34,.16,m.body);
-cube(p,-.30,.72,0,.14,.54,.17,m.body);cube(p,.30,.72,0,.14,.54,.17,m.body);
-if(type==='hero'){cube(p,.43,.58,.07,.055,1,.07,metal);cube(p,.43,.17,.07,.25,.08,.11,mat(0xbca67d));}
-if(type==='elder'){cube(p,-.4,.56,.13,.06,1.15,.06,wood);cube(p,0,1.08,.19,.24,.18,.12,m.hair);}
-return p;}
+function person(type){
+const p=new THREE.Group(),m=avatarMaterials[type]||avatarMaterials.child,hero=type==='hero',elder=type==='elder',child=type==='child';
+const skin=m.head,boot=mat(0x242733),belt=mat(0x51433c),armor=mat(0x526477,.7);
+const legs=new THREE.Group();p.add(legs);
+for(let side of [-1,1]){cube(legs,side*.15,.29,.025,.19,.43,.22,m.body);cube(legs,side*.15,.10,.12,.21,.21,.32,boot);}
+const torso=new THREE.Group();p.add(torso);
+cube(torso,0,.82,0,.52,.7,.35,m.body);
+cube(torso,0,.57,.02,.56,.11,.39,belt);
+cube(torso,0,.58,.215,.1,.13,.045,gold);
+const cape=new THREE.Group();p.add(cape);
+cube(cape,0,.62,-.24,.61,.86,.12,m.cape);
+cube(cape,0,.22,-.29,.73,.15,.14,m.cape);
+for(let side of [-1,1]){
+cube(torso,side*.37,.89,0,.2,.24,.30,hero?armor:m.body);
+cube(torso,side*.39,.60,.03,.17,.40,.21,m.body);
+ball(torso,side*.39,.34,.08,.11,skin);
+}
+column(torso,0,1.28,0,.205,.37,skin);
+ball(torso,0,1.50,0,.225,skin);
+const fringe=cube(torso,0,1.67,.085,.44,.15,.36,m.hair);
+for(let side of [-1,1]){
+ball(torso,side*.235,1.47,0,.09,skin);
+cube(torso,side*.09,1.51,.206,.046,.035,.02,eye);
+}
+if(hero){
+cube(torso,0,1.09,.20,.38,.43,.10,armor);
+cube(torso,0,1.12,.267,.075,.34,.035,gold);
+for(let side of [-1,1])cube(torso,side*.28,.92,.02,.075,.38,.4,armor);
+cube(torso,-.12,1.70,.06,.21,.11,.42,m.hair);
+cube(torso,.48,.72,.02,.045,.99,.07,metal);
+cube(torso,.48,.23,.02,.23,.09,.14,gold);
+cube(cape,0,.57,-.32,.53,.74,.045,mat(0x192535));
+}else if(elder){
+cube(torso,0,1.30,.215,.24,.25,.14,bone);
+cube(torso,0,1.06,.245,.17,.23,.13,bone);
+cube(torso,0,1.70,-.02,.46,.14,.43,m.hair);
+cube(torso,-.45,.54,.15,.065,1.16,.065,wood);
+ball(torso,-.45,1.15,.15,.09,gold);
+}else if(child){
+cube(torso,-.22,1.34,-.04,.15,.64,.22,m.hair);
+cube(torso,.22,1.34,-.04,.15,.64,.22,m.hair);
+cube(torso,0,.40,0,.69,.40,.47,m.cape);
+cube(torso,0,.73,.23,.32,.08,.08,cloth);
+}
+p.userData={legs,torso,cape};return p;
+}
 const player=person('hero');scene.add(player);let npcs=[],lastChapter=0,clock=new THREE.Clock();
 function rebuild(ch){makeWorld(ch);npcs.forEach(o=>scene.remove(o));npcs=[];view().actors.forEach(a=>{let o;if(a.id==='elder'||a.id==='child'||a.id==='keeper'){o=person(a.id==='elder'?'elder':'child');}else{o=new THREE.Group();const core=cube(o,0,.65,0,.7,1.3,.55,a.id==='gate'||a.id==='seal'?stone[2]:metal);if(a.id==='flower'||a.id==='altar'){core.scale.set(.4,.5,.4);ball(o,0,1.1,0,.24,glow);}else{cube(o,0,1.3,0,.85,.14,.62,stone[1]);}}o.position.set(a.x-11.5,0,a.y-6);scene.add(o);npcs.push(o);});}
 function frame(){
@@ -204,11 +249,11 @@ if(!s){renderer.render(scene,camera);return;}
 if(lastChapter!==s.chapter){lastChapter=s.chapter;rebuild(lastChapter);}
 const t=clock.getElapsedTime(),targetX=s.x-11.5,targetZ=s.y-6;
 player.position.x+=(targetX-player.position.x)*.22;player.position.z+=(targetZ-player.position.z)*.22;
-player.position.y=Math.sin(t*2.5)*.035;
-const aspect=Math.max(.6,stage.clientWidth/Math.max(1,stage.clientHeight)),height=aspect<1?8.2:9.7;
+const moving=Math.abs(targetX-player.position.x)+Math.abs(targetZ-player.position.z)>.04;player.position.y=moving?Math.sin(t*11)*.045:Math.sin(t*2.5)*.012;player.userData.legs.rotation.x=moving?Math.sin(t*11)*.22:0;player.userData.cape.rotation.x=moving?-.1+Math.sin(t*9)*.045:0;if(moving){const dx=targetX-player.position.x,dz=targetZ-player.position.z;player.rotation.y=Math.atan2(dx,dz);} 
+const aspect=Math.max(.6,stage.clientWidth/Math.max(1,stage.clientHeight)),height=aspect<1?9.8:11.5;
 camera.left=-height*aspect/2;camera.right=height*aspect/2;camera.top=height/2;camera.bottom=-height/2;camera.updateProjectionMatrix();
 const look=new THREE.Vector3(player.position.x,0,player.position.z);
-const desired=new THREE.Vector3(look.x+6.8,11.5,look.z+9.3);
+const desired=new THREE.Vector3(look.x,15.5,look.z+6.3);
 camera.position.lerp(desired,.12);camera.lookAt(look.x,.1,look.z);
 renderer.setSize(Math.max(1,stage.clientWidth),Math.max(1,stage.clientHeight),false);
 renderer.render(scene,camera);

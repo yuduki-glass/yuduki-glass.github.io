@@ -32,7 +32,43 @@ header{min-height:32px}h1{font-size:20px}.back{font-size:11px;white-space:nowrap
 @keyframes planet-pulse{0%,100%{opacity:.92;transform:scale(1)}50%{opacity:1;transform:scale(1.055)}}
 @keyframes planet-aura{0%,100%{opacity:.5;transform:scale(.93)}50%{opacity:1;transform:scale(1.13)}}
 @media(prefers-reduced-motion:reduce){.tile.luminous svg,.tile.luminous::before{animation:none}}
-.equipment-status{font-size:11px;line-height:1.55;color:#d8e7fa;background:#203851;border:1px solid #496a87;border-radius:8px;padding:7px;margin:6px 0;overflow-wrap:anywhere}#trashBulk{background:#624457;border-color:#97788a}@media(max-width:690px){.equipment-status{font-size:10px;padding:5px}}.comparison-heading{font-size:12px;color:#c5d6ef}.level-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare-line{min-width:0;display:flex;flex-direction:column;gap:4px}.compare-line>span{font-size:11px;color:#b8cae0}.compare-line strong{font-size:clamp(18px,3vw,27px);color:#e7f5ff}.compare-line:nth-child(2) strong{color:#d7c1e8}.compare-track{height:11px;border-radius:12px;background:#101e35;overflow:hidden;border:1px solid #435b7a}.compare-track i{display:block;height:100%;background:linear-gradient(90deg,#56a6d7,#b0e2f5);border-radius:12px;min-width:2px;transition:width .4s}.compare-line:nth-child(2) .compare-track i{background:linear-gradient(90deg,#85769e,#c2a9d9)}.compare-result{font-size:clamp(13px,2.2vw,19px);font-weight:800;color:#f0d5ac}.cosmic-time small{font-size:10px;color:#9db4d0}@media(max-width:690px){.level-compare{gap:9px}.compare-line strong{font-size:18px}}</style></head><body><div id="app">
+.equipment-status{font-size:11px;line-height:1.55;color:#d8e7fa;background:#203851;border:1px solid #496a87;border-radius:8px;padding:7px;margin:6px 0;overflow-wrap:anywhere}#trashBulk{background:#624457;border-color:#97788a}@media(max-width:690px){.equipment-status{font-size:10px;padding:5px}}.comparison-heading{font-size:12px;color:#c5d6ef}.level-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}.compare-line{min-width:0;display:flex;flex-direction:column;gap:4px}.compare-line>span{font-size:11px;color:#b8cae0}.compare-line strong{font-size:clamp(18px,3vw,27px);color:#e7f5ff}.compare-line:nth-child(2) strong{color:#d7c1e8}.compare-track{height:11px;border-radius:12px;background:#101e35;overflow:hidden;border:1px solid #435b7a}.compare-track i{display:block;height:100%;background:linear-gradient(90deg,#56a6d7,#b0e2f5);border-radius:12px;min-width:2px;transition:width .4s}.compare-line:nth-child(2) .compare-track i{background:linear-gradient(90deg,#85769e,#c2a9d9)}.compare-result{font-size:clamp(13px,2.2vw,19px);font-weight:800;color:#f0d5ac}.cosmic-time small{font-size:10px;color:#9db4d0}@media(max-width:690px){.level-compare{gap:9px}.compare-line strong{font-size:18px}}
+/* Mobile single-screen cockpit: use the gutters beside the 5x5 board for actions. */
+@media(max-width:690px){
+html,body{height:100%;overflow:hidden}
+#app{height:100dvh;min-height:0;overflow-y:auto;gap:5px;padding:6px 8px 12px}
+header{min-height:26px}header h1{font-size:19px}
+.stats{gap:4px}.stat{padding:5px 4px;border-radius:9px}.stat label{font-size:9px;line-height:1.25}.stat b{font-size:13px}
+.progress{height:3px}
+.cosmic-time{padding:6px 8px;gap:2px;border-radius:10px}
+.comparison-heading{font-size:10px}
+.level-compare{gap:8px}.compare-line{gap:2px}.compare-line>span{font-size:10px}.compare-line strong{font-size:17px}.compare-track{height:6px}
+.compare-result{font-size:12px}
+.cosmic-time #naturalDetail{display:none}
+.cosmic-time #baselineElapsed{font-size:9px;line-height:1.2}
+.reservoir{min-height:29px;padding:3px 7px}
+.play{gap:5px}
+.boardbox{width:100%;position:relative;display:flex;flex-direction:column;align-items:center;gap:5px}
+.board{width:min(calc(100vw - 128px),calc(100dvh - 330px),390px);min-width:205px;max-width:calc(100% - 116px);max-height:none;margin:0 auto;padding:5px;gap:3px;border-radius:12px}
+.cell{border-radius:9px}.tile span{font-size:clamp(8px,2.3vw,11px);padding:0 2px}
+.controls{position:absolute;left:0;right:0;top:0;height:min(calc(100vw - 128px),calc(100dvh - 330px),390px);min-height:205px;display:block;width:100%;pointer-events:none;margin:0;padding:0}
+.controls .btn{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;text-align:center;width:calc((100% - min(calc(100vw - 128px),calc(100dvh - 330px),390px)) / 2 - 6px);min-width:0;max-width:74px;min-height:0;height:25%;padding:3px 2px;font-size:0;line-height:1.2;white-space:normal;overflow-wrap:anywhere;border-radius:8px}
+.controls .btn::after{font-size:clamp(9px,2.5vw,12px);font-weight:700}
+#spawn{left:0;top:0}#spawn::after{content:"◆ 投入"}
+#mergeNow{left:0;top:27%}#mergeNow::after{content:"⚡ 合成"}
+#trashBulk{left:0;top:54%}#trashBulk::after{content:"低LV 一括廃棄"}
+#trashToggle{right:0;top:10%}#trashToggle::after{content:"🗑 個別廃棄"}
+#trashToggle.trash-active::after{content:"🗑 廃棄中"}
+#reset{right:0;top:41%}#reset::after{content:"リセット"}
+.storage{width:min(calc(100vw - 128px),calc(100dvh - 330px),390px);min-width:205px;max-width:calc(100% - 116px);gap:2px}
+.storage-title{font-size:10px}.storage-title small{display:none}
+.storage-slots{gap:3px}.store-cell{max-height:48px;border-radius:8px}
+.hint{font-size:9px;line-height:1.25}
+.side{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.panel{padding:6px}.visual{height:28px}
+}
+@media(max-width:360px){.board,.storage{width:calc(100vw - 118px);max-width:calc(100% - 106px);min-width:190px}.controls{height:calc(100vw - 118px);min-height:190px}.controls .btn{width:calc((100% - (100vw - 118px))/2 - 5px)}}
+</style></head><body><div id="app">
 <header><h1>MERGE ∞ <small>終わらない宇宙進化</small></h1><a class="back" href="/">結月硝子へ戻る ↗</a></header>
 <div class="stats"><div class="stat"><label>最高レベル</label><b id="highest">LV.1</b></div><div class="stat"><label>累計生成資源</label><b id="total">0</b></div><div class="stat"><label>生産能力 / 秒</label><b id="rate">1</b></div><div class="stat"><label>未強化の世界線</label><b id="percent">LV.1</b></div></div>
 <div class="progress"><div id="fill"></div></div><div class="cosmic-time"><div class="comparison-heading">同じ経過時間で、設備を一切強化しなかったら？</div><div class="level-compare"><div class="compare-line"><span>現在の宇宙</span><strong id="actualLevel">LV.1</strong><div class="compare-track"><i id="actualBar"></i></div></div><div class="compare-line"><span>未強化の宇宙</span><strong id="baselineLevel">LV.1</strong><div class="compare-track"><i id="baselineBar"></i></div></div></div><div class="compare-result" id="levelGap"></div><small id="naturalDetail"></small><small id="baselineElapsed"></small></div><div class="reservoir"><span>◆ 上部ストック</span><div class="mini-orbs" id="stockOrbs"></div><b id="stockCount">0</b><small>合成済み結晶を毎秒1個供給 / 上限18マス</small></div>

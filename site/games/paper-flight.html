@@ -14,10 +14,10 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {SMAAPass} from 'three/addons/postprocessing/SMAAPass.js';
 const $=id=>document.getElementById(id),host=$('view');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xe4b89d);scene.fog=new THREE.FogExp2(0xc6a998,.00034);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xe4b89d);scene.fog=new THREE.FogExp2(0xc6a998,.00025);
 const camera=new THREE.PerspectiveCamera(68,16/9,.5,5200);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;host.append(renderer.domElement);const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(960,540),.34,.62,.87);composer.addPass(bloom);const cinematic=new ShaderPass({uniforms:{tDiffuse:{value:null},vignette:{value:.19},grain:{value:.017},time:{value:0}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float vignette;uniform float grain;uniform float time;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float v=1.0-vignette*pow(length((vUv-.5)*1.5),2.0);float n=fract(sin(dot(vUv*vec2(1920.,1080.)+time,vec2(12.9898,78.233)))*43758.5453)-.5;c.rgb=c.rgb*v+n*grain;gl_FragColor=vec4(c.rgb,1.0);}' });composer.addPass(cinematic);composer.addPass(new OutputPass());
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.append(renderer.domElement);const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(960,540),.19,.48,.92);composer.addPass(bloom);const cinematic=new ShaderPass({uniforms:{tDiffuse:{value:null},vignette:{value:.19},grain:{value:.017},time:{value:0}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float vignette;uniform float grain;uniform float time;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float v=1.0-vignette*pow(length((vUv-.5)*1.5),2.0);float n=fract(sin(dot(vUv*vec2(1920.,1080.)+time,vec2(12.9898,78.233)))*43758.5453)-.5;c.rgb=c.rgb*v+n*grain;gl_FragColor=vec4(c.rgb,1.0);}' });composer.addPass(cinematic);composer.addPass(new OutputPass());
 // PMREM supplies physically based specular reflections without an expensive realtime cube capture.
 const pmrem=new THREE.PMREMGenerator(renderer);
 const environment=pmrem.fromScene(new RoomEnvironment(),.04);
@@ -59,31 +59,39 @@ function texture(seed){let cv=document.createElement('canvas');cv.width=512;cv.h
 let mats=Array.from({length:8},(_,i)=>new THREE.MeshPhysicalMaterial({map:texture(i),roughness:.17+(i%4)*.055,metalness:.45,clearcoat:.7,clearcoatRoughness:.16,envMapIntensity:1.65}));
 let buildings=[],seed=8372;function rnd(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296}
 const cityDetails=new THREE.Group();scene.add(cityDetails);
-const concrete=new THREE.MeshStandardMaterial({color:0xa8a6a0,roughness:.88}),roofMat=new THREE.MeshStandardMaterial({color:0x5b6870,roughness:.72,metalness:.3}),asphalt=new THREE.MeshStandardMaterial({color:0x303b42,roughness:.93}),green=new THREE.MeshStandardMaterial({color:0x365f48,roughness:1}),trunk=new THREE.MeshStandardMaterial({color:0x5b5148,roughness:1}),lightGlass=new THREE.MeshPhysicalMaterial({color:0x98adbb,metalness:.55,roughness:.15,clearcoat:1,envMapIntensity:2});
+const concrete=new THREE.MeshStandardMaterial({color:0x9b9994,roughness:.88}),roofMat=new THREE.MeshStandardMaterial({color:0x53616b,roughness:.75,metalness:.28}),asphalt=new THREE.MeshStandardMaterial({color:0x303b42,roughness:.95}),green=new THREE.MeshStandardMaterial({color:0x3b674b,roughness:1}),trunk=new THREE.MeshStandardMaterial({color:0x60544b,roughness:1}),lightGlass=new THREE.MeshPhysicalMaterial({color:0x90aab7,metalness:.5,roughness:.17,clearcoat:1,envMapIntensity:1.7});
 function block(x,y,z,w,h,d,mat,parent=cityDetails){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);parent.add(m);return m}
-function tower(x,z,w,h,d,variant,mat){let group=new THREE.Group();group.position.set(x,0,z);scene.add(group);
-let base=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);base.position.y=h/2;group.add(base);
-if(variant===1){let crown=block(0,h+5,0,w*.68,10,d*.68,lightGlass,group);block(0,h+11,0,w*.3,3,d*.35,roofMat,group)}
-if(variant===2){for(let yy=24;yy<h;yy+=35)block(0,yy,0,w+1,1.3,d+1,concrete,group);block(0,h+2,0,w*.5,4,d*.55,roofMat,group)}
-if(variant===3){block(0,h+8,0,w*.55,16,d*.55,lightGlass,group);block(0,h+19,0,2,7,2,roofMat,group)}
-if(variant===4){block(w*.2,h*.6,0,w*.58,h*.7,d*.8,mat,group);block(-w*.2,h*.35,0,w*.5,h*.4,d*.9,mat,group)}
-block(0,h+1.2,0,w*.28,2.4,d*.23,roofMat,group);
-if(h>85){for(let n=0;n<3;n++)block((n-1)*w*.22,h+2.3,d*.15,3,2.5,5,roofMat,group)}
-group.traverse(o=>{if(o.isMesh){o.castShadow=h>100&&Math.abs(z)<2400;o.receiveShadow=true}});
-buildings.push({mesh:group,x,z,w,h:h+(variant===3?19:variant===1?11:0),d,passed:false});
+const roadLines=new THREE.Group();scene.add(roadLines);
+function segmentRoad(x1,z1,x2,z2,width=15,y=.22,mat=asphalt){let len=Math.hypot(x2-x1,z2-z1),m=block((x1+x2)/2,y,(z1+z2)/2,width,.3,len,mat,roadLines);m.rotation.y=Math.atan2(x2-x1,z2-z1);return m}
+function tower(x,z,w,h,d,variant,mat,detail){let group=new THREE.Group();group.position.set(x,0,z);scene.add(group);let base=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);base.position.y=h/2;group.add(base);
+if(detail){if(variant===1){block(0,h+4,0,w*.72,8,d*.7,lightGlass,group)}if(variant===2){for(let yy=24;yy<h;yy+=38)block(0,yy,0,w+1,1.5,d+1,concrete,group)}if(variant===3){block(0,h+6,0,w*.5,12,d*.58,lightGlass,group)}if(variant===4){block(w*.22,h*.58,0,w*.54,h*.55,d*.76,mat,group)}block(0,h+1,0,w*.32,2,d*.3,roofMat,group)}
+if(detail&&h>100){block(0,h+3,d*.15,w*.16,3,5,roofMat,group)}group.traverse(o=>{if(o.isMesh){o.castShadow=detail&&h>100&&z>-2400;o.receiveShadow=detail&&z>-2400}});buildings.push({mesh:group,x,z,w,h:h+(detail?9:0),d,passed:false})}
+function tree(x,z,scale=1){let t=new THREE.Mesh(new THREE.CylinderGeometry(.55*scale,.85*scale,7*scale,5),trunk);t.position.set(x,3.5*scale,z);cityDetails.add(t);let crown=new THREE.Mesh(new THREE.IcosahedronGeometry(4.4*scale,1),green);crown.position.set(x,9*scale,z);cityDetails.add(crown)}
+// District boundaries wander independently of the flight path; no central straight corridor.
+function centerAt(z){return 110*Math.sin(z*.00047)+60*Math.sin(z*.00131)}
+const districtNames=['office','mixed','residential','waterfront','park','office','mixed','residential'];
+const zones=[];for(let k=0;k<44;k++){let z=-k*350-160;zones.push({z,kind:districtNames[(k+Math.floor(k/5))%districtNames.length],shift:centerAt(z)})}
+for(let k=0;k<zones.length;k++){let zone=zones[k],z0=-k*350-80,z1=z0-350,kind=zone.kind,roadShift=centerAt(z0),nextShift=centerAt(z1);
+for(let j=0;j<7;j++){let t=j/7,u=(j+1)/7;segmentRoad(roadShift+(nextShift-roadShift)*t,z0+(z1-z0)*t,roadShift+(nextShift-roadShift)*u,z0+(z1-z0)*u,22)}
+for(let side of [-1,1]){for(let lane=0;lane<4;lane++){let width=80+rnd()*45,base=side*(65+lane*113),x=zone.shift+base+(rnd()-.5)*38;
+let count=kind==='park'?(lane===0?0:1):kind==='residential'?3:2;
+if(kind==='waterfront'&&side===1&&lane>1)count=0;
+for(let j=0;j<count;j++){let z=z0-55-j*(kind==='residential'?82:125)+(rnd()-.5)*22;
+let w=kind==='residential'?18+rnd()*22:32+rnd()*44,d=kind==='residential'?22+rnd()*20:30+rnd()*48;
+let h=kind==='office'?100+rnd()*170:kind==='mixed'?45+rnd()*145:kind==='residential'?12+rnd()*38:kind==='waterfront'?28+rnd()*110:15+rnd()*25;
+if(kind==='park'&&rnd()<.75){for(let t=0;t<4;t++)tree(x+(rnd()-.5)*70,z+(rnd()-.5)*75,.8+rnd()*.6);continue}
+tower(x+(rnd()-.5)*23,z,w,h,d,Math.floor(rnd()*5),mats[(Math.floor(rnd()*mats.length)+(kind==='residential'?2:0))%mats.length],k<9||lane<2)}
+if(lane<3&&kind!=='waterfront'){let a=zone.shift+side*(90+lane*113),c=zone.shift+side*(90+(lane+1)*113);segmentRoad(a,z0-18,c,z0-18,12)}
+if(kind==='park'&&lane===0){block(x,.25,z0-160,85,.4,200,green);for(let n=0;n<9;n++)tree(x+(rnd()-.5)*75,z0-50-rnd()*220)}}
 }
-const districtRoads=new THREE.Group();scene.add(districtRoads);
-for(let i=0;i<180;i++){let z=-i*95-75;const district=i%9;
-for(let side of [-1,1]){let rowX=side*(120+18*(i%3));for(let lane=0;lane<3;lane++){let x=rowX+side*lane*105+(rnd()-.5)*15,w=32+rnd()*43,d=38+rnd()*40;let h=(district===0?95:35)+rnd()*(district===0?190:lane===2?85:150);if(i<4&&lane===0)h*=.7;let variant=Math.floor(rnd()*5);tower(x,z+(rnd()-.5)*20,w,h,d,variant,mats[Math.floor(rnd()*mats.length)])}}
-if(i%3===0){block(0,.22,z,940,.3,11,asphalt,districtRoads);for(let k=-4;k<=4;k++){block(k*92,.41,z,22,.12,.55,stripeMat,districtRoads)}}
-if(i%6===0){for(let side of [-1,1]){let x=side*(90+rnd()*45);let trunkMesh=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.2,9,6),trunk);trunkMesh.position.set(x,4.5,z);cityDetails.add(trunkMesh);let crown=new THREE.Mesh(new THREE.IcosahedronGeometry(5.5,1),green);crown.position.set(x,11,z);cityDetails.add(crown)}}
+if(k%3===0){let zx=z0-65;segmentRoad(zone.shift-510,zx,zone.shift+520,zx,19)}
 }
-// Elevated expressway with concrete supports and guard rails.
-const highway=new THREE.Group();scene.add(highway);
-for(let i=0;i<100;i++){let z=-i*135-80,x=-450+Math.sin(i*.12)*42;block(x,24,z,24,3,135,asphalt,highway);for(let side of [-1,1])block(x+side*12.5,27,z,.8,4,135,concrete,highway);if(i%2===0)block(x,12,z,6,24,7,concrete,highway)}
-// Lightweight instanced traffic and street-level greenery.
-const trafficGeometry=new THREE.BoxGeometry(4,2,8),trafficColors=[0xc7c9cb,0x273846,0x9b3333,0xc2b39b],trafficMaterial=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.48,roughness:.35});
-const cars=new THREE.InstancedMesh(trafficGeometry,trafficMaterial,420);cars.instanceMatrix.setUsage(THREE.StaticDrawUsage);const dummy=new THREE.Object3D();for(let i=0;i<420;i++){let z=-rnd()*15000,x=(rnd()>.5?1:-1)*(13+rnd()*12);dummy.position.set(x,1.2,z);dummy.rotation.y=0;dummy.updateMatrix();cars.setMatrixAt(i,dummy.matrix);cars.setColorAt(i,new THREE.Color(trafficColors[Math.floor(rnd()*trafficColors.length)]))}cars.instanceMatrix.needsUpdate=true;scene.add(cars);
+// Curving elevated expressway, offset from the main flight path.
+const highway=new THREE.Group();scene.add(highway);for(let i=0;i<115;i++){let z=-i*130-90,x=-470+85*Math.sin(z*.00055)+35*Math.sin(z*.0017);let nextZ=z-130,nextX=-470+85*Math.sin(nextZ*.00055)+35*Math.sin(nextZ*.0017);let length=Math.hypot(nextX-x,nextZ-z);let deck=block((x+nextX)/2,24,(z+nextZ)/2,24,3,length,asphalt,highway);deck.rotation.y=Math.atan2(nextX-x,nextZ-z);if(i%2===0)block(x,12,z,6,24,7,concrete,highway)}
+// Canal and park strips follow a different alignment to break the repeated grid.
+const canalMat=new THREE.MeshPhysicalMaterial({color:0x467f94,metalness:.5,roughness:.22,clearcoat:1,envMapIntensity:1.5});
+for(let k=3;k<zones.length;k+=8){let z=-k*350-170,x=560+centerAt(z)*.5;let canal=block(x,.35,z,140,.25,900,canalMat);canal.rotation.y=.15;for(let j=-2;j<=2;j++){let zz=z+j*155;segmentRoad(x-120,zz,x+120,zz,15,13,concrete);block(x,6.5,zz,7,13,7,concrete)}}
+const trafficGeometry=new THREE.BoxGeometry(4,2,8),trafficMaterial=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.48,roughness:.35}),cars=new THREE.InstancedMesh(trafficGeometry,trafficMaterial,330);const dummy=new THREE.Object3D(),trafficColors=[0xc7c9cb,0x273846,0x9b3333,0xc2b39b];for(let i=0;i<330;i++){let z=-rnd()*14500,x=centerAt(z)+(rnd()>.5?1:-1)*(7+rnd()*12);dummy.position.set(x,1.3,z);dummy.rotation.y=Math.atan2(centerAt(z-20)-centerAt(z+20),40);dummy.updateMatrix();cars.setMatrixAt(i,dummy.matrix);cars.setColorAt(i,new THREE.Color(trafficColors[Math.floor(rnd()*trafficColors.length)]))}cars.instanceMatrix.needsUpdate=true;scene.add(cars);
 // Stylized Tokyo Tower silhouette and bridge structures near the waterfront.
 const landmark=new THREE.Group();scene.add(landmark);landmark.position.set(430,0,-1250);
 const red=new THREE.MeshStandardMaterial({color:0xc95335,metalness:.3,roughness:.55}),ivory=new THREE.MeshStandardMaterial({color:0xf1e8d4,metalness:.25,roughness:.65});
@@ -93,7 +101,7 @@ for(let h of [55,110,155]){let deck=new THREE.Mesh(new THREE.BoxGeometry(55-h*.1
 for(let bz of [-900,-3000]){let bridge=new THREE.Group();scene.add(bridge);bridge.position.set(600,16,bz);let deck=new THREE.Mesh(new THREE.BoxGeometry(900,7,19),new THREE.MeshStandardMaterial({color:0xb7b8ae,metalness:.3}));bridge.add(deck);for(let bx of [-230,230]){let tower=new THREE.Mesh(new THREE.BoxGeometry(13,100,12),ivory);tower.position.set(bx,48,0);bridge.add(tower);for(let j=0;j<11;j++){let cable=new THREE.Vector3(bx,95,0),end=new THREE.Vector3(bx+(j-5)*20,0,0);beam(cable,end,.55,ivory,bridge)}}}
 const plane=new THREE.Group();scene.add(plane);
 function wing(points,mat){let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(points.flat(),3));geo.computeVertexNormals();let mesh=new THREE.Mesh(geo,mat);mesh.material.side=THREE.DoubleSide;plane.add(mesh);mesh.castShadow=true}
-const white=new THREE.MeshStandardMaterial({color:0xf4f3eb,roughness:.88,metalness:0,envMapIntensity:.6,side:THREE.DoubleSide}),shade=new THREE.MeshStandardMaterial({color:0xc7d2d6,roughness:.93,metalness:0,side:THREE.DoubleSide});
+const white=new THREE.MeshStandardMaterial({color:0xdedcd5,roughness:.88,metalness:0,envMapIntensity:.6,side:THREE.DoubleSide}),shade=new THREE.MeshStandardMaterial({color:0xc7d2d6,roughness:.93,metalness:0,side:THREE.DoubleSide});
 wing([[-0.1,0,-2.7],[-6.3,-.15,2.2],[-.75,-.4,.6]],white);
 wing([[.1,0,-2.7],[.75,-.4,.6],[6.3,-.15,2.2]],white);
 wing([[0,.2,-2.7],[-.75,-.4,.6],[0,-.9,2.6]],shade);

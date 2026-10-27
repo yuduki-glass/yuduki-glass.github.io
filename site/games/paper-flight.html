@@ -3,90 +3,56 @@ layout: null
 permalink: /games/paper-flight/
 ---
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>PAPER FLIGHT | 結月硝子</title><style>
-*{box-sizing:border-box}body{margin:0;background:#081524;color:#e6f7ff;font-family:system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:12px}h1{font-size:20px;letter-spacing:.16em;margin:8px 0}canvas{width:100%;aspect-ratio:16/9;background:#6ba9d0;display:block;border:1px solid #365f76;border-radius:12px;touch-action:none}header,.hud,.controls,.shophead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.hud{padding:10px 2px;color:#a4f9d3;font-family:monospace}.hud b{color:white}.controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0;align-items:stretch}.controls button{width:100%;min-width:0;padding:12px 4px;white-space:nowrap;font-size:clamp(10px,2.5vw,15px)}button{border:1px solid #5b95aa;background:#173c55;color:white;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;touch-action:none}button:disabled{opacity:.4}.primary{background:#167e81}.hint{font-size:12px;color:#a9c6d6}#shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0}.item{border:1px solid #345269;background:#10283c;border-radius:10px;padding:12px}.item strong{display:block}.item p{font-size:12px;color:#b0c5d3;min-height:30px}.item button{width:100%;padding:9px}.status{color:#a8e8c5}a{color:#8bdedc}@media(max-width:600px){canvas{aspect-ratio:4/3}.hud{font-size:12px}button{padding:11px 8px}.controls{gap:4px}.controls button{font-size:11px;padding:13px 2px}}
-</style></head><body><main><header><h1>✈ PAPER FLIGHT <small style="font-size:11px">CITY WIND</small></h1><a href="/">結月硝子へ戻る</a></header><div class="hud"><span>DIST <b id="dist">0</b>m</span><span>ALT <b id="alt">130</b>m</span><span>SPEED <b id="speed">15</b>m/s</span><span>BEST <b id="best">0</b>m</span><span>COINS <b id="coins">0</b></span></div><canvas id="view" width="960" height="540"></canvas><div class="hud"><span id="wind">WIND --</span><span id="roll">BANK 0°</span><span class="status" id="status">READY</span></div><div class="controls"><button id="left">◀ 左翼</button><button id="up">▲ 上昇</button><button class="primary" id="start">飛行開始</button><button id="down">▼ 下降</button><button id="right">右翼 ▶</button></div><p class="hint">PC：← → でロール、↑ ↓ で機首操作。スマホ：画面をドラッグ（左右＝ロール、上下＝機首）またはボタン。風は約5秒ごとに変化。高度が尽きるかビルに衝突すると終了。</p><div class="shophead"><h2>永続アップグレード</h2><span>所持コイン <b id="wallet">0</b></span></div><div id="shop"></div><p class="hint">強化・最高記録はこのブラウザのローカルストレージに保存。別端末には同期されません。</p></main><script>
-(()=>{
-'use strict';
-const $=id=>document.getElementById(id),c=$('view'),g=c.getContext('2d');
+*{box-sizing:border-box}body{margin:0;background:#081524;color:#e6f7ff;font-family:system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:12px}h1{font-size:20px;letter-spacing:.16em;margin:8px 0}#view{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;background:linear-gradient(#5c99bd,#f1c8a0);display:block;border:1px solid #365f76;border-radius:12px;touch-action:none}#view canvas{width:100%;height:100%;display:block;touch-action:none}header,.hud,.controls,.shophead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.hud{padding:10px 2px;color:#a4f9d3;font-family:monospace}.hud b{color:white}.controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0;align-items:stretch}.controls button{width:100%;min-width:0;padding:12px 4px;white-space:nowrap;font-size:clamp(10px,2.5vw,15px)}button{border:1px solid #5b95aa;background:#173c55;color:white;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;touch-action:none}button:disabled{opacity:.4}.primary{background:#167e81}.hint{font-size:12px;color:#a9c6d6}#shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0}.item{border:1px solid #345269;background:#10283c;border-radius:10px;padding:12px}.item strong{display:block}.item p{font-size:12px;color:#b0c5d3;min-height:30px}.item button{width:100%;padding:9px}.status{color:#a8e8c5}a{color:#8bdedc}@media(max-width:600px){#view{aspect-ratio:4/3}.hud{font-size:12px}button{padding:11px 8px}.controls{gap:4px}.controls button{font-size:11px;padding:13px 2px}}
+ .overlay{position:absolute;inset:0;pointer-events:none;color:#c9ffdb;font:12px monospace;text-shadow:0 1px 6px #123}.overlay .top{position:absolute;top:12px;left:12px}.overlay .reticle{position:absolute;top:49%;left:50%;transform:translate(-50%,-50%);font-size:28px;opacity:.7}.overlay .notice{position:absolute;top:34%;left:50%;transform:translateX(-50%);padding:14px 25px;background:#061a2ab9;border-radius:10px;color:white;font:bold 20px system-ui;white-space:nowrap}.overlay .radar{position:absolute;bottom:12px;left:12px;border:1px solid #a7f7c4a8;border-radius:50%;width:100px;height:100px;display:grid;place-items:center;background:#062e3255} </style></head><body><main><header><h1>✈ PAPER FLIGHT <small style="font-size:11px">CITY WIND</small></h1><a href="/">結月硝子へ戻る</a></header><div class="hud"><span>DIST <b id="dist">0</b>m</span><span>ALT <b id="alt">130</b>m</span><span>SPEED <b id="speed">15</b>m/s</span><span>BEST <b id="best">0</b>m</span><span>COINS <b id="coins">0</b></span></div><div id="view" role="img" aria-label="3D都市を滑空する紙飛行機"></div><div class="hud"><span id="wind">WIND --</span><span id="roll">BANK 0°</span><span class="status" id="status">READY</span></div><div class="controls"><button id="left">◀ 左翼</button><button id="up">▲ 上昇</button><button class="primary" id="start">飛行開始</button><button id="down">▼ 下降</button><button id="right">右翼 ▶</button></div><p class="hint">PC：← → でロール、↑ ↓ で機首操作。スマホ：画面をドラッグ（左右＝ロール、上下＝機首）またはボタン。風は約5秒ごとに変化。高度が尽きるかビルに衝突すると終了。</p><div class="shophead"><h2>永続アップグレード</h2><span>所持コイン <b id="wallet">0</b></span></div><div id="shop"></div><p class="hint">強化・最高記録はこのブラウザのローカルストレージに保存。別端末には同期されません。</p></main><script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+const $=id=>document.getElementById(id),host=$('view');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x86b6d2);scene.fog=new THREE.FogExp2(0x9bb7c0,.0015);
+const camera=new THREE.PerspectiveCamera(73,16/9,.5,4500);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;host.append(renderer.domElement);
+const overlay=document.createElement('div');overlay.className='overlay';overlay.innerHTML='<div class="top" id="hud3">PAPER FLIGHT / CITY WIND</div><div class="reticle">＋</div><div class="radar">▲</div><div class="notice" id="notice">READY TO FLY</div>';host.append(overlay);
+function resize(){let w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(host);resize();
+scene.add(new THREE.HemisphereLight(0xdcecff,0x56626a,2.0));
+const sun=new THREE.DirectionalLight(0xffd7a2,3.2);sun.position.set(-200,380,-450);scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(15000,15000),new THREE.MeshStandardMaterial({color:0x526a65,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-1;scene.add(ground);
+const roadMat=new THREE.MeshStandardMaterial({color:0x303d44,roughness:.95});
+for(let x of [-70,0,70]){let road=new THREE.Mesh(new THREE.PlaneGeometry(x===0?55:15,15000),roadMat);road.rotation.x=-Math.PI/2;road.position.set(x,.1,-4000);scene.add(road)}
+const stripeMat=new THREE.MeshBasicMaterial({color:0xd2cbb6});
+for(let i=0;i<450;i++){let stripe=new THREE.Mesh(new THREE.PlaneGeometry(.6,12),stripeMat);stripe.rotation.x=-Math.PI/2;stripe.position.set(0,.16,-i*30);scene.add(stripe)}
+function texture(seed){let cv=document.createElement('canvas');cv.width=128;cv.height=256;let q=cv.getContext('2d');q.fillStyle=['#3d5566','#5b707d','#657b86','#475e69'][seed%4];q.fillRect(0,0,128,256);for(let y=5;y<256;y+=17)for(let x=5;x<128;x+=15){q.fillStyle=((x*17+y*11+seed*13)%9<2)?'#d4bd91':'#7893a2';q.globalAlpha=.35+((x+y)%5)*.08;q.fillRect(x,y,9,11)}q.globalAlpha=1;let t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;return t}
+let mats=Array.from({length:8},(_,i)=>new THREE.MeshStandardMaterial({map:texture(i),roughness:.48,metalness:.24}));
+let buildings=[],seed=8372;function rnd(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296}
+for(let i=0;i<310;i++)for(let side of [-1,1]){let x=side*(95+rnd()*240),z=-i*65-100,w=25+rnd()*58,h=28+rnd()*160,d=28+rnd()*55;let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mats[Math.floor(rnd()*mats.length)]);m.position.set(x,h/2,z);scene.add(m);buildings.push({mesh:m,x,z,w,h,d,passed:false})}
+const plane=new THREE.Group();scene.add(plane);
+function wing(points,mat){let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(points.flat(),3));geo.computeVertexNormals();let mesh=new THREE.Mesh(geo,mat);mesh.material.side=THREE.DoubleSide;plane.add(mesh)}
+const white=new THREE.MeshStandardMaterial({color:0xf4f3eb,roughness:.86,side:THREE.DoubleSide}),shade=new THREE.MeshStandardMaterial({color:0xc7d2d6,roughness:.9,side:THREE.DoubleSide});
+wing([[-0.1,0,-2.7],[-6.3,-.15,2.2],[-.75,-.4,.6]],white);
+wing([[.1,0,-2.7],[.75,-.4,.6],[6.3,-.15,2.2]],white);
+wing([[0,.2,-2.7],[-.75,-.4,.6],[0,-.9,2.6]],shade);
+wing([[0,.2,-2.7],[0,-.9,2.6],[.75,-.4,.6]],white);
+const crease=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,.23,-2.7),new THREE.Vector3(0,-.88,2.6)]),new THREE.LineBasicMaterial({color:0x91a6b0}));plane.add(crease);
 const defs=[['揚力強化','沈下速度を抑える',30],['姿勢安定','風で傾きにくくなる',40],['軽量化','空気抵抗を低減',50],['耐風加工','突風の影響を軽減',65],['高所発進','初期高度が増える',80],['操縦翼','操作への応答が速くなる',55],['滑空効率','水平移動距離が伸びる',90],['報酬増加','飛行後のコインが増える',100]];
-let save;try{save=JSON.parse(localStorage.getItem('paperFlightV1')||'{}')}catch(e){save={}}
-let lv=Array.isArray(save.lv)?defs.map((_,i)=>Math.max(0,Math.min(99,Number(save.lv[i])||0))):defs.map(()=>0),wallet=Number(save.wallet)||0,best=Number(save.best)||0;
-function persist(){try{localStorage.setItem('paperFlightV1',JSON.stringify({lv,wallet,best}))}catch(e){}}
-function price(i){return Math.ceil(defs[i][2]*Math.pow(1.48,lv[i]))}
-function shop(){ $('wallet').textContent=Math.floor(wallet);$('coins').textContent=Math.floor(wallet);$('best').textContent=Math.floor(best);$('shop').innerHTML='';defs.forEach((d,i)=>{let x=document.createElement('div');x.className='item';let h=document.createElement('strong');h.textContent=d[0]+' Lv.'+lv[i];let p=document.createElement('p');p.textContent=d[1];let b=document.createElement('button');b.textContent=price(i)+' コイン';b.disabled=wallet<price(i)||running;b.onclick=()=>{if(wallet>=price(i)&&!running){wallet-=price(i);lv[i]++;persist();shop()}};x.append(h,p,b);$('shop').append(x)})}
-let streak=0,nearMiss=0,shake=0,trail=[],running=false,ever=false,dist=0,alt=130,vel=15,bank=0,pitch=0,lateral=0,wx=0,wz=0,tx=0,tz=0,t=0,nextWind=0,last=0,keys={},drag=false,dx=0,dy=0,buildings=[];
-let seed=34781;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-for(let i=0;i<550;i++){let z=i*48+70;for(let side of [-1,1]){let x=side*(95+rnd()*220);buildings.push({x,z,w:28+rnd()*62,h:25+rnd()*125,shade:rnd(),rows:3+Math.floor(rnd()*6)})}}
-function start(){running=true;ever=true;dist=0;alt=130+lv[4]*20;vel=19;bank=0;pitch=0;lateral=0;streak=0;nearMiss=0;shake=0;trail=[];wx=0;wz=0;tx=0;tz=0;t=0;nextWind=0;$('start').textContent='飛行中';$('status').textContent='FLYING';shop()}
-function finish(msg){if(!running)return;running=false;let gain=Math.max(1,Math.floor((dist/12+nearMiss*12)*(1+lv[7]*.25)));wallet+=gain;best=Math.max(best,Math.floor(dist));persist();shop();$('start').textContent='再挑戦';$('status').textContent=msg+' +'+gain+' COINS'}
+let save={};try{save=JSON.parse(localStorage.getItem('paperFlightV1')||'{}')}catch{}
+let lv=defs.map((_,i)=>Math.max(0,Math.min(99,Number(save.lv?.[i])||0))),wallet=Number(save.wallet)||0,best=Number(save.best)||0;
+let running=false,ever=false,dist=0,alt=130,vel=19,bank=0,pitch=0,lateral=0,wx=0,wz=0,tx=0,tz=0,time=0,nextWind=0,nearMiss=0;
+function persist(){try{localStorage.setItem('paperFlightV1',JSON.stringify({lv,wallet,best}))}catch{}}
+function price(i){return Math.ceil(defs[i][2]*1.48**lv[i])}
+function shop(){$('wallet').textContent=Math.floor(wallet);$('coins').textContent=Math.floor(wallet);$('best').textContent=Math.floor(best);$('shop').innerHTML='';defs.forEach((d,i)=>{let x=document.createElement('div');x.className='item';let h=document.createElement('strong');h.textContent=d[0]+' Lv.'+lv[i];let p=document.createElement('p');p.textContent=d[1];let b=document.createElement('button');b.textContent=price(i)+' コイン';b.disabled=wallet<price(i)||running;b.onclick=()=>{if(!running&&wallet>=price(i)){wallet-=price(i);lv[i]++;persist();shop()}};x.append(h,p,b);$('shop').append(x)})}
+function start(){running=true;ever=true;dist=0;alt=130+lv[4]*20;vel=19;bank=0;pitch=0;lateral=0;wx=0;wz=0;time=0;nextWind=0;nearMiss=0;buildings.forEach(b=>b.passed=false);$('start').textContent='飛行中';$('notice').style.display='none';$('status').textContent='FLYING';shop()}
+function finish(msg){if(!running)return;running=false;let gain=Math.max(1,Math.floor((dist/12+nearMiss*12)*(1+lv[7]*.25)));wallet+=gain;best=Math.max(best,Math.floor(dist));persist();shop();$('start').textContent='再挑戦';$('status').textContent=msg+' +'+gain+' COINS';$('notice').textContent=msg+' / '+Math.floor(dist)+'m';$('notice').style.display='block'}
 $('start').onclick=()=>{if(!running)start()};
-for(let k of ['left','right','up','down']){let el=$(k);el.onpointerdown=e=>{e.preventDefault();el.setPointerCapture(e.pointerId);keys[k]=true};for(let evt of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(evt,()=>keys[k]=false)}
+let keys={},drag=false,px=0,py=0;
+for(let k of ['left','right','up','down']){let el=$(k);el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);keys[k]=true});for(let evt of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(evt,()=>keys[k]=false)}
 window.addEventListener('keydown',e=>{let k={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key];if(k){e.preventDefault();keys[k]=true}});window.addEventListener('keyup',e=>{let k={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key];if(k)keys[k]=false});
-c.onpointerdown=e=>{drag=true;c.setPointerCapture(e.pointerId);dx=e.clientX;dy=e.clientY};c.onpointermove=e=>{if(drag){let r=c.getBoundingClientRect();keys.dragX=Math.max(-1,Math.min(1,(e.clientX-dx)/(r.width*.25)));keys.dragY=Math.max(-1,Math.min(1,(dy-e.clientY)/(r.height*.28)))}};c.onpointerup=c.onpointercancel=()=>{drag=false;keys.dragX=0;keys.dragY=0};
-function project(x,y,z){let depth=z-dist+55;if(depth<3)return null;let scale=(480+Math.min(120,vel*2.5))/(depth+170);return{x:480+(x-lateral)*scale,y:270+(alt-y)*scale+pitch*130,s:scale,depth}}
-function polygon(points,fill,stroke){g.beginPath();g.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)g.lineTo(points[i][0],points[i][1]);g.closePath();g.fillStyle=fill;g.fill();if(stroke){g.strokeStyle=stroke;g.stroke()}}
-function building(b){
-let z=b.z-dist;if(z< -70||z>1900)return;
-let x=b.x,w=b.w,h=b.h;
-let A=project(x-w/2,0,b.z),B=project(x+w/2,0,b.z),C=project(x+w/2,h,b.z),D=project(x-w/2,h,b.z);
-if(!A||!B||!C||!D)return;
-let width=B.x-A.x,height=A.y-D.y;if(width<.6||height<.6)return;
-let side=Math.max(2,width*.16),v=Math.floor(62+b.shade*64);
-g.fillStyle='rgb('+v+','+(v+18)+','+(v+29)+')';g.fillRect(D.x,D.y,width,height);
-let glass=g.createLinearGradient(D.x,D.y,B.x,A.y);
-glass.addColorStop(0,'rgba(216,238,250,.37)');glass.addColorStop(.32,'rgba(30,62,83,.35)');glass.addColorStop(.7,'rgba(164,205,221,.22)');glass.addColorStop(1,'rgba(14,35,53,.52)');
-g.fillStyle=glass;g.fillRect(D.x,D.y,width,height);
-polygon([[B.x,D.y],[B.x+side,D.y-side*.38],[B.x+side,A.y-side*.38],[B.x,A.y]],'rgba(24,47,65,.85)');
-polygon([[D.x,D.y],[B.x,D.y],[B.x+side,D.y-side*.38],[D.x+side,D.y-side*.38]],'#b0bdc2');
-if(width>5){let cols=Math.max(2,Math.floor(width/9)),rows=Math.max(3,Math.floor(height/12));
-g.strokeStyle='rgba(9,31,46,.5)';g.lineWidth=Math.max(.6,width*.009);
-for(let i=1;i<cols;i++){let xx=D.x+width*i/cols;g.beginPath();g.moveTo(xx,D.y);g.lineTo(xx,A.y);g.stroke()}
-for(let j=1;j<rows;j++){let yy=D.y+height*j/rows;g.beginPath();g.moveTo(D.x,yy);g.lineTo(B.x,yy);g.stroke()}
-g.fillStyle='rgba(255,228,171,.38)';
-for(let j=1;j<rows;j++)for(let i=0;i<cols;i++)if((i*11+j*7+Math.floor(b.z))%9===0)g.fillRect(D.x+(i+.18)*width/cols,D.y+(j+.22)*height/rows,width/cols*.5,height/rows*.38)}
-}
-function plane(){
-g.save();g.translate(480+Math.sin(t*17)*shake*2,372+Math.cos(t*19)*shake*1.5);g.rotate(bank*.75);let bob=Math.sin(t*5)*1.5;g.translate(0,bob);
-g.shadowColor='rgba(3,17,29,.35)';g.shadowBlur=18;g.shadowOffsetY=9;
-polygon([[0,-115],[-180,66],[-29,25],[0,93],[29,25],[180,66]],'#f5f3eb','#6c8796');
-g.shadowBlur=0;g.shadowOffsetY=0;
-let wingL=g.createLinearGradient(-160,0,0,80);wingL.addColorStop(0,'#fafaf5');wingL.addColorStop(.6,'#e7e9e6');wingL.addColorStop(1,'#a6bdc8');
-polygon([[0,-115],[-180,66],[-29,25]],wingL);
-let wingR=g.createLinearGradient(0,0,180,80);wingR.addColorStop(0,'#f9f8f2');wingR.addColorStop(1,'#d3d9d7');
-polygon([[0,-115],[29,25],[180,66]],wingR);
-polygon([[0,-115],[-29,25],[0,93]],'#a5bac6');
-polygon([[0,-115],[0,93],[29,25]],'#f7f7f2');
-g.strokeStyle='rgba(84,114,133,.7)';g.lineWidth=1.5;g.beginPath();g.moveTo(0,-115);g.lineTo(-180,66);g.moveTo(0,-115);g.lineTo(180,66);g.moveTo(-29,25);g.lineTo(0,93);g.lineTo(29,25);g.stroke();
-g.strokeStyle='rgba(255,255,255,.6)';g.beginPath();g.moveTo(0,-115);g.lineTo(0,93);g.stroke();g.restore()
-}
-function draw(){
-let sky=g.createLinearGradient(0,0,0,540);
-sky.addColorStop(0,'#3d729a');sky.addColorStop(.35,'#7caac4');sky.addColorStop(.66,'#f3cba3');sky.addColorStop(1,'#d4b8a1');
-g.fillStyle=sky;g.fillRect(0,0,960,540);
-let sun=g.createRadialGradient(690,135,5,690,135,280);sun.addColorStop(0,'rgba(255,251,221,.98)');sun.addColorStop(.09,'rgba(255,236,191,.78)');sun.addColorStop(.35,'rgba(255,201,150,.22)');sun.addColorStop(1,'rgba(255,215,166,0)');g.fillStyle=sun;g.fillRect(370,0,590,470);
-for(let i=0;i<23;i++){let x=((i*173+Math.sin(i*13)*95-dist*.022)%1300+1300)%1300-160,y=45+(i*71)%215,sc=.4+(i%6)*.2;
-g.fillStyle='rgba(255,255,246,'+(.09+(i%4)*.035)+')';g.beginPath();g.ellipse(x,y,75*sc,15*sc,-.08,0,Math.PI*2);g.ellipse(x+23*sc,y-12*sc,42*sc,22*sc,0,0,Math.PI*2);g.ellipse(x-20*sc,y-6*sc,48*sc,18*sc,0,0,Math.PI*2);g.fill()}
-g.save();g.translate(480,270);g.rotate(-bank*.20);g.translate(-480,-270);
-let horizon=295+pitch*125;g.fillStyle='rgba(230,193,154,.13)';for(let i=0;i<5;i++){g.fillRect(0,horizon+i*12,960,2)}
-g.fillStyle='#718a89';g.fillRect(-300,horizon,1600,700);
-let haze=g.createLinearGradient(0,horizon-80,0,horizon+160);haze.addColorStop(0,'rgba(242,211,177,0)');haze.addColorStop(.4,'rgba(226,203,183,.57)');haze.addColorStop(1,'rgba(53,77,82,0)');g.fillStyle=haze;g.fillRect(0,horizon-80,960,240);
-for(let i=0;i<85;i++){let x=((i*127+37)%1200)-120,w=8+(i*17)%27,hh=12+(i*31)%60;g.fillStyle='rgba(45,69,83,'+(.18+(i%3)*.08)+')';g.fillRect(x,horizon-hh,w,hh)}
-polygon([[436,horizon],[524,horizon],[1200,540],[-240,540]],'#43565c');
-g.strokeStyle='rgba(239,226,203,.35)';g.lineWidth=2;
-for(let z=Math.floor(dist/75)*75+75;z<dist+1300;z+=75){let a=project(0,0,z);if(a){g.beginPath();g.moveTo(a.x,a.y);g.lineTo(a.x,a.y+Math.max(2,a.s*10));g.stroke()}}
-let visible=buildings.filter(b=>b.z>dist-80&&b.z<dist+1900).sort((a,b)=>b.z-a.z);for(let b of visible)building(b);
-g.restore();
-// Velocity streaks and atmospheric motion parallax
-if(running){let intensity=Math.max(.15,(vel-12)/18);g.strokeStyle='rgba(232,247,255,'+(intensity*.30)+')';g.lineWidth=1.3;for(let i=0;i<34;i++){let x=(i*139+Math.floor(t*90)*(i%3+1))%1040-40,y=(i*83+Math.floor(t*75)*(i%4+1))%570-20;let vx=(x-480)*.07*intensity,vy=(y-280)*.07*intensity;g.beginPath();g.moveTo(x,y);g.lineTo(x+vx,y+vy);g.stroke()}}
-plane();
-g.strokeStyle='rgba(170,255,207,.75)';g.lineWidth=2;g.beginPath();g.moveTo(409,269);g.lineTo(457,269);g.moveTo(503,269);g.lineTo(551,269);g.moveTo(480,245);g.lineTo(480,291);g.stroke();
-g.fillStyle='#c3ffcf';g.font='16px monospace';g.shadowColor='#063d31';g.shadowBlur=5;
-g.fillText('PAPER FLIGHT / CITY WIND',24,32);g.fillText('WIND X '+wx.toFixed(1)+'  Z '+wz.toFixed(1),24,57);g.fillText('ROLL '+Math.round(bank*57.3)+'°',24,82);
-g.fillText('SPEED '+vel.toFixed(1)+' m/s',24,106);g.fillText('ALT '+Math.max(0,Math.floor(alt))+' m',24,130);g.fillText('NEAR MISS '+nearMiss+'   FLOW '+Math.round(Math.max(0,(vel-12)*6))+'%',24,154);g.shadowBlur=0;
-g.strokeStyle='rgba(160,255,190,.55)';g.strokeRect(22,360,160,150);g.beginPath();g.moveTo(102,360);g.lineTo(102,510);g.moveTo(22,435);g.lineTo(182,435);g.stroke();g.fillStyle='#baffcb';g.beginPath();g.moveTo(102+Math.max(-70,Math.min(70,lateral*.12)),435);g.lineTo(96+Math.max(-70,Math.min(70,lateral*.12)),447);g.lineTo(108+Math.max(-70,Math.min(70,lateral*.12)),447);g.fill();
-if(!running){g.fillStyle='rgba(5,22,35,.72)';g.fillRect(300,174,360,112);g.fillStyle='white';g.textAlign='center';g.font='bold 27px system-ui';g.fillText(ever?'FLIGHT COMPLETE':'READY TO FLY',480,220);g.font='16px system-ui';g.fillText(ever?Math.floor(dist)+' m':'飛行開始を押して離陸',480,253);g.textAlign='left'}
-}
-function update(dt){if(!running)return;t+=dt;if(t>=nextWind){tx=(Math.random()-.5)*13;tz=(Math.random()-.5)*12;nextWind=t+4+Math.random()*3}wx+=(tx-wx)*dt*.55;wz+=(tz-wz)*dt*.5;let steer=(keys.right?1:0)-(keys.left?1:0)+(keys.dragX||0),elev=(keys.up?1:0)-(keys.down?1:0)+(keys.dragY||0);steer=Math.max(-1,Math.min(1,steer));elev=Math.max(-1,Math.min(1,elev));bank+=(steer*(1.25+lv[5]*.13)+wx*.055/(1+lv[3]*.2)-bank*(.85+lv[1]*.18))*dt*1.5;bank=Math.max(-1.55,Math.min(1.55,bank));pitch+=(elev*.48-pitch*.9)*dt;let air=Math.max(3,vel-wz*.25);let lift=(.65+lv[0]*.085)*Math.pow(air/15,1.1)*Math.max(.08,Math.cos(bank));let sink=3.1-lift*2.55+Math.abs(bank)*1.15-pitch*4.5;alt-=sink*dt;vel+=(2.0-pitch*3.6-air*(.045-lv[2]*.002))*dt;vel=Math.max(7,Math.min(39,vel));shake=Math.max(0,Math.min(1,(vel-22)/20));let forward=Math.max(2,(vel+wz*.6)*(1+lv[6]*.035));dist+=forward*dt;lateral+=(Math.sin(bank)*vel*.5+wx*.45)*dt;$('dist').textContent=Math.floor(dist);$('alt').textContent=Math.max(0,Math.floor(alt));$('speed').textContent=vel.toFixed(1);$('roll').textContent='BANK '+Math.round(bank*57.3)+'°';$('wind').textContent='横風 '+wx.toFixed(1)+' / '+(wz>=0?'追い風 ':'向かい風 ')+Math.abs(wz).toFixed(1)+'m/s';$('status').textContent=Math.abs(bank)>1?'BANK WARNING':air<8?'STALL WARNING':'FLYING';if(alt<=0){finish('GROUND CONTACT');return}for(let b of buildings){if(Math.abs(b.z-dist)<13&&alt<b.h+4){let clearance=Math.abs(lateral-b.x)-b.w/2;if(clearance<6){finish('BUILDING COLLISION');return}if(clearance<38&&!b.passed){b.passed=true;nearMiss++;$('status').textContent='NEAR MISS +12 BONUS'}}}}
-function frame(now){let dt=Math.min(.04,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(frame)}shop();requestAnimationFrame(frame);
-})();
+host.addEventListener('pointerdown',e=>{drag=true;host.setPointerCapture(e.pointerId);px=e.clientX;py=e.clientY});host.addEventListener('pointermove',e=>{if(!drag)return;keys.dragX=THREE.MathUtils.clamp((e.clientX-px)/(host.clientWidth*.25),-1,1);keys.dragY=THREE.MathUtils.clamp((py-e.clientY)/(host.clientHeight*.28),-1,1)});for(let ev of ['pointerup','pointercancel'])host.addEventListener(ev,()=>{drag=false;keys.dragX=0;keys.dragY=0});
+function update(dt){if(!running)return;time+=dt;if(time>=nextWind){tx=(Math.random()-.5)*13;tz=(Math.random()-.5)*12;nextWind=time+4+Math.random()*3}wx+=(tx-wx)*dt*.55;wz+=(tz-wz)*dt*.5;let steer=THREE.MathUtils.clamp((keys.right?1:0)-(keys.left?1:0)+(keys.dragX||0),-1,1),elev=THREE.MathUtils.clamp((keys.up?1:0)-(keys.down?1:0)+(keys.dragY||0),-1,1);
+bank+=(steer*(1.25+lv[5]*.13)+wx*.055/(1+lv[3]*.2)-bank*(.85+lv[1]*.18))*dt*1.5;bank=THREE.MathUtils.clamp(bank,-1.55,1.55);pitch+=(elev*.48-pitch*.9)*dt;let air=Math.max(3,vel-wz*.25),lift=(.65+lv[0]*.085)*(air/15)**1.1*Math.max(.08,Math.cos(bank));alt-=(3.1-lift*2.55+Math.abs(bank)*1.15-pitch*4.5)*dt;vel=THREE.MathUtils.clamp(vel+(2-pitch*3.6-air*(.045-lv[2]*.002))*dt,7,39);dist+=Math.max(2,(vel+wz*.6)*(1+lv[6]*.035))*dt;lateral+=(Math.sin(bank)*vel*.5+wx*.45)*dt;
+$('dist').textContent=Math.floor(dist);$('alt').textContent=Math.max(0,Math.floor(alt));$('speed').textContent=vel.toFixed(1);$('roll').textContent='BANK '+Math.round(bank*57.3)+'°';$('wind').textContent='横風 '+wx.toFixed(1)+' / '+(wz>=0?'追い風 ':'向かい風 ')+Math.abs(wz).toFixed(1)+'m/s';$('status').textContent=Math.abs(bank)>1?'BANK WARNING':air<8?'STALL WARNING':'FLYING';
+if(alt<=0){finish('GROUND CONTACT');return}
+for(let b of buildings){if(Math.abs(b.z+dist)<b.d/2+3&&alt<b.h+3){let clearance=Math.abs(lateral-b.x)-b.w/2;if(clearance<3){finish('BUILDING COLLISION');return}if(clearance<38&&!b.passed){b.passed=true;nearMiss++;$('status').textContent='NEAR MISS +12'}}}}
+let last=0;function frame(now){let dt=Math.min(.045,(now-last)/1000||.016);last=now;update(dt);
+plane.position.set(lateral,alt,-dist);plane.rotation.set(-pitch,0,-bank);camera.position.lerp(new THREE.Vector3(lateral,alt+7,-dist+22),.12);camera.lookAt(lateral,alt+1,-dist-40);camera.rotation.z=-bank*.19;
+camera.fov=73+Math.max(0,vel-19)*.6;camera.updateProjectionMatrix();$('hud3').textContent='PAPER FLIGHT  |  '+vel.toFixed(1)+' m/s  |  '+Math.floor(alt)+'m  |  NEAR MISS '+nearMiss;
+renderer.render(scene,camera);requestAnimationFrame(frame)}shop();requestAnimationFrame(frame);
 </script></body></html>

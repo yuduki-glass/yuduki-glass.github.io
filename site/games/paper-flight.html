@@ -11,15 +11,19 @@ import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {SMAAPass} from 'three/addons/postprocessing/SMAAPass.js';
 const $=id=>document.getElementById(id),host=$('view');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xe4b89d);scene.fog=new THREE.FogExp2(0xc6a998,.00068);
 const camera=new THREE.PerspectiveCamera(73,16/9,.5,4500);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.48;host.append(renderer.domElement);const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(960,540),.34,.62,.87);composer.addPass(bloom);composer.addPass(new OutputPass());
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.48;host.append(renderer.domElement);const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(960,540),.34,.62,.87);composer.addPass(bloom);const cinematic=new ShaderPass({uniforms:{tDiffuse:{value:null},vignette:{value:.19},grain:{value:.017},time:{value:0}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float vignette;uniform float grain;uniform float time;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float v=1.0-vignette*pow(length((vUv-.5)*1.5),2.0);float n=fract(sin(dot(vUv*vec2(1920.,1080.)+time,vec2(12.9898,78.233)))*43758.5453)-.5;c.rgb=c.rgb*v+n*grain;gl_FragColor=vec4(c.rgb,1.0);}' });composer.addPass(cinematic);composer.addPass(new OutputPass());
 // PMREM supplies physically based specular reflections without an expensive realtime cube capture.
 const pmrem=new THREE.PMREMGenerator(renderer);
 const environment=pmrem.fromScene(new RoomEnvironment(),.04);
 scene.environment=environment.texture;pmrem.dispose();
+// Runtime GPU telemetry for quality diagnostics.
+let fpsFrames=0,fpsClock=performance.now(),fpsValue=0;
 const overlay=document.createElement('div');overlay.className='overlay';overlay.innerHTML='<div class="top" id="hud3">PAPER FLIGHT / CITY WIND</div><div class="reticle">＋</div><div class="radar">▲</div><div class="notice" id="notice">READY TO FLY</div>';host.append(overlay);
 function resize(){let w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(host);resize();
 scene.add(new THREE.HemisphereLight(0xdcecff,0x56626a,2.0));
@@ -33,16 +37,18 @@ let skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorS
 let skyDome=new THREE.Mesh(new THREE.SphereGeometry(3900,48,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false,fog:false}));scene.add(skyDome);
 // Camera-facing cloud sheets provide layered parallax above the skyline.
 const cloudMap=(()=>{const cv=document.createElement('canvas');cv.width=512;cv.height=256;const q=cv.getContext('2d');let state=179;const rand=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296};for(let i=0;i<115;i++){let x=rand()*512,y=55+rand()*135,r=12+rand()*48;let grad=q.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,'rgba(255,246,226,'+(.13+rand()*.22)+')');grad.addColorStop(.55,'rgba(241,218,208,.11)');grad.addColorStop(1,'rgba(245,230,220,0)');q.fillStyle=grad;q.fillRect(x-r,y-r,r*2,r*2)}return new THREE.CanvasTexture(cv)})();
-const cloudLayers=[];for(let i=0;i<18;i++){let mesh=new THREE.Mesh(new THREE.PlaneGeometry(310+Math.random()*380,110+Math.random()*90),new THREE.MeshBasicMaterial({map:cloudMap,transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:.7,fog:false}));mesh.position.set((Math.random()-.5)*2200,290+Math.random()*470,-400-Math.random()*2200);scene.add(mesh);cloudLayers.push(mesh)}
+const cloudLayers=[];for(let i=0;i<30;i++){let mesh=new THREE.Mesh(new THREE.PlaneGeometry(310+Math.random()*380,110+Math.random()*90),new THREE.MeshBasicMaterial({map:cloudMap,transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:.7,fog:false}));mesh.position.set((Math.random()-.5)*2200,290+Math.random()*470,-400-Math.random()*2200);scene.add(mesh);cloudLayers.push(mesh)}
 
+// Lightweight procedural atmospheric particles catch sunset light in the distance.
+const atmosphereGeometry=new THREE.BufferGeometry(),atmoPositions=[];for(let i=0;i<900;i++){let a=i*2.399963,r=100+Math.sqrt(i/900)*1800;atmoPositions.push(Math.cos(a)*r,120+(i*41)%670,-300-(i*71)%2500)}atmosphereGeometry.setAttribute('position',new THREE.Float32BufferAttribute(atmoPositions,3));const atmosphere=new THREE.Points(atmosphereGeometry,new THREE.PointsMaterial({color:0xffd8b5,size:2.6,transparent:true,opacity:.13,depthWrite:false}));scene.add(atmosphere);
 const sunDisc=new THREE.Sprite(new THREE.SpriteMaterial({map:(()=>{let cv=document.createElement('canvas');cv.width=cv.height=256;let q=cv.getContext('2d'),gr=q.createRadialGradient(128,128,3,128,128,128);gr.addColorStop(0,'rgba(255,255,238,1)');gr.addColorStop(.1,'rgba(255,244,205,.95)');gr.addColorStop(.32,'rgba(255,204,129,.45)');gr.addColorStop(1,'rgba(255,174,98,0)');q.fillStyle=gr;q.fillRect(0,0,256,256);return new THREE.CanvasTexture(cv)})(),transparent:true,depthWrite:false,fog:false}));sunDisc.position.set(950,310,-2100);sunDisc.scale.set(650,650,1);scene.add(sunDisc);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(15000,15000),new THREE.MeshStandardMaterial({color:0x526a65,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-1;scene.add(ground);ground.receiveShadow=true;
 // Harbor water with sunset reflections; the skyline is inspired by Minato, not a geospatial replica.
-const waterMat=new THREE.MeshPhysicalMaterial({color:0x567b91,metalness:.76,roughness:.14,clearcoat:1,clearcoatRoughness:.08});
+const waterMat=new THREE.MeshPhysicalMaterial({color:0x567b91,metalness:.76,roughness:.14,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.9});
 const rippleCanvas=document.createElement('canvas');rippleCanvas.width=rippleCanvas.height=256;const rq=rippleCanvas.getContext('2d');rq.fillStyle='#8080ff';rq.fillRect(0,0,256,256);for(let i=0;i<500;i++){let x=Math.random()*256,y=Math.random()*256;rq.strokeStyle='rgba(160,185,255,.18)';rq.beginPath();rq.ellipse(x,y,Math.random()*20+4,Math.random()*2+.5,0,0,Math.PI*2);rq.stroke()}const rippleNormal=new THREE.CanvasTexture(rippleCanvas);rippleNormal.wrapS=rippleNormal.wrapT=THREE.RepeatWrapping;rippleNormal.repeat.set(25,70);waterMat.normalMap=rippleNormal;waterMat.normalScale.set(.13,.13);
 const water=new THREE.Mesh(new THREE.PlaneGeometry(2600,13000),waterMat);water.rotation.x=-Math.PI/2;water.position.set(1450,.35,-4100);scene.add(water);
 const ripples=new THREE.Group();scene.add(ripples);const rippleMat=new THREE.MeshBasicMaterial({color:0xffd4a0,transparent:true,opacity:.34,depthWrite:false,side:THREE.DoubleSide});
-for(let i=0;i<230;i++){let z=-Math.random()*11000,x=520+Math.random()*1650;let p=new THREE.Mesh(new THREE.PlaneGeometry(3+Math.random()*32,.25+Math.random()*1.2),rippleMat);p.rotation.x=-Math.PI/2;p.position.set(x,.44,z);ripples.add(p)}
+for(let i=0;i<450;i++){let z=-Math.random()*11000,x=520+Math.random()*1650;let p=new THREE.Mesh(new THREE.PlaneGeometry(3+Math.random()*32,.25+Math.random()*1.2),rippleMat);p.rotation.x=-Math.PI/2;p.position.set(x,.44,z);ripples.add(p)}
 const roadMat=new THREE.MeshStandardMaterial({color:0x303d44,roughness:.95});
 for(let x of [-70,0,70]){let road=new THREE.Mesh(new THREE.PlaneGeometry(x===0?55:15,15000),roadMat);road.rotation.x=-Math.PI/2;road.position.set(x,.1,-4000);scene.add(road)}
 const stripeMat=new THREE.MeshBasicMaterial({color:0xd2cbb6});
@@ -87,6 +93,6 @@ if(alt<=0){finish('GROUND CONTACT');return}
 for(let b of buildings){if(Math.abs(b.z+dist)<b.d/2+3&&alt<b.h+3){let clearance=Math.abs(lateral-b.x)-b.w/2;if(clearance<3){finish('BUILDING COLLISION');return}if(clearance<38&&!b.passed){b.passed=true;nearMiss++;$('status').textContent='NEAR MISS +12'}}}}
 let last=0;function frame(now){let dt=Math.min(.045,(now-last)/1000||.016);last=now;update(dt);
 plane.position.set(lateral,alt,-dist);plane.rotation.set(-pitch,0,-bank);camera.position.lerp(new THREE.Vector3(lateral,alt+8,-dist+24),.12);skyDome.position.set(lateral,0,-dist);sunDisc.position.set(lateral+950,310,-dist-2100);camera.lookAt(lateral,alt+1,-dist-40);for(let i=0;i<cloudLayers.length;i++){let cloud=cloudLayers[i];cloud.position.z=-dist-500-i*115;cloud.position.x=lateral+(i%2?-1:1)*(160+i*73);cloud.lookAt(camera.position)}camera.rotation.z=-bank*.19;
-camera.fov=73+Math.max(0,vel-19)*.6;rippleNormal.offset.y+=dt*.016;camera.updateProjectionMatrix();$('hud3').textContent='PAPER FLIGHT  |  '+vel.toFixed(1)+' m/s  |  '+Math.floor(alt)+'m  |  NEAR MISS '+nearMiss;
-composer.render();requestAnimationFrame(frame)}shop();requestAnimationFrame(frame);
+camera.fov=73+Math.max(0,vel-19)*.6;rippleNormal.offset.y+=dt*.016;cinematic.uniforms.time.value=now*.001;camera.updateProjectionMatrix();$('hud3').textContent='PAPER FLIGHT  |  '+vel.toFixed(1)+' m/s  |  '+Math.floor(alt)+'m  |  NEAR MISS '+nearMiss;
+composer.render();fpsFrames++;if(now-fpsClock>=1000){fpsValue=Math.round(fpsFrames*1000/(now-fpsClock));fpsFrames=0;fpsClock=now}requestAnimationFrame(frame)}shop();requestAnimationFrame(frame);
 </script></body></html>

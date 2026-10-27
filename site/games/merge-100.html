@@ -20,7 +20,27 @@ header{min-height:32px}h1{font-size:20px}.back{font-size:11px;white-space:nowrap
 }
 @media(max-width:690px) and (max-height:730px){.board{width:min(100%,calc(100dvh - 395px),420px)}.visual{height:30px}}
 .trash-active{background:#8a354a!important;border-color:#f2a1b0!important}.trash-active~.btn{opacity:.9}@media(max-width:690px){.controls .btn{flex:1 1 auto}} .storage{width:min(100%,610px);display:flex;flex-direction:column;gap:4px;flex-shrink:0}.storage-title{font-size:12px;color:#d4e5f5;font-weight:700}.storage-title small{font-weight:400;color:#94b2c9}.storage-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;touch-action:none}.store-cell{aspect-ratio:1;max-height:75px;background:linear-gradient(145deg,#283b51,#17253b);border:1px dashed #7aa4b4;touch-action:none}.store-cell .tile{width:88%;height:88%}@media(max-width:690px){.storage{width:min(100%,calc(100dvh - 470px),490px);min-width:245px;max-width:100%}.store-cell{max-height:57px}.storage-title{font-size:11px}.storage-title small{font-size:9px}.board{width:min(100%,calc(100dvh - 510px),490px)}}
-@media(max-width:690px){.side .panel:nth-child(2){max-height:230px;overflow-y:auto;overscroll-behavior:contain}.side .panel:nth-child(2) .btn{font-size:10px;line-height:1.35;padding:7px 5px;white-space:normal}.side .panel:nth-child(2) h2{position:sticky;top:-7px;background:#17263b;padding:4px 0;z-index:1}} </style></head><body><div id="app">
+@media(max-width:690px){.side .panel:nth-child(2){max-height:230px;overflow-y:auto;overscroll-behavior:contain}.side .panel:nth-child(2) .btn{font-size:10px;line-height:1.35;padding:7px 5px;white-space:normal}.side .panel:nth-child(2) h2{position:sticky;top:-7px;background:#17263b;padding:4px 0;z-index:1}} /* Muted mineral-glass palette: no neon primary colors. */
+body{background:radial-gradient(ellipse at 45% 8%,#333f49,#171d25 78%);color:#e9e8e3}
+.stat,.panel{background:#28323bcf;border-color:#53616a99}
+.board{background:#1b252dcc;border-color:#68747c}
+.cell{background:linear-gradient(145deg,#34414a,#27323c);border-color:#4b5963}
+.cell.target{background:#405d57;border-color:#a4c0b3}
+.cell.invalid{border-color:#b58f89}
+.tile{filter:drop-shadow(0 3px 4px #10191e66)}
+.tile span{background:#26333bcc;color:#f1f0eb}
+.btn{background:#485b65;border-color:#71818a;color:#f3f0e8}
+.btn.primary{background:#506d6a;border-color:#8daaa1}
+.progress{background:#38434c}.progress div{background:linear-gradient(90deg,#879c96,#c4b7a1)}
+.reservoir{background:#2b3c44;border-color:#607b7d}.reservoir b{color:#c6d9cf}.mini-orbs i{color:#a3bcb2;filter:none}
+.store-cell{background:linear-gradient(145deg,#3c464c,#28333a);border-color:#82918e}
+.visual{background:linear-gradient(#364750,#26343c)}
+.tower{background:linear-gradient(90deg,#667b80,#a5b5af,#566b70);border-color:#b3c4bd;box-shadow:none}
+.tower:nth-child(2n){background:linear-gradient(90deg,#7e7584,#aea0ae,#6e6978)}
+.toast{background:#435b60;border-color:#a2b9b3}
+.burst{border-color:#c2d4c5;box-shadow:0 0 17px #b1c8ba88}
+.trash-active{background:#74575b!important;border-color:#b59a98!important}
+</style></head><body><div id="app">
 <header><h1>MERGE 100 <small>無意味な進歩</small></h1><a class="back" href="/">結月硝子へ戻る ↗</a></header>
 <div class="stats"><div class="stat"><label>最高レベル</label><b id="highest">LV.1</b></div><div class="stat"><label>累計生成資源</label><b id="total">0</b></div><div class="stat"><label>生産能力 / 秒</label><b id="rate">1</b></div><div class="stat"><label>本当の達成率</label><b id="percent">0%</b></div></div>
 <div class="progress"><div id="fill"></div></div><div class="reservoir"><span>◆ 上部ストック</span><div class="mini-orbs" id="stockOrbs"></div><b id="stockCount">0</b><small>合成済み結晶を毎秒1個供給 / 上限18マス</small></div>
@@ -38,7 +58,25 @@ const canMerge=()=>board.some((n,i)=>n>0&&n<100&&board.indexOf(n,i+1)>=0);
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({board,total:String(total),bank:String(bank),machines,power,refinery,reactor,quantum,highest,storage,productionQueue}))}catch{}};
 const log=m=>{let e=document.createElement('div');e.textContent=m;$('log').prepend(e);while($('log').children.length>12)$('log').lastChild.remove()};
 const toast=m=>{let e=document.createElement('div');e.className='toast';e.textContent=m;document.body.append(e);setTimeout(()=>e.remove(),1500)};
-function crystal(n){let hue=(185+n*23)%360,shape=n%4,points=shape===0?'50,2 93,25 85,77 50,98 15,77 7,25':shape===1?'50,2 85,15 98,50 85,85 50,98 15,85 2,50 15,15':shape===2?'50,2 94,78 6,78':'50,1 76,25 99,50 76,75 50,99 24,75 1,50 24,25';return '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="g'+n+'" x1="0" x2="1" y1="0" y2="1"><stop stop-color="hsl('+hue+',95%,83%)"/><stop offset=".48" stop-color="hsl('+hue+',75%,52%)"/><stop offset="1" stop-color="hsl('+hue+',75%,22%)"/></linearGradient></defs><polygon points="'+points+'" fill="url(#g'+n+')" stroke="hsl('+hue+',90%,80%)" stroke-width="3"/><path d="M50 7 L50 92 M12 45 L50 25 L87 45" fill="none" stroke="#ffffff" stroke-opacity=".32" stroke-width="3"/></svg>'}
+function crystal(n){
+const palettes=[
+['#d8d5ca','#8b918b','#5d6765'],['#c9d3d1','#778f93','#4d676d'],
+['#ded1bf','#aa9380','#706b68'],['#d4c8d0','#9b8896','#635d70'],
+['#d0d5bf','#909b7d','#5e6e64'],['#d5c6bb','#a48379','#756b67'],
+['#c9d0d8','#8395a9','#596b7d'],['#d8d0c1','#a99f88','#74756d'],
+['#bfcfca','#7c9e95','#536f70'],['#d3c9d8','#978eaa','#626780'],
+['#d7d4c6','#9b9d8d','#646f68'],['#d6c8c0','#ad948b','#776c71']
+];
+let p=palettes[Math.floor((n-1)/8)%palettes.length],seed=(n*2654435761)>>>0;
+const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+let sides=5+(n%7),phase=rand()*Math.PI*2,rx=34+rand()*9,ry=35+rand()*8;
+let pts=[];for(let i=0;i<sides;i++){let a=phase+2*Math.PI*i/sides,variation=.84+rand()*.26;pts.push([50+Math.cos(a)*rx*variation,50+Math.sin(a)*ry*variation])}
+const xy=a=>a.map(v=>v.toFixed(1)).join(','),polygon=pts.map(xy).join(' '),center=[47+rand()*6,45+rand()*10];
+let facets='';for(let i=0;i<sides;i++){let a=pts[i],b=pts[(i+1)%sides],fill=i%3===0?p[0]:i%3===1?p[1]:p[2],opacity=(.17+rand()*.19).toFixed(2);facets+='<polygon points="'+xy(center)+' '+xy(a)+' '+xy(b)+'" fill="'+fill+'" opacity="'+opacity+'"/>'}
+let cutCount=1+(n%5),cuts='';for(let j=0;j<cutCount;j++){let a=pts[(j*3+n)%sides],b=pts[(j*3+n+Math.floor(sides/2))%sides];cuts+='<path d="M'+xy(a).replace(',',' ')+' L'+xy(b).replace(',',' ')+'" stroke="'+p[0]+'" stroke-width=".7" opacity=".35"/>'}
+let core=n>=20?'<circle cx="'+center[0].toFixed(1)+'" cy="'+center[1].toFixed(1)+'" r="'+Math.min(9,2+Math.floor(n/15))+'" fill="'+p[0]+'" opacity=".25"/>':'';
+return '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="'+polygon+'" fill="'+p[1]+'" stroke="'+p[0]+'" stroke-width="1.8" stroke-linejoin="round"/>'+facets+cuts+core+'<path d="M'+xy(pts[0]).replace(',',' ')+' L'+xy(center).replace(',',' ')+'" stroke="#f6f2e9" stroke-opacity=".45" stroke-width="1.1"/></svg>'
+}
 function tile(n){return '<div class="tile">'+crystal(n)+'<span>LV.'+n+'</span></div>'}
 function stage(){return highest>=90?'宇宙全域':highest>=70?'銀河文明':highest>=50?'恒星間文明':highest>=40?'惑星文明':highest>=30?'工業国家':highest>=20?'自動化都市':highest>=10?'工業都市':'手作業の時代'}
 function render(){let root=$('board');root.innerHTML=board.map((n,i)=>'<div class="cell" data-i="'+i+'">'+(n?tile(n):'')+'</div>').join('');$('storageSlots').innerHTML=storage.map((n,i)=>'<div class="cell store-cell" data-store="'+i+'">'+(n?tile(n):'')+'</div>').join('');$('highest').textContent='LV.'+highest;$('total').textContent=short(total);$('rate').textContent=short(rate());let scaled=total*1000000000000000000n/GOAL,pct=Number(scaled)/1e16;$('percent').textContent=pct?pct.toPrecision(4)+'%':'< 0.0000000000000001%';$('fill').style.width=Math.min(100,pct)+'%';$('stage').textContent=stage();$('stockCount').textContent=short(bank)+' 個分 / '+occupied()+'/25マス';$('stockOrbs').innerHTML=Array.from({length:Number(bank>4n?4n:bank)},()=>'<i>◆</i>').join('');$('bank').textContent='設備 '+machines+' 台 / 生産強化 '+power+' 段階';$('buy').textContent='工場を増設（累計 '+short(cost())+' 個で解放）';$('upgrade').textContent='生産力×2（累計 '+short(upcost())+' 個で解放）';$('buy').disabled=total<cost();$('upgrade').disabled=total<upcost();$('refinery').textContent='精製炉 +5/秒（'+refinery+'基・累計 '+short(refCost())+'）';$('reactor').textContent='核融合炉 ×3（'+reactor+'基・累計 '+short(reactCost())+'）';$('quantum').textContent='量子工場 ×10（'+quantum+'基・累計 '+short(quantCost())+'）';$('refinery').disabled=total<refCost();$('reactor').disabled=total<reactCost();$('quantum').disabled=total<quantCost();$('spawn').disabled=bank<1n||!board.includes(0);let years=(GOAL>total?GOAL-total:0n)/rate()/31556952n;$('time').textContent='残り約 '+short(years)+' 年';$('remaining').textContent='目標 LV.100 / 残り '+short(GOAL>total?GOAL-total:0n)+' 個';$('mergeNow').disabled=!board.some((n,i)=>n>0&&n<100&&board.indexOf(n,i+1)>=0);let city=$('city');city.innerHTML='';let count=Math.min(12,2+Math.floor(highest/5));for(let i=0;i<count;i++){let e=document.createElement('div');e.className='tower';e.style.height=(25+(i*31+highest*7)%70)+'%';city.append(e)}}

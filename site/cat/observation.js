@@ -1,12 +1,9 @@
-import { demoSource } from './behavior.js';
+import { fetchConditions, japanClock, weatherLabel } from './conditions.js';
 
 const canvas = document.querySelector('#scene');
 const ctx = canvas.getContext('2d', { alpha: false });
 const clock = document.querySelector('#clock');
-const period = document.querySelector('#period');
-const timeMode = document.querySelector('#time-mode');
-const weatherButton = document.querySelector('#weather');
-const pauseButton = document.querySelector('#pause');
+const conditions = document.querySelector('#conditions');
 const status = document.querySelector('#status');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -24,14 +21,6 @@ const mask = points => {
   return path;
 };
 
-// Silhouettes follow the pixels of the fixed camera plate.
-const car = mask([[474,424],[517,409],[587,414],[627,427],[688,480],[736,487],
-  [773,503],[790,519],[800,540],[800,584],[771,594],[743,606],[722,608],
-  [704,621],[676,626],[653,615],[633,582],[587,573],[570,516],[474,469]]);
-const carportPost = mask([[656,310],[677,318],[679,659],[658,663]]);
-const gardenWall = mask([[1420,515],[1672,515],[1672,941],[1548,890],[1411,821]]);
-const distantWall = mask([[1262,488],[1298,485],[1314,476],[1330,490],
-  [1350,504],[1355,642],[1321,645],[1295,629],[1256,608]]);
 const sky = mask([[980,0],[1428,0],[1428,272],[1367,260],[1280,278],[1219,302],
   [1160,281],[1101,295],[1029,273],[944,269],[895,264],[899,205],[855,150],[930,157]]);
 const puddleEdges = mask([
@@ -61,9 +50,6 @@ const lighting = [
   { hour: 20, day: 0, night: 1, dawn: 0 },
   { hour: 24, day: 0, night: 1, dawn: 0 },
 ];
-const fixedHours = { morning: 6.6, day: 12, dusk: 17.25, night: 22 };
-const cats = [{}, {}, {}];
-const actionSource = demoSource;
 const background = document.createElement('canvas');
 background.width = canvas.width;
 background.height = canvas.height;
@@ -76,14 +62,17 @@ const leafAreas = [
   [1570,334,102,144,2.0], [72,570,112,103,1.3], [1510,754,118,113,1.3],
 ];
 
-let dusk, daylight, nightPlate, sprites;
+let dusk, daylight, nightPlate;
 let elapsed = 0;
 let raf = 0;
 let previous = 0;
 let previousDraw = 0;
 let gradeMinute = -1;
 let lastRain = -1;
-let raining = false;
+let report;
+let lastWeatherAttempt = 0;
+let weatherRequest;
+let nowInJapan;
 let rain = 0;
 let paused = motion.matches;
 let currentLight;
@@ -133,7 +122,6 @@ function getLighting(hour) {
     day: mix(a.day,b.day,f),
     night: mix(a.night,b.night,f),
     dawn: mix(a.dawn,b.dawn,f),
-    name: hour < 5.4 || hour >= 19.4 ? '夜' : hour < 10 ? '朝' : hour < 16 ? '昼' : '夕暮れ',
   };
 }
 
@@ -172,56 +160,6 @@ function environment(t, light) {
     const wave = Math.sin(t*1.27+x*.025) + .28*Math.sin(t*2.8+y*.05);
     ctx.drawImage(layer,x + Math.round(wave*strength*(1+rain)), y + Math.round(wave*.8));
   }
-}
-
-function occlude(path) {
-  ctx.save();
-  ctx.clip(path);
-  ctx.drawImage(background,0,0,W,H);
-  ctx.restore();
-}
-
-const poses = { still: 8, sit: 9, sleep: 10, sniff: 11, crawl: 11, groom: 12 };
-function drawCat(cat, id, light) {
-  if (cat.action === 'away') return;
-  const x = cat.x * W;
-  const y = cat.y * H;
-  const depth = cat.layer === 'wall' ? .79 : clamp((cat.y - .59) / .29);
-  const size = mix(.52, 1.07, depth) * (id === 2 ? 1.15 : 1);
-  const walk = cat.action === 'walk';
-  const crawl = cat.action === 'crawl';
-  const grooming = cat.action === 'groom' && cat.elapsed % 3.7 < 2.8;
-  const frame = walk ? Math.floor(cat.elapsed*8.6) % 8 : grooming ? poses.groom :
-    cat.action === 'groom' ? poses.sit : poses[cat.action];
-  const stride = Math.sin(cat.elapsed*TAU*2.15);
-  const bob = walk ? 1.2*stride : cat.action === 'sleep' ? .6*Math.sin(cat.elapsed*2.3) :
-    grooming ? 1.1*Math.sin(cat.elapsed*8.4) : 0;
-  const height = size*(crawl ? 83 : 100) + bob;
-  const alpha = crawl ? .83 : 1;
-
-  ctx.save();
-  ctx.translate(Math.round(x), Math.round(y));
-  ctx.scale(size, size);
-  ctx.scale(mix(1.22,.72,light.day),1);
-  ctx.fillStyle = `rgba(43,31,42,${.27*(1-light.night*.6)})`;
-  ctx.beginPath();
-  ctx.ellipse(-13*(1-light.day),2,43,6,-.08,0,TAU);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(24,19,26,.25)';
-  ctx.beginPath();
-  ctx.ellipse(0,0,37,4,0,0,TAU);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(Math.round(x),Math.round(y));
-  ctx.scale(cat.facing,1);
-  ctx.imageSmoothingEnabled = false;
-  const brightness = mix(.94,.50,light.night) * mix(1,.83,rain) * (crawl ? .8 : 1);
-  ctx.filter = `brightness(${brightness}) saturate(${1 - .40*light.night - .15*light.day})`;
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(sprites,frame*128,id*100,128,100,-64*size,-height+2,128*size,height);
-  ctx.restore();
 }
 
 function lightingEffects(light) {
@@ -274,14 +212,17 @@ function weather(t) {
 }
 
 function render() {
-  const hour = fixedHours[timeMode.value] ?? (17.25 + elapsed/30) % 24;
-  const minute = Math.floor(hour * 60);
+  const minute = nowInJapan.minute;
   if (minute !== gradeMinute || Math.abs(rain-lastRain) > .025) {
-    currentLight = getLighting(hour);
-    if (gradeMinute !== minute) {
-      clock.textContent = `${String(Math.floor(hour)).padStart(2,'0')}:${String(minute%60).padStart(2,'0')}`;
-      period.textContent = currentLight.name;
-    }
+    const hour = minute / 60;
+    const sun = report?.date === nowInJapan.date ? report : null;
+    // Map actual sunrise and sunset onto the existing artwork's light curve.
+    const mappedHour = sun
+      ? hour < sun.sunrise ? mix(0, 6.1, hour / sun.sunrise)
+        : hour < sun.sunset ? mix(6.1, 17.25, (hour-sun.sunrise)/(sun.sunset-sun.sunrise))
+          : mix(17.25, 20, clamp((hour-sun.sunset) / .92))
+      : hour;
+    currentLight = getLighting(mappedHour);
     gradeMinute = minute;
     lastRain = rain;
     composePlate(currentLight);
@@ -289,28 +230,6 @@ function render() {
   ctx.setTransform(scale,0,0,canvas.height/H,0,0);
   ctx.drawImage(background,0,0,W,H);
   environment(elapsed,currentLight);
-  actionSource.sample(elapsed,cats);
-  // Areas covered by the car and fence are painted again after the cats
-  // in their depth bands, before the cats on the street and on the wall.
-  for (let i=0; i<cats.length; i++) {
-    if (cats[i].layer === 'behindWall') drawCat(cats[i],i,currentLight);
-  }
-  if (cats.some(cat => cat.layer === 'behindWall')) occlude(distantWall);
-  for (let i=0; i<cats.length; i++) {
-    if (cats[i].action === 'crawl') drawCat(cats[i],i,currentLight);
-  }
-  if (cats.some(cat => cat.action === 'crawl')) {
-    occlude(car);
-    occlude(carportPost);
-  }
-  for (let i=0; i<cats.length; i++) {
-    const cat = cats[i];
-    if (cat.layer === 'street' && cat.action !== 'crawl') drawCat(cat,i,currentLight);
-  }
-  if (cats.some(cat => cat.layer === 'street' && cat.x > .80)) occlude(gardenWall);
-  for (let i=0; i<cats.length; i++) {
-    if (cats[i].layer === 'wall') drawCat(cats[i],i,currentLight);
-  }
   lightingEffects(currentLight);
   weather(elapsed);
 }
@@ -321,7 +240,7 @@ function frame(now) {
   if (now - previousDraw >= 32) {
     const step = previous ? Math.min(.1,(now-previous)/1000) : 0;
     elapsed += step;
-    rain = mix(rain,Number(raining),1 - Math.exp(-step*2));
+    rain = mix(rain,rainTarget(),1 - Math.exp(-step*2));
     previous = previousDraw = now;
     render();
   }
@@ -339,38 +258,64 @@ function stop() {
   raf = 0;
 }
 
-function setPaused(value) {
-  paused = value;
-  pauseButton.setAttribute('aria-pressed',String(value));
-  pauseButton.textContent = value ? '再生' : '一時停止';
-  if (value) stop();
-  else resume();
+function rainTarget() {
+  return report ? Math.min(1, (report.rain + report.showers) * 2 + (weatherLabel(report.code) === '雨' ? .4 : 0)) : 0;
+}
+
+function updateClock() {
+  nowInJapan = japanClock(new Date());
+  clock.textContent = nowInJapan.label;
+  clock.dateTime = nowInJapan.date + 'T' + nowInJapan.label + ':00+09:00';
+  if (paused) render();
+}
+
+async function updateWeather() {
+  if (weatherRequest || document.hidden || Date.now() - lastWeatherAttempt < 60000) return;
+  lastWeatherAttempt = Date.now();
+  weatherRequest = fetchConditions();
+  try {
+    report = await weatherRequest;
+    conditions.textContent = `葛飾 · ${weatherLabel(report.code)} · ${report.temperature} °C（${report.time.slice(11,16)} 推定）`;
+  } catch {
+    report = undefined;
+    conditions.textContent = '葛飾の天候を取得できません';
+  } finally {
+    weatherRequest = undefined;
+    gradeMinute = -1;
+    if (paused) {
+      rain = rainTarget();
+      render();
+    }
+  }
 }
 
 async function start() {
-  [dusk, daylight, nightPlate, sprites] = await Promise.all([
+  [dusk, daylight, nightPlate] = await Promise.all([
     image('./art/alley.webp'),
     image('./art/day.webp'),
     image('./art/night.webp'),
-    image('./art/cats.webp'),
   ]);
   loadFoliage();
-  timeMode.addEventListener('change', () => { gradeMinute = -1; render(); });
-  weatherButton.addEventListener('click', () => {
-    raining = !raining;
-    weatherButton.setAttribute('aria-pressed',String(raining));
-    if (paused) {
-      rain = Number(raining);
-      gradeMinute = -1;
-      render();
+  motion.addEventListener('change', event => {
+    paused = event.matches;
+    if (paused) stop();
+    else resume();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else {
+      updateClock();
+      updateWeather();
+      resume();
     }
   });
-  pauseButton.addEventListener('click', () => setPaused(!paused));
-  motion.addEventListener('change', event => setPaused(event.matches));
-  document.addEventListener('visibilitychange', () => document.hidden ? stop() : resume());
+  updateClock();
   render();
   status.hidden = true;
-  setPaused(paused);
+  resume();
+  updateWeather();
+  setInterval(updateClock, 1000);
+  setInterval(updateWeather, 5 * 60000);
 }
 
 start().catch(error => {

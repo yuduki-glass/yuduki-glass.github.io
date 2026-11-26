@@ -22,38 +22,25 @@ permalink: /cat/
       <div class="heading">
         <div>
           <h1 id="title">Cat Watching Log</h1>
-          <p class="subtitle">夕暮れ、住宅街の路地</p>
+          <p class="subtitle">住宅街の路地</p>
         </div>
-        <div class="clock" aria-label="風景の時刻">
-          <time id="clock">17:15</time>
-          <span id="period">夕暮れ</span>
+        <div class="clock" aria-label="日本標準時">
+          <time id="clock">--:--</time>
+          <span id="period">JST</span>
         </div>
       </div>
       <figure>
         <div class="view">
-          <canvas id="scene" width="1280" height="720" role="img" aria-label="日本の住宅街を、猫たちが行き来する動くピクセルアート">夕暮れの住宅街。手前の塀から、車のある駐車場を通って路地が遠くへ続いています。</canvas>
+          <canvas id="scene" width="1280" height="720" role="img" aria-label="現在の時刻と天候に合わせた住宅街のピクセルアート">住宅街の路地。手前の塀から、車のある駐車場を通って路地が遠くへ続いています。</canvas>
           <p id="status" role="status">風景を読み込み中</p>
         </div>
         <figcaption>
-          <span>仮想観測映像</span>
-          <div class="controls" aria-label="風景の表示設定">
-            <label>
-              <span>時刻</span>
-              <select id="time-mode">
-                <option value="cycle">一日の移ろい</option>
-                <option value="morning">朝</option>
-                <option value="day">昼</option>
-                <option value="dusk">夕暮れ</option>
-                <option value="night">夜</option>
-              </select>
-            </label>
-            <button id="weather" type="button" aria-pressed="false">雨</button>
-            <button id="pause" type="button" aria-pressed="false">一時停止</button>
-          </div>
+          <span id="conditions">葛飾の天候を取得中</span>
+          <a href="https://open-meteo.com/">気象データ © Open-Meteo</a>
         </figcaption>
       </figure>
     </section>
-    <footer>三毛・短尾<span>／</span>黒・白靴下<span>／</span>茶トラ・耳欠け</footer>
+    <footer>猫の現在位置は取得できていません</footer>
   </main>
 </body>
 </html>

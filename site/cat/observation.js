@@ -1,3 +1,4 @@
+import { readVisibleCats, pollInterval } from './positions.js';
 import { fetchConditions, japanClock, weatherLabel } from './conditions.js';
 
 const canvas = document.querySelector('#scene');
@@ -21,6 +22,14 @@ const mask = points => {
   return path;
 };
 
+// Silhouettes follow the pixels of the fixed camera plate.
+const car = mask([[474,424],[517,409],[587,414],[627,427],[688,480],[736,487],
+  [773,503],[790,519],[800,540],[800,584],[771,594],[743,606],[722,608],
+  [704,621],[676,626],[653,615],[633,582],[587,573],[570,516],[474,469]]);
+const carportPost = mask([[656,310],[677,318],[679,659],[658,663]]);
+const gardenWall = mask([[1420,515],[1672,515],[1672,941],[1548,890],[1411,821]]);
+const distantWall = mask([[1262,488],[1298,485],[1314,476],[1330,490],
+  [1350,504],[1355,642],[1321,645],[1295,629],[1256,608]]);
 const sky = mask([[980,0],[1428,0],[1428,272],[1367,260],[1280,278],[1219,302],
   [1160,281],[1101,295],[1029,273],[944,269],[895,264],[899,205],[855,150],[930,157]]);
 const puddleEdges = mask([
@@ -62,7 +71,9 @@ const leafAreas = [
   [1570,334,102,144,2.0], [72,570,112,103,1.3], [1510,754,118,113,1.3],
 ];
 
-let dusk, daylight, nightPlate;
+let dusk, daylight, nightPlate, sprites;
+let positionRequest;
+let positions = { expiresAt: 0, cats: [] };
 let elapsed = 0;
 let raf = 0;
 let previous = 0;
@@ -162,6 +173,82 @@ function environment(t, light) {
   }
 }
 
+function occlude(path) {
+  ctx.save();
+  ctx.clip(path);
+  ctx.drawImage(background,0,0,W,H);
+  ctx.restore();
+}
+
+const poses = { still: 8, sit: 9, sleep: 10, sniff: 11, crawl: 11, groom: 12 };
+function drawCat(cat, light) {
+  const id = cat.sprite;
+  const x = cat.x * W;
+  const y = cat.y * H;
+  const depth = cat.layer === 'wall' ? .79 : clamp((cat.y - .59) / .29);
+  const size = mix(.52, 1.07, depth) * (id === 2 ? 1.15 : 1);
+  const walk = cat.action === 'walk';
+  const crawl = cat.action === 'crawl';
+  const grooming = cat.action === 'groom' && elapsed % 3.7 < 2.8;
+  const frame = walk ? Math.floor(elapsed*8.6) % 8 : grooming ? poses.groom :
+    cat.action === 'groom' ? poses.sit : poses[cat.action];
+  const stride = Math.sin(elapsed*TAU*2.15);
+  const bob = walk ? 1.2*stride : cat.action === 'sleep' ? .6*Math.sin(elapsed*2.3) :
+    grooming ? 1.1*Math.sin(elapsed*8.4) : 0;
+  const height = size*(crawl ? 83 : 100) + bob;
+  const alpha = crawl ? .83 : 1;
+
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.scale(size, size);
+  ctx.scale(mix(1.22,.72,light.day),1);
+  ctx.fillStyle = `rgba(43,31,42,${.27*(1-light.night*.6)})`;
+  ctx.beginPath();
+  ctx.ellipse(-13*(1-light.day),2,43,6,-.08,0,TAU);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(24,19,26,.25)';
+  ctx.beginPath();
+  ctx.ellipse(0,0,37,4,0,0,TAU);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(Math.round(x),Math.round(y));
+  ctx.scale(cat.facing,1);
+  ctx.imageSmoothingEnabled = false;
+  const brightness = mix(.94,.50,light.night) * mix(1,.83,rain) * (crawl ? .8 : 1);
+  ctx.filter = `brightness(${brightness}) saturate(${1 - .40*light.night - .15*light.day})`;
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(sprites,frame*128,id*100,128,100,-64*size,-height+2,128*size,height);
+  ctx.restore();
+}
+
+function drawVisibleCats(light) {
+  if (positions.expiresAt <= Date.now()) return;
+  for (const cat of positions.cats) {
+    drawCat(cat, light);
+    if (cat.layer === 'behindWall') occlude(distantWall);
+    if (cat.layer === 'street' && cat.x > .80) occlude(gardenWall);
+    if (cat.action === 'crawl') {
+      occlude(car);
+      occlude(carportPost);
+    }
+  }
+}
+
+async function updatePositions() {
+  if (document.hidden || positionRequest) return;
+  positionRequest = readVisibleCats();
+  try {
+    positions = await positionRequest;
+  } catch {
+    positions = { expiresAt: 0, cats: [] };
+  } finally {
+    positionRequest = undefined;
+    if (paused) render();
+  }
+}
+
 function lightingEffects(light) {
   if (light.night < .23) return;
   const intensity = smooth(clamp((light.night-.23)/.62));
@@ -230,6 +317,7 @@ function render() {
   ctx.setTransform(scale,0,0,canvas.height/H,0,0);
   ctx.drawImage(background,0,0,W,H);
   environment(elapsed,currentLight);
+  drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);
 }
@@ -290,10 +378,11 @@ async function updateWeather() {
 }
 
 async function start() {
-  [dusk, daylight, nightPlate] = await Promise.all([
+  [dusk, daylight, nightPlate, sprites] = await Promise.all([
     image('./art/alley.webp'),
     image('./art/day.webp'),
     image('./art/night.webp'),
+    image('./art/cats.webp'),
   ]);
   loadFoliage();
   motion.addEventListener('change', event => {
@@ -306,6 +395,7 @@ async function start() {
     else {
       updateClock();
       updateWeather();
+      updatePositions();
       resume();
     }
   });
@@ -314,6 +404,8 @@ async function start() {
   status.hidden = true;
   resume();
   updateWeather();
+  updatePositions();
+  setInterval(updatePositions, pollInterval);
   setInterval(updateClock, 1000);
   setInterval(updateWeather, 5 * 60000);
 }

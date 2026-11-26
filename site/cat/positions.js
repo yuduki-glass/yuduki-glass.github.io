@@ -30,8 +30,9 @@ export function decodeSnapshot(snapshot, now = Date.now()) {
 }
 
 export async function readVisibleCats() {
-  const endpoint = new URL('./positions.json', import.meta.url);
-  const response = await fetch(endpoint, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+  const configured = document.querySelector('meta[name="cat-position-feed"]')?.content;
+  const endpoint = configured || new URL('./positions.json', import.meta.url);
+  const response = await fetch(endpoint, { credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(8000) });
   if (!response.ok) throw new Error('Cat snapshot is unavailable');
   return decodeSnapshot(await response.json());
 }

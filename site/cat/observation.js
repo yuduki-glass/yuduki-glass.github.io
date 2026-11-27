@@ -415,7 +415,7 @@ async function updateWeather() {
 async function loadSeason(season) {
   const base = season === 'rainy' ? 'springgreen' : season;
   const [atlas, sky, flowers] = await Promise.all([
-    image(`./art/season-${base}.webp`),
+    image(`./art/season-${base}-v2.webp`),
     image(`./art/sky-${base}.webp`),
     season === 'rainy' ? image('./art/hydrangea.webp') : null,
   ]);

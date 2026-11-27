@@ -1,7 +1,7 @@
 import { wetnessAt } from './puddles.js';
 import { createCloudLayer, seasonFor } from './seasons.js';
 import { readVisibleCats, pollInterval } from './positions.js';
-import { fetchConditions, japanClock, weatherLabel } from './conditions.js';
+import { fetchConditions, formatWeather, japanClock, weatherLabel } from './conditions.js?v=3';
 
 const canvas = document.querySelector('#scene');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -385,7 +385,7 @@ function updateClock() {
   const previousDate = nowInJapan?.date;
   nowInJapan = japanClock(new Date());
   if (nowInJapan.date !== previousDate) refreshSeason();
-  clock.textContent = nowInJapan.label;
+  clock.textContent = nowInJapan.display;
   clock.dateTime = nowInJapan.date + 'T' + nowInJapan.label + ':00+09:00';
   if (paused) render();
 }
@@ -398,7 +398,7 @@ async function updateWeather() {
     report = await weatherRequest;
     lastWetReport = report;
     if (rainTarget() > 0) lastRainSample = { end: report.sampledAt, amount: Math.max(1, report.rain + report.showers) };
-    conditions.textContent = `葛飾 · ${weatherLabel(report.code)} · ${report.temperature} °C（${report.time.slice(11,16)} 推定）`;
+    conditions.textContent = formatWeather(report);
   } catch {
     report = undefined;
     conditions.textContent = '葛飾の天候を取得できません';

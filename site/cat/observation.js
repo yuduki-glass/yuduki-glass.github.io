@@ -1,3 +1,4 @@
+import { createCloudLayer, seasonFor } from './seasons.js';
 import { readVisibleCats, pollInterval } from './positions.js';
 import { fetchConditions, japanClock, weatherLabel } from './conditions.js';
 
@@ -30,8 +31,6 @@ const carportPost = mask([[656,310],[677,318],[679,659],[658,663]]);
 const gardenWall = mask([[1420,515],[1672,515],[1672,941],[1548,890],[1411,821]]);
 const distantWall = mask([[1262,488],[1298,485],[1314,476],[1330,490],
   [1350,504],[1355,642],[1321,645],[1295,629],[1256,608]]);
-const sky = mask([[980,0],[1428,0],[1428,272],[1367,260],[1280,278],[1219,302],
-  [1160,281],[1101,295],[1029,273],[944,269],[895,264],[899,205],[855,150],[930,157]]);
 const puddleEdges = mask([
   [1046,718],[1097,707],[1264,709],[1300,717],[1320,741],[1248,749],
   [1140,750],[1071,745],[1052,738],[1090,731],
@@ -71,7 +70,7 @@ const leafAreas = [
   [1570,334,102,144,2.0], [72,570,112,103,1.3], [1510,754,118,113,1.3],
 ];
 
-let dusk, daylight, nightPlate, sprites;
+let sprites, scenery, seasonRequested;
 let positionRequest;
 let positions = { expiresAt: 0, cats: [] };
 let elapsed = 0;
@@ -87,7 +86,7 @@ let nowInJapan;
 let rain = 0;
 let paused = motion.matches;
 let currentLight;
-let paperCloud;
+const clouds = createCloudLayer();
 
 function image(filename) {
   const asset = new Image();
@@ -107,21 +106,6 @@ function loadFoliage() {
     foliage.push({x,y,w,h,strength,layer,g,edge});
   }
 
-  paperCloud = document.createElement('canvas');
-  paperCloud.width = 240;
-  paperCloud.height = 48;
-  const cloud = paperCloud.getContext('2d');
-  for (const [x,y,rx,ry] of [[80,25,70,10],[105,19,49,12],[145,24,67,11],[181,29,51,8],[60,30,55,6]]) {
-    const glow = cloud.createRadialGradient(0,0,.1,0,0,1);
-    glow.addColorStop(0,'#fff5dfb0');
-    glow.addColorStop(1,'#fff5df00');
-    cloud.save();
-    cloud.translate(x,y);
-    cloud.scale(rx,ry);
-    cloud.fillStyle = glow;
-    cloud.fillRect(-1,-1,2,2);
-    cloud.restore();
-  }
 }
 
 function getLighting(hour) {
@@ -137,11 +121,20 @@ function getLighting(hour) {
 }
 
 function composePlate(light) {
-  plate.drawImage(dusk,0,0,W,H);
-  plate.globalAlpha = light.day;
-  plate.drawImage(daylight,0,0,W,H);
-  plate.globalAlpha = light.night;
-  plate.drawImage(nightPlate,0,0,W,H);
+  const { atlas, legacy } = scenery;
+  if (atlas) {
+    plate.drawImage(atlas,0,0,W,H,0,0,W,H);
+    plate.globalAlpha = light.day;
+    plate.drawImage(atlas,0,H,W,H,0,0,W,H);
+    plate.globalAlpha = light.night;
+    plate.drawImage(atlas,0,2*H,W,H,0,0,W,H);
+  } else {
+    plate.drawImage(legacy[0],0,0,W,H);
+    plate.globalAlpha = light.day;
+    plate.drawImage(legacy[1],0,0,W,H);
+    plate.globalAlpha = light.night;
+    plate.drawImage(legacy[2],0,0,W,H);
+  }
   plate.globalAlpha = 1;
   plate.fillStyle = `rgba(252,166,125,${light.dawn*.14})`;
   plate.fillRect(0,0,W,H);
@@ -159,14 +152,7 @@ function composePlate(light) {
 }
 
 function environment(t, light) {
-  ctx.save();
-  ctx.clip(sky);
-  ctx.globalAlpha = (.12 + light.day*.32) * (1 - .84*light.night);
-  for (let i=0; i<5; i++) {
-    const x = 640 + (t * (3.2 + i*.4) + i*201) % 1050;
-    ctx.drawImage(paperCloud, Math.floor(x), 29 + i*32, 181+i*28, 24+i*3);
-  }
-  ctx.restore();
+  if (scenery.sky) ctx.drawImage(clouds(t,light,report,scenery.sky),0,0);
   for (const { x,y,layer,strength } of foliage) {
     const wave = Math.sin(t*1.27+x*.025) + .28*Math.sin(t*2.8+y*.05);
     ctx.drawImage(layer,x + Math.round(wave*strength*(1+rain)), y + Math.round(wave*.8));
@@ -351,7 +337,9 @@ function rainTarget() {
 }
 
 function updateClock() {
+  const previousDate = nowInJapan?.date;
   nowInJapan = japanClock(new Date());
+  if (nowInJapan.date !== previousDate) refreshSeason();
   clock.textContent = nowInJapan.label;
   clock.dateTime = nowInJapan.date + 'T' + nowInJapan.label + ':00+09:00';
   if (paused) render();
@@ -377,11 +365,35 @@ async function updateWeather() {
   }
 }
 
+async function loadSeason(season) {
+  const [atlas, sky] = await Promise.all([
+    image(`./art/season-${season}.webp`),
+    image(`./art/sky-${season}.webp`),
+  ]);
+  return { atlas, sky };
+}
+
+function refreshSeason() {
+  const season = seasonFor(nowInJapan.date);
+  if (season === seasonRequested) return;
+  seasonRequested = season;
+  loadSeason(season).then(next => {
+    if (seasonRequested !== season) return;
+    scenery = next;
+    gradeMinute = -1;
+    if (paused) render();
+  }).catch(() => {
+    // The current scene stays on screen if a replacement cannot load.
+  });
+}
+
 async function start() {
-  [dusk, daylight, nightPlate, sprites] = await Promise.all([
-    image('./art/alley.webp'),
-    image('./art/day.webp'),
-    image('./art/night.webp'),
+  const season = seasonFor(japanClock(new Date()).date);
+  seasonRequested = season;
+  [scenery, sprites] = await Promise.all([
+    loadSeason(season).catch(async () => ({
+      legacy: await Promise.all(['alley','day','night'].map(name => image(`./art/${name}.webp`))),
+    })),
     image('./art/cats.webp'),
   ]);
   loadFoliage();

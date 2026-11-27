@@ -15,7 +15,7 @@ export function japanClock(date) {
 const endpoint = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
   latitude: '35.74',
   longitude: '139.85',
-  current: 'rain,showers,weather_code,temperature_2m',
+  current: 'rain,showers,weather_code,temperature_2m,cloud_cover,wind_speed_10m,wind_direction_10m',
   daily: 'sunrise,sunset',
   timezone: 'Asia/Tokyo',
   forecast_days: '1',
@@ -51,5 +51,10 @@ export async function fetchConditions() {
     throw new Error('Weather response is incomplete or stale');
   }
   const [code,temperature,rain,showers] = values;
-  return { date, time, sunrise: hourOf(sunrise), sunset: hourOf(sunset), code, temperature, rain, showers };
+  const cloudCover = current.cloud_cover;
+  const windSpeed = current.wind_speed_10m;
+  const windDirection = current.wind_direction_10m;
+  return { date, time, cloudCover: Number.isFinite(cloudCover) ? Math.max(0, Math.min(100, cloudCover)) : undefined,
+    windSpeed: Number.isFinite(windSpeed) ? Math.max(0, Math.min(65, windSpeed)) : undefined,
+    windDirection: Number.isFinite(windDirection) ? windDirection : undefined, sunrise: hourOf(sunrise), sunset: hourOf(sunset), code, temperature, rain, showers };
 }

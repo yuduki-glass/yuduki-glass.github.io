@@ -72,6 +72,7 @@ background.height = canvas.height;
 const plate = background.getContext('2d', { alpha: false });
 plate.setTransform(scale, 0, 0, canvas.height / H, 0, 0);
 let sprites, scenery, dryRoad, seasonRequested;
+let foliage = [];
 let positionRequest;
 let positions = { expiresAt: 0, cats: [] };
 let elapsed = 0;
@@ -135,6 +136,69 @@ function drawDryingRoad(light, wetness) {
   plate.restore();
 }
 
+// Small clusters wholly inside the canopy or shrubs, away from the gate and wires.
+const leafClusters = [
+  [290,42,60,29], [436,30,63,25], [540,54,41,31], [641,37,53,29],
+  [741,26,53,21], [870,47,48,31], [939,53,27,25],
+  [389,272,40,29], [468,257,39,25], [523,284,28,23],
+  [879,341,37,31], [921,370,35,26], [960,324,28,23],
+  [1603,423,36,30], [1635,450,28,24],
+];
+
+function prepareFoliage(atlas) {
+  const sample = document.createElement('canvas');
+  const pixels = sample.getContext('2d', { willReadFrequently: true });
+  return leafClusters.map(([cx,cy,rx,ry], index) => {
+    const x = cx-rx, y = cy-ry, w = rx*2, h = ry*2;
+    sample.width = w;
+    sample.height = h;
+    pixels.drawImage(atlas,x,y+H,w,h,0,0,w,h);
+    const image = pixels.getImageData(0,0,w,h);
+    for (let row=0; row<h; row++) {
+      for (let col=0; col<w; col++) {
+        const p = (row*w+col)*4;
+        const [r,g,b] = image.data.subarray(p,p+3);
+        const chroma = Math.max(r,g)-b;
+        const edge = 1 - ((col-rx)/rx)**2 - ((row-ry)/ry)**2;
+        const leaf = r+g > 92 && b < Math.max(r,g)*.81;
+        image.data[p+3] = leaf ? Math.round(255 * clamp(edge*2) * clamp((chroma-20)/29)) : 0;
+      }
+    }
+    const matte = document.createElement('canvas');
+    matte.width = w;
+    matte.height = h;
+    matte.getContext('2d').putImageData(image,0,0);
+    const layer = document.createElement('canvas');
+    layer.width = w;
+    layer.height = h;
+    return { x,y,w,h,matte,layer,phase:index*.83 };
+  });
+}
+
+function refreshLeafLayers() {
+  for (const { x,y,w,h,matte,layer } of foliage) {
+    const g = layer.getContext('2d');
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0,0,w,h);
+    g.drawImage(background,x*scale,y*canvas.height/H,w*scale,h*canvas.height/H,0,0,w,h);
+    g.globalCompositeOperation = 'destination-in';
+    g.drawImage(matte,0,0);
+  }
+}
+
+function drawFoliage(t) {
+  const speed = report?.windSpeed ?? 5;
+  const strength = clamp(.55 + speed/13,.55,1.7);
+  const gust = .68 + .32*Math.sin(t*.53);
+  ctx.save();
+  ctx.globalAlpha = .76;
+  for (const { x,y,layer,phase } of foliage) {
+    const wave = Math.sin(t*1.46-phase) + .25*Math.sin(t*2.6+phase);
+    ctx.drawImage(layer,x+wave*strength*gust,y+wave*.55*strength*gust);
+  }
+  ctx.restore();
+}
+
 function composePlate(light) {
   const { atlas, legacy, flowers } = scenery;
   if (atlas) {
@@ -162,6 +226,7 @@ function composePlate(light) {
   plate.fillRect(0,0,W,H);
   plate.fillStyle = `rgba(49,67,92,${rain*.23})`;
   plate.fillRect(0,0,W,H);
+  refreshLeafLayers();
 }
 
 function drawClouds(t, light) {
@@ -312,6 +377,7 @@ function render() {
   ctx.setTransform(scale,0,0,canvas.height/H,0,0);
   ctx.drawImage(background,0,0,W,H);
   drawClouds(elapsed,currentLight);
+  if (!paused) drawFoliage(elapsed);
   drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);
@@ -395,6 +461,7 @@ function refreshSeason() {
   loadSeason(season).then(next => {
     if (seasonRequested !== season) return;
     scenery = next;
+    foliage = prepareFoliage(next.atlas);
     gradeMinute = -1;
     if (paused) render();
   }).catch(() => {
@@ -410,7 +477,7 @@ async function start() {
       legacy: await Promise.all(['alley','day','night'].map(name => image(`./art/${name}.webp`))),
     })),
     image('./art/cats.webp'),
-    image('./art/dry-road.webp').catch(() => null),
+    image('./art/dry-road-shadow.webp').catch(() => null),
   ]);
   motion.addEventListener('change', event => {
     paused = event.matches;
@@ -426,6 +493,7 @@ async function start() {
       resume();
     }
   });
+  if (scenery.atlas) foliage = prepareFoliage(scenery.atlas);
   updateClock();
   render();
   status.hidden = true;

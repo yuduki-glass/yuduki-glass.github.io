@@ -71,13 +71,6 @@ background.width = canvas.width;
 background.height = canvas.height;
 const plate = background.getContext('2d', { alpha: false });
 plate.setTransform(scale, 0, 0, canvas.height / H, 0, 0);
-const foliage = [];
-const leafAreas = [
-  [367,242,82,62,1.4], [502,269,101,75,2.0], [539,413,79,75,1.8],
-  [714,20,150,124,1.6], [861,35,106,99,1.7], [1369,577,58,111,2.2],
-  [1570,334,102,144,2.0], [72,570,112,103,1.3], [1510,754,118,113,1.3],
-];
-
 let sprites, scenery, dryRoad, seasonRequested;
 let positionRequest;
 let positions = { expiresAt: 0, cats: [] };
@@ -100,20 +93,6 @@ function image(filename) {
   const asset = new Image();
   asset.src = new URL(filename, import.meta.url);
   return asset.decode().then(() => asset);
-}
-
-function loadFoliage() {
-  for (const [x,y,w,h,strength] of leafAreas) {
-    const layer = document.createElement('canvas');
-    layer.width = w;
-    layer.height = h;
-    const g = layer.getContext('2d');
-    const edge = g.createRadialGradient(w/2,h/2,Math.min(w,h)*.16,w/2,h/2,Math.min(w,h)*.49);
-    edge.addColorStop(0,'#fff');
-    edge.addColorStop(1,'#fff0');
-    foliage.push({x,y,w,h,strength,layer,g,edge});
-  }
-
 }
 
 function getLighting(hour) {
@@ -183,23 +162,10 @@ function composePlate(light) {
   plate.fillRect(0,0,W,H);
   plate.fillStyle = `rgba(49,67,92,${rain*.23})`;
   plate.fillRect(0,0,W,H);
-
-  for (const { x,y,w,h,g,edge } of foliage) {
-    g.globalCompositeOperation = 'source-over';
-    g.clearRect(0,0,w,h);
-    g.drawImage(background, x*scale, y*canvas.height/H, w*scale, h*canvas.height/H,0,0,w,h);
-    g.globalCompositeOperation = 'destination-in';
-    g.fillStyle = edge;
-    g.fillRect(0,0,w,h);
-  }
 }
 
-function environment(t, light) {
+function drawClouds(t, light) {
   if (scenery.sky) ctx.drawImage(clouds(t,light,report,scenery.sky),0,0);
-  for (const { x,y,layer,strength } of foliage) {
-    const wave = Math.sin(t*1.27+x*.025) + .28*Math.sin(t*2.8+y*.05);
-    ctx.drawImage(layer,x + Math.round(wave*strength*(1+rain)), y + Math.round(wave*.8));
-  }
 }
 
 function occlude(path) {
@@ -345,7 +311,7 @@ function render() {
   }
   ctx.setTransform(scale,0,0,canvas.height/H,0,0);
   ctx.drawImage(background,0,0,W,H);
-  environment(elapsed,currentLight);
+  drawClouds(elapsed,currentLight);
   drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);
@@ -446,7 +412,6 @@ async function start() {
     image('./art/cats.webp'),
     image('./art/dry-road.webp').catch(() => null),
   ]);
-  loadFoliage();
   motion.addEventListener('change', event => {
     paused = event.matches;
     if (paused) stop();

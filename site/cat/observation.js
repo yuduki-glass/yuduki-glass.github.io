@@ -32,14 +32,6 @@ const carportPost = mask([[656,310],[677,318],[679,659],[658,663]]);
 const gardenWall = mask([[1420,515],[1672,515],[1672,941],[1548,890],[1411,821]]);
 const distantWall = mask([[1262,488],[1298,485],[1314,476],[1330,490],
   [1350,504],[1355,642],[1321,645],[1295,629],[1256,608]]);
-const puddleEdges = mask([
-  [1046,718],[1097,707],[1264,709],[1300,717],[1320,741],[1248,749],
-  [1140,750],[1071,745],[1052,738],[1090,731],
-]);
-puddleEdges.addPath(mask([[1155,817],[1226,802],[1334,804],[1387,823],
-  [1418,857],[1428,899],[1395,918],[1325,909],[1265,877],[1197,851]]));
-puddleEdges.addPath(mask([[1146,668],[1232,660],[1291,670],[1302,702],
-  [1230,708],[1198,690],[1150,677]]));
 const dryingHollows = [
   [1252,679,117,21,.22],
   [1194,726,170,25,.1],
@@ -47,13 +39,6 @@ const dryingHollows = [
 ];
 const dampRoad = mask([[1210,624],[1260,633],[1290,689],[1340,778],
   [1450,865],[1560,941],[1035,941],[1034,854],[1045,772],[1138,686]]);
-const puddles = [
-  { x: 1170, y: 726, rx: 95, ry: 14 },
-  { x: 1275, y: 826, rx: 91, ry: 18 },
-  { x: 1361, y: 886, rx: 57, ry: 12 },
-  { x: 1207, y: 671, rx: 35, ry: 4 },
-];
-
 const lighting = [
   { hour: 0, day: 0, night: 1, dawn: 0 },
   { hour: 4.5, day: 0, night: 1, dawn: 0 },
@@ -66,6 +51,13 @@ const lighting = [
   { hour: 20, day: 0, night: 1, dawn: 0 },
   { hour: 24, day: 0, night: 1, dawn: 0 },
 ];
+// The sheen follows the pavement, widening with the road towards the camera.
+const rainRoad = mask([[1175,562],[1230,565],[1290,681],[1324,753],
+  [1411,838],[1570,941],[310,941],[511,798],[666,684],[863,614],[1016,581]]);
+const rainSky = document.createElement('canvas');
+rainSky.width = W;
+rainSky.height = 340;
+const skyPaint = rainSky.getContext('2d');
 const background = document.createElement('canvas');
 background.width = canvas.width;
 background.height = canvas.height;
@@ -199,7 +191,32 @@ function drawFoliage(t) {
   ctx.restore();
 }
 
+function paintRainSky(light) {
+  if (!scenery.sky) return;
+  skyPaint.clearRect(0,0,W,rainSky.height);
+  const gradient = skyPaint.createLinearGradient(0,0,0,320);
+  gradient.addColorStop(0, light.night > .5 ? '#202834' : '#485361');
+  gradient.addColorStop(1, light.night > .5 ? '#394452' : '#879096');
+  skyPaint.fillStyle = gradient;
+  skyPaint.fillRect(0,0,W,rainSky.height);
+  skyPaint.globalCompositeOperation = 'destination-in';
+  skyPaint.drawImage(scenery.sky,0,0);
+  skyPaint.globalCompositeOperation = 'source-over';
+  plate.drawImage(rainSky,0,0);
+}
+
+function paintRainRoad() {
+  const sheen = plate.createLinearGradient(0,565,0,H);
+  sheen.addColorStop(0,'rgba(178,190,199,.04)');
+  sheen.addColorStop(.35,'rgba(144,161,176,.20)');
+  sheen.addColorStop(1,'rgba(117,138,158,.09)');
+  plate.fillStyle = sheen;
+  plate.fill(rainRoad);
+}
+
 function composePlate(light) {
+  const raining = rainTarget() > 0;
+  if (raining) plate.filter = 'saturate(.62) brightness(.72)';
   const { atlas, legacy, flowers } = scenery;
   if (atlas) {
     plate.drawImage(atlas,0,0,W,H,0,0,W,H);
@@ -217,12 +234,16 @@ function composePlate(light) {
   plate.globalAlpha = 1;
   if (flowers) blendPatch(flowers,40,538,light);
   const wetness = wetnessAt(lastWetReport, Date.now(), rainTarget() > 0, lastRainSample);
-  drawDryingRoad(light, wetness);
-  if (wetness > 0) {
+  drawDryingRoad(light, raining ? 0 : wetness);
+  plate.filter = 'none';
+  if (raining) {
+    paintRainSky(light);
+    paintRainRoad();
+  } else if (wetness > 0) {
     plate.fillStyle = `rgba(34,47,61,${Math.max(.04, wetness*.18)})`;
     plate.fill(dampRoad);
   }
-  plate.fillStyle = `rgba(252,166,125,${light.dawn*.14})`;
+  plate.fillStyle = `rgba(252,166,125,${light.dawn*(raining ? .03 : .14)})`;
   plate.fillRect(0,0,W,H);
   plate.fillStyle = `rgba(49,67,92,${rain*.23})`;
   plate.fillRect(0,0,W,H);
@@ -230,7 +251,7 @@ function composePlate(light) {
 }
 
 function drawClouds(t, light) {
-  if (scenery.sky) ctx.drawImage(clouds(t,light,report,scenery.sky),0,0);
+  if (scenery.sky && rainTarget() === 0) ctx.drawImage(clouds(t,light,report,scenery.sky),0,0);
 }
 
 function occlude(path) {
@@ -332,10 +353,10 @@ function lightingEffects(light) {
 function weather(t) {
   if (rain < .01) return;
   ctx.save();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = `rgba(205,220,233,${rain*.33})`;
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = `rgba(219,230,237,${.18+rain*.37})`;
   ctx.beginPath();
-  for (let i=0; i<160; i++) {
+  for (let i=0; i<240; i++) {
     const velocity = 310+(i*213 % 275);
     const y = (i*1337 + t*velocity) % (H+60)-30;
     const x = (i*1379 + Math.floor((i*1337+t*velocity)/(H+60))*143+y*.14) % (W+40);
@@ -343,16 +364,17 @@ function weather(t) {
     ctx.lineTo(x+3,y+12+(i%8));
   }
   ctx.stroke();
-  ctx.clip(puddleEdges);
-  ctx.strokeStyle = `rgba(236,224,220,${rain*.35})`;
-  for (let i=0; i<puddles.length*5; i++) {
-    const patch = puddles[i % puddles.length];
-    const cycle = (t*1.78+i*.381) % 1;
-    const x = patch.x + (i*13%29-14)*patch.rx/22;
-    const y = patch.y + (i*7%19-9)*patch.ry/11;
-    ctx.globalAlpha = (1-cycle)*rain;
+  ctx.clip(rainRoad);
+  ctx.lineWidth = 1.2;
+  for (let i=0; i<38; i++) {
+    const x = 540+(i*271)%980;
+    const y = 592+(i*137)%349;
+    const cycle = (t*1.4+i*.381)%1;
+    const width = 1 + cycle*(y-520)*.017;
+    ctx.strokeStyle = `rgba(209,220,230,${(1-cycle)*rain*.31})`;
     ctx.beginPath();
-    ctx.ellipse(x,y,1+cycle*11, .5+cycle*2.6,0,0,TAU);
+    ctx.moveTo(x-width,y);
+    ctx.lineTo(x+width,y);
     ctx.stroke();
   }
   ctx.restore();

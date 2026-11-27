@@ -205,13 +205,66 @@ function paintRainSky(light) {
   plate.drawImage(rainSky,0,0);
 }
 
-function paintRainRoad() {
+function paintRainRoad(light) {
+  plate.save();
+  plate.clip(rainRoad);
   const sheen = plate.createLinearGradient(0,565,0,H);
-  sheen.addColorStop(0,'rgba(178,190,199,.04)');
-  sheen.addColorStop(.35,'rgba(144,161,176,.20)');
-  sheen.addColorStop(1,'rgba(117,138,158,.09)');
+  const daylight = 1-light.night*.64;
+  sheen.addColorStop(0,'rgba(183,203,221,.14)');
+  sheen.addColorStop(.40,`rgba(181,204,224,${.37*daylight})`);
+  sheen.addColorStop(.77,`rgba(157,184,205,${.22*daylight})`);
+  sheen.addColorStop(1,'rgba(21,35,51,.26)');
   plate.fillStyle = sheen;
-  plate.fill(rainRoad);
+  plate.fillRect(0,565,W,H-565);
+
+  // Broken highlights widen towards the camera and stay within the asphalt.
+  for (let i=0; i<148; i++) {
+    const depth = ((i*181)%997)/997;
+    const y = Math.floor(573+depth*depth*367);
+    const x = 1190 + (((i*311)%997)/997-.72)*(75+depth*1100);
+    const width = 3 + depth*(8+(i*47)%56);
+    const glint = plate.createLinearGradient(x-width,0,x+width,0);
+    glint.addColorStop(0,'rgba(171,195,215,0)');
+    glint.addColorStop(.47,`rgba(196,218,234,${(.15+depth*.22)*daylight})`);
+    glint.addColorStop(1,'rgba(171,195,215,0)');
+    plate.fillStyle = glint;
+    plate.fillRect(x-width,y,width*2,1+Math.floor(depth*2));
+  }
+  plate.restore();
+}
+
+const wetRoof = mask([[444,147],[480,121],[691,109],[783,127],[863,185],
+  [843,196],[466,191]]);
+const wetEdges = [
+  [377,455,654,455], [1422,516,1672,513],
+  [14,744,257,680], [0,831,355,723], [24,861,379,743],
+  [650,439,838,382],
+];
+
+function paintWetSurfaces(light) {
+  plate.save();
+  plate.globalCompositeOperation = 'screen';
+  plate.globalAlpha = 1-light.night*.64;
+  const roof = plate.createLinearGradient(0,113,0,196);
+  roof.addColorStop(0,'rgba(160,185,206,.30)');
+  roof.addColorStop(.68,'rgba(115,146,172,.12)');
+  roof.addColorStop(1,'rgba(115,146,172,0)');
+  plate.fillStyle = roof;
+  plate.fill(wetRoof);
+  for (const [x1,y1,x2,y2] of wetEdges) {
+    const edge = plate.createLinearGradient(x1,y1,x2,y2);
+    edge.addColorStop(0,'rgba(167,189,205,0)');
+    edge.addColorStop(.30,'rgba(167,189,205,.37)');
+    edge.addColorStop(.68,'rgba(167,189,205,.22)');
+    edge.addColorStop(1,'rgba(167,189,205,0)');
+    plate.strokeStyle = edge;
+    plate.lineWidth = 2.5;
+    plate.beginPath();
+    plate.moveTo(x1,y1);
+    plate.lineTo(x2,y2);
+    plate.stroke();
+  }
+  plate.restore();
 }
 
 function composePlate(light) {
@@ -238,7 +291,8 @@ function composePlate(light) {
   plate.filter = 'none';
   if (raining) {
     paintRainSky(light);
-    paintRainRoad();
+    paintRainRoad(light);
+    paintWetSurfaces(light);
   } else if (wetness > 0) {
     plate.fillStyle = `rgba(34,47,61,${Math.max(.04, wetness*.18)})`;
     plate.fill(dampRoad);

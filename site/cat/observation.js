@@ -1,3 +1,4 @@
+import { wetnessAt } from './puddles.js';
 import { createCloudLayer, seasonFor } from './seasons.js';
 import { readVisibleCats, pollInterval } from './positions.js';
 import { fetchConditions, japanClock, weatherLabel } from './conditions.js';
@@ -39,6 +40,13 @@ puddleEdges.addPath(mask([[1155,817],[1226,802],[1334,804],[1387,823],
   [1418,857],[1428,899],[1395,918],[1325,909],[1265,877],[1197,851]]));
 puddleEdges.addPath(mask([[1146,668],[1232,660],[1291,670],[1302,702],
   [1230,708],[1198,690],[1150,677]]));
+const dryingHollows = [
+  [1252,679,117,21,.22],
+  [1194,726,170,25,.1],
+  [1339,861,230,67,0],
+];
+const dampRoad = mask([[1210,624],[1260,633],[1290,689],[1340,778],
+  [1450,865],[1560,941],[1035,941],[1034,854],[1045,772],[1138,686]]);
 const puddles = [
   { x: 1170, y: 726, rx: 95, ry: 14 },
   { x: 1275, y: 826, rx: 91, ry: 18 },
@@ -70,7 +78,7 @@ const leafAreas = [
   [1570,334,102,144,2.0], [72,570,112,103,1.3], [1510,754,118,113,1.3],
 ];
 
-let sprites, scenery, seasonRequested;
+let sprites, scenery, dryRoad, seasonRequested;
 let positionRequest;
 let positions = { expiresAt: 0, cats: [] };
 let elapsed = 0;
@@ -79,7 +87,7 @@ let previous = 0;
 let previousDraw = 0;
 let gradeMinute = -1;
 let lastRain = -1;
-let report;
+let report, lastWetReport, lastRainSample;
 let lastWeatherAttempt = 0;
 let weatherRequest;
 let nowInJapan;
@@ -120,8 +128,36 @@ function getLighting(hour) {
   };
 }
 
+function blendPatch(patch, x, y, light) {
+  const width = patch.width;
+  const height = patch.height / 3;
+  for (const [band, alpha] of [1, light.day, light.night].entries()) {
+    plate.globalAlpha = alpha;
+    plate.drawImage(patch,0,height*band,width,height,x,y,width,height);
+  }
+  plate.globalAlpha = 1;
+}
+
+function drawDryingRoad(light, wetness) {
+  if (!dryRoad || wetness >= 1) return;
+  const dry = new Path2D();
+  dry.rect(1020,657,537,283);
+  for (const [x,y,rx,ry,cutoff] of dryingHollows) {
+    if (wetness <= cutoff) continue;
+    const size = Math.sqrt((wetness-cutoff)/(1-cutoff));
+    dry.moveTo(x+rx*size,y);
+    dry.ellipse(x,y,rx*size,ry*size,0,0,TAU);
+    dry.closePath();
+  }
+  // Reveal the original reflections only inside the shrinking hollows.
+  plate.save();
+  plate.clip(dry,'evenodd');
+  blendPatch(dryRoad,1020,657,light);
+  plate.restore();
+}
+
 function composePlate(light) {
-  const { atlas, legacy } = scenery;
+  const { atlas, legacy, flowers } = scenery;
   if (atlas) {
     plate.drawImage(atlas,0,0,W,H,0,0,W,H);
     plate.globalAlpha = light.day;
@@ -136,6 +172,13 @@ function composePlate(light) {
     plate.drawImage(legacy[2],0,0,W,H);
   }
   plate.globalAlpha = 1;
+  if (flowers) blendPatch(flowers,40,538,light);
+  const wetness = wetnessAt(lastWetReport, Date.now(), rainTarget() > 0, lastRainSample);
+  drawDryingRoad(light, wetness);
+  if (wetness > 0) {
+    plate.fillStyle = `rgba(34,47,61,${Math.max(.04, wetness*.18)})`;
+    plate.fill(dampRoad);
+  }
   plate.fillStyle = `rgba(252,166,125,${light.dawn*.14})`;
   plate.fillRect(0,0,W,H);
   plate.fillStyle = `rgba(49,67,92,${rain*.23})`;
@@ -333,7 +376,9 @@ function stop() {
 }
 
 function rainTarget() {
-  return report ? Math.min(1, (report.rain + report.showers) * 2 + (weatherLabel(report.code) === '雨' ? .4 : 0)) : 0;
+  if (!report || Date.now() - report.sampledAt >= 45*60000) return 0;
+  const label = weatherLabel(report.code);
+  return Math.min(1, (report.rain + report.showers) * 2 + (label === '雨' || label === '雷雨' ? .4 : 0));
 }
 
 function updateClock() {
@@ -351,6 +396,8 @@ async function updateWeather() {
   weatherRequest = fetchConditions();
   try {
     report = await weatherRequest;
+    lastWetReport = report;
+    if (rainTarget() > 0) lastRainSample = { end: report.sampledAt, amount: Math.max(1, report.rain + report.showers) };
     conditions.textContent = `葛飾 · ${weatherLabel(report.code)} · ${report.temperature} °C（${report.time.slice(11,16)} 推定）`;
   } catch {
     report = undefined;
@@ -366,11 +413,13 @@ async function updateWeather() {
 }
 
 async function loadSeason(season) {
-  const [atlas, sky] = await Promise.all([
-    image(`./art/season-${season}.webp`),
-    image(`./art/sky-${season}.webp`),
+  const base = season === 'rainy' ? 'springgreen' : season;
+  const [atlas, sky, flowers] = await Promise.all([
+    image(`./art/season-${base}.webp`),
+    image(`./art/sky-${base}.webp`),
+    season === 'rainy' ? image('./art/hydrangea.webp') : null,
   ]);
-  return { atlas, sky };
+  return { atlas, sky, flowers };
 }
 
 function refreshSeason() {
@@ -390,11 +439,12 @@ function refreshSeason() {
 async function start() {
   const season = seasonFor(japanClock(new Date()).date);
   seasonRequested = season;
-  [scenery, sprites] = await Promise.all([
+  [scenery, sprites, dryRoad] = await Promise.all([
     loadSeason(season).catch(async () => ({
       legacy: await Promise.all(['alley','day','night'].map(name => image(`./art/${name}.webp`))),
     })),
     image('./art/cats.webp'),
+    image('./art/dry-road.webp').catch(() => null),
   ]);
   loadFoliage();
   motion.addEventListener('change', event => {

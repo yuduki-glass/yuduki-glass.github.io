@@ -17,6 +17,8 @@ const endpoint = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams
   longitude: '139.85',
   current: 'rain,showers,weather_code,temperature_2m,cloud_cover,wind_speed_10m,wind_direction_10m',
   daily: 'sunrise,sunset',
+  hourly: 'rain,showers',
+  past_days: '1',
   timezone: 'Asia/Tokyo',
   forecast_days: '1',
 });
@@ -37,11 +39,12 @@ const hourOf = value => Number(value.slice(11,13)) + Number(value.slice(14,16))/
 export async function fetchConditions() {
   const response = await fetch(endpoint, { signal: AbortSignal.timeout(10000), cache: 'no-store' });
   if (!response.ok) throw new Error(`Weather HTTP ${response.status}`);
-  const { current, daily } = await response.json();
+  const { current, daily, hourly } = await response.json();
   const time = current?.time;
   const date = japanClock(new Date()).date;
-  const sunrise = daily?.sunrise?.[0];
-  const sunset = daily?.sunset?.[0];
+  const dayIndex = daily?.time?.indexOf(date);
+  const sunrise = daily?.sunrise?.[dayIndex];
+  const sunset = daily?.sunset?.[dayIndex];
   const values = [current?.weather_code, current?.temperature_2m, current?.rain, current?.showers];
   if (![time,sunrise,sunset].every(value => localTime.test(value)) ||
       ![sunrise,sunset].every(value => value.startsWith(date)) ||
@@ -54,7 +57,19 @@ export async function fetchConditions() {
   const cloudCover = current.cloud_cover;
   const windSpeed = current.wind_speed_10m;
   const windDirection = current.wind_direction_10m;
-  return { date, time, cloudCover: Number.isFinite(cloudCover) ? Math.max(0, Math.min(100, cloudCover)) : undefined,
+  const sampledAt = Date.parse(time + ':00+09:00');
+  const recentRain = [];
+  for (const [index, stamp] of (hourly?.time ?? []).entries()) {
+    if (!localTime.test(stamp)) continue;
+    const end = Date.parse(stamp + ':00+09:00');
+    const rain = hourly.rain?.[index];
+    const showers = hourly.showers?.[index];
+    if (end <= sampledAt && sampledAt - end < 8*3600000 &&
+        Number.isFinite(rain) && Number.isFinite(showers) && rain + showers > 0) {
+      recentRain.push({ end, amount: rain + showers });
+    }
+  }
+  return { date, time, sampledAt, recentRain, cloudCover: Number.isFinite(cloudCover) ? Math.max(0, Math.min(100, cloudCover)) : undefined,
     windSpeed: Number.isFinite(windSpeed) ? Math.max(0, Math.min(65, windSpeed)) : undefined,
     windDirection: Number.isFinite(windDirection) ? windDirection : undefined, sunrise: hourOf(sunrise), sunset: hourOf(sunset), code, temperature, rain, showers };
 }

@@ -8,28 +8,18 @@ permalink: /cat/
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#191918">
-  <title>CAT WATCHING LOG | 結月硝子</title>
-  <link rel="stylesheet" href="./observation.css">
+  <title>ねこ気象</title>
+  <link rel="stylesheet" href="./observation.css?v=3">
   <meta name="cat-position-feed" content="https://script.google.com/macros/s/AKfycbxGip-XUzmUfFuCa7mHhbB24jcF5RN_dgdF0LIK6SOWJoWm6BRyMT6eC4yFz7UdMceW/exec">
-  <script type="module" src="./observation.js?v=55948b8"></script>
+  <script type="module" src="./observation.js?v=4"></script>
 </head>
 <body>
   <main>
-    <header class="masthead">
-      <a href="/">結月硝子</a>
-      <span>猫指数観測所</span>
-    </header>
     <section aria-labelledby="title">
-      <div class="heading">
-        <div>
-          <h1 id="title">Cat Watching Log</h1>
-          <p class="subtitle">住宅街の路地</p>
-        </div>
-        <div class="clock" aria-label="日本標準時">
-          <time id="clock">--:--</time>
-          <span id="period">JST</span>
-        </div>
-      </div>
+      <header class="heading">
+        <h1 id="title">ねこ気象</h1>
+        <time id="clock" aria-label="日本標準時"></time>
+      </header>
       <figure>
         <div class="view">
           <canvas id="scene" width="1280" height="720" role="img" aria-label="現在の時刻と天候に合わせた住宅街のピクセルアート">住宅街の路地。手前の塀から、車のある駐車場を通って路地が遠くへ続いています。</canvas>
@@ -37,9 +27,14 @@ permalink: /cat/
         </div>
         <figcaption>
           <span id="conditions">葛飾の天候を取得中</span>
-          <a href="https://open-meteo.com/">気象データ © Open-Meteo</a>
+
         </figcaption>
       </figure>
+      <details class="sources">
+        <summary>データの出典</summary>
+        <a href="https://open-meteo.com/">Open-Meteo</a>
+        （<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>、表示用に加工）
+      </details>
     </section>
   </main>
 </body>

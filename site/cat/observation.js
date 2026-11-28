@@ -180,13 +180,23 @@ function refreshLeafLayers() {
 
 function drawFoliage(t) {
   const speed = report?.windSpeed ?? 5;
-  const strength = clamp(1.9 + speed/7,1.9,4.1);
-  const gust = .73 + .27*Math.sin(t*.53);
+  const wind = clamp(speed / 18);
+  const direction = Math.sin((report?.windDirection ?? 250)*Math.PI/180);
+  const gust = .55 + .29*Math.sin(t*.62) + .16*Math.sin(t*1.09+.8);
   ctx.save();
-  ctx.globalAlpha = .76;
-  for (const { x,y,layer,phase } of foliage) {
-    const wave = Math.sin(t*1.46-phase) + .25*Math.sin(t*2.6+phase);
-    ctx.drawImage(layer,x+wave*strength*gust,y+wave*.55*strength*gust);
+  ctx.globalAlpha = .86;
+  for (const { x,y,h,layer,phase } of foliage) {
+    const hanging = y < 110;
+    const anchorY = hanging ? 0 : h;
+    const flutter = Math.sin(t*1.85-phase) + .23*Math.sin(t*3.2+phase);
+    const sway = wind*(direction*gust*4 + flutter*(.9+gust*2));
+    const shear = (hanging ? sway : -sway)/h;
+    ctx.save();
+    ctx.translate(x,y+anchorY);
+    // The masked leaves bend around their attachment point.
+    ctx.transform(1,0,shear,1,0,0);
+    ctx.drawImage(layer,0,-anchorY);
+    ctx.restore();
   }
   ctx.restore();
 }

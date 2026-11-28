@@ -521,7 +521,12 @@ function drawPedestrian(t, light) {
   const distance = (1-progress)**1.7;
   const x = 1166-distance*793;
   const y = 573+distance*398;
-  const size = .19+.94*distance;
+  // Ground-contact calibration against the parked car and the far garden walls.
+  // The street flattens towards the bend, so near and far use separate slopes.
+  const height = y < 650
+    ? mix(65, 183, clamp((y-573)/77))
+    : mix(183, 345, clamp((y-650)/321));
+  const size = height/57;
   const gait = Math.sin(walkingTime*7.8);
   const stride = gait*7;
   const bob = Math.abs(gait)*2;

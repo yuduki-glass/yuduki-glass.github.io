@@ -14,12 +14,13 @@ export function japanClock(date) {
   };
 }
 
+export const forecastLead = 4*3600000;
+
 const endpoint = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
   latitude: '35.74',
   longitude: '139.85',
-  current: 'rain,showers,weather_code,temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,wind_direction_10m',
   daily: 'sunrise,sunset',
-  hourly: 'rain,showers,weather_code,precipitation_probability',
+  hourly: 'rain,showers,weather_code,precipitation_probability,temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,wind_direction_10m',
   past_days: '1',
   timezone: 'Asia/Tokyo',
   forecast_days: '2',
@@ -38,52 +39,52 @@ export function weatherLabel(code) {
 const localTime = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/;
 const hourOf = value => Number(value.slice(11,13)) + Number(value.slice(14,16))/60;
 
-export async function fetchConditions() {
+export async function fetchConditions(now = new Date()) {
+  const forecastAt = now.getTime() + forecastLead;
+  const forecast = japanClock(new Date(forecastAt));
   const response = await fetch(endpoint, { signal: AbortSignal.timeout(10000), cache: 'no-store' });
   if (!response.ok) throw new Error(`Weather HTTP ${response.status}`);
-  const { current, daily, hourly } = await response.json();
-  const time = current?.time;
-  const date = japanClock(new Date()).date;
-  const dayIndex = daily?.time?.indexOf(date);
+  const { daily, hourly } = await response.json();
+  const dayIndex = daily?.time?.indexOf(forecast.date);
   const sunrise = daily?.sunrise?.[dayIndex];
   const sunset = daily?.sunset?.[dayIndex];
-  const values = [current?.weather_code, current?.temperature_2m, current?.rain, current?.showers];
-  if (![time,sunrise,sunset].every(value => localTime.test(value)) ||
-      ![sunrise,sunset].every(value => value.startsWith(date)) ||
-      hourOf(sunrise) >= hourOf(sunset) ||
-      Math.abs(Date.now() - Date.parse(time + ':00+09:00')) > 45*60000 ||
-      !values.every(Number.isFinite)) {
-    throw new Error('Weather response is incomplete or stale');
+  const hours = (hourly?.time ?? []).map(time => localTime.test(time) ? Date.parse(time + ':00+09:00') : NaN);
+  const later = hours.findIndex(time => time >= forecastAt);
+  const earlier = later > 0 && hours[later] !== forecastAt ? later-1 : later;
+  if (later < 0 || ![sunrise,sunset].every(time => localTime.test(time) && time.startsWith(forecast.date)) ||
+      hourOf(sunrise) >= hourOf(sunset) || !Number.isFinite(hours[earlier]) ||
+      forecastAt < hours[earlier] || hours[later]-hours[earlier] > 3600000) {
+    throw new Error('Four-hour forecast is unavailable');
   }
-  const [code,temperature,rain,showers] = values;
-  const cloudCover = current.cloud_cover;
-  const windSpeed = current.wind_speed_10m;
-  const windDirection = current.wind_direction_10m;
-  const sampledAt = Date.parse(time + ':00+09:00');
-  const futureHour = (hourly?.time ?? []).findIndex(stamp => localTime.test(stamp) && stamp > time);
-  const nextCode = hourly?.weather_code?.[futureHour];
-  const precipitationProbability = hourly?.precipitation_probability?.[futureHour];
-  const humidity = current.relative_humidity_2m;
-  const recentRain = [];
-  for (const [index, stamp] of (hourly?.time ?? []).entries()) {
-    if (!localTime.test(stamp)) continue;
-    const end = Date.parse(stamp + ':00+09:00');
-    const rain = hourly.rain?.[index];
-    const showers = hourly.showers?.[index];
-    if (end <= sampledAt && sampledAt - end < 8*3600000 &&
-        Number.isFinite(rain) && Number.isFinite(showers) && rain + showers > 0) {
-      recentRain.push({ end, amount: rain + showers });
-    }
+  const weight = earlier === later ? 0 : (forecastAt-hours[earlier])/(hours[later]-hours[earlier]);
+  const nearest = weight < .5 ? earlier : later;
+  const interpolate = field => {
+    const a = hourly[field]?.[earlier], b = hourly[field]?.[later];
+    return Number.isFinite(a) && Number.isFinite(b) ? a+(b-a)*weight : undefined;
+  };
+  const code = hourly.weather_code?.[nearest];
+  const temperature = interpolate('temperature_2m');
+  const humidity = interpolate('relative_humidity_2m');
+  const precipitationProbability = hourly.precipitation_probability?.[later];
+  const rain = hourly.rain?.[later];
+  const showers = hourly.showers?.[later];
+  if (![code,temperature,rain,showers].every(Number.isFinite)) {
+    throw new Error('Four-hour forecast is incomplete');
   }
-  return { date, time, sampledAt, recentRain, nextCode, precipitationProbability, humidity, cloudCover: Number.isFinite(cloudCover) ? Math.max(0, Math.min(100, cloudCover)) : undefined,
-    windSpeed: Number.isFinite(windSpeed) ? Math.max(0, Math.min(65, windSpeed)) : undefined,
-    windDirection: Number.isFinite(windDirection) ? windDirection : undefined, sunrise: hourOf(sunrise), sunset: hourOf(sunset), code, temperature, rain, showers };
+  // Hourly rain totals are timestamped at the end of each interval.
+  const recentRain = hours.flatMap((end,index) => {
+    const rain = hourly.rain?.[index], showers = hourly.showers?.[index];
+    return end <= forecastAt && forecastAt-end < 8*3600000 &&
+      Number.isFinite(rain) && Number.isFinite(showers) && rain+showers > 0
+      ? [{end,amount:rain+showers}] : [];
+  });
+  return { date:forecast.date, time:forecast.label, forecastAt, recentRain,
+    sunrise:hourOf(sunrise), sunset:hourOf(sunset), code, temperature, humidity,
+    precipitationProbability, rain, showers, cloudCover:interpolate('cloud_cover'),
+    windSpeed:interpolate('wind_speed_10m'), windDirection:hourly.wind_direction_10m?.[nearest] };
 }
 
-export function formatWeather({ code, nextCode, temperature, humidity, precipitationProbability, time }) {
-  const initial = weatherLabel(code);
-  const next = Number.isFinite(nextCode) ? weatherLabel(nextCode) : initial;
-  const trend = next === initial ? initial : `${initial}▶${next}`;
+export function formatWeather({ code, temperature, humidity, precipitationProbability }) {
   const percent = value => Number.isFinite(value) && value >= 0 && value <= 100 ? `${Math.round(value)}%` : '—';
-  return `${trend}　${Math.round(temperature)}℃　湿度${percent(humidity)}　降水${percent(precipitationProbability)}（${time.slice(11,16)} 推定）`;
+  return `${weatherLabel(code)}　${Math.round(temperature)}℃　湿度${percent(humidity)}　降水${percent(precipitationProbability)}`;
 }

@@ -434,6 +434,62 @@ function weather(t) {
   ctx.restore();
 }
 
+// A car occasionally recedes towards the bend. Skip a pass if a cat is in the street.
+let nextCarAt = 32;
+let carStartedAt = null;
+
+function drawPassingCar(t, light) {
+  const streetOccupied = positions.expiresAt > Date.now() &&
+    positions.cats.some(cat => cat.layer === 'street' && cat.action !== 'crawl');
+  if (carStartedAt !== null && (streetOccupied || t-carStartedAt >= 13)) {
+    carStartedAt = null;
+  }
+  if (t >= nextCarAt) {
+    nextCarAt = t + 85 + Math.random()*65;
+    if (!streetOccupied) carStartedAt = t;
+  }
+  if (carStartedAt === null) return;
+
+  const progress = (t-carStartedAt)/13;
+  const distance = (1-progress)**2.45;
+  const x = 1170 - distance*395;
+  const y = 565 + distance*490;
+  const size = .065 + distance*.96;
+  ctx.save();
+  ctx.globalAlpha = clamp((1-progress)*10);
+  ctx.translate(Math.round(x),Math.round(y));
+  ctx.scale(size,size);
+  ctx.filter = `brightness(${1-light.night*.55-rain*.13})`;
+
+  ctx.fillStyle = '#28293562';
+  ctx.fill(new Path2D('M -92 1 L -62 -20 L 62 -20 L 92 1 Z'));
+  ctx.fillStyle = '#22242b';
+  ctx.fillRect(-68,-29,24,28);
+  ctx.fillRect(44,-29,24,28);
+  ctx.fillStyle = '#455356';
+  ctx.fill(new Path2D('M -74 -18 L -76 -53 L -66 -65 L -51 -101 L 48 -101 L 64 -69 L 75 -57 L 75 -18 L 62 -12 L -62 -12 Z'));
+  ctx.fillStyle = '#a1aaa6';
+  ctx.fill(new Path2D('M -69 -57 L -55 -69 L 55 -69 L 70 -55 L 70 -27 L -70 -27 Z'));
+  ctx.fillStyle = '#657b87';
+  ctx.fill(new Path2D('M -45 -93 L 43 -93 L 54 -71 L -56 -71 Z'));
+  ctx.fillStyle = '#384a58';
+  ctx.fill(new Path2D('M -45 -93 L 43 -93 L 47 -86 L -49 -86 Z'));
+  ctx.fillStyle = '#c6cbc1';
+  ctx.fillRect(-47,-103,94,4);
+  ctx.fillRect(-64,-60,128,3);
+  ctx.fillStyle = '#a13535';
+  ctx.fillRect(-67,-53,29,9);
+  ctx.fillRect(38,-53,29,9);
+  ctx.fillStyle = light.night > .4 ? '#ff6859' : '#e18470';
+  ctx.fillRect(-66,-52,21,3);
+  ctx.fillRect(45,-52,21,3);
+  ctx.fillStyle = '#d9d9c8';
+  ctx.fillRect(-15,-43,30,12);
+  ctx.fillStyle = '#637374';
+  ctx.fillRect(-9,-39,18,3);
+  ctx.restore();
+}
+
 function render() {
   const minute = nowInJapan.minute;
   if (minute !== gradeMinute || Math.abs(rain-lastRain) > .025) {
@@ -454,6 +510,7 @@ function render() {
   ctx.drawImage(background,0,0,W,H);
   drawClouds(elapsed,currentLight);
   if (!paused) drawFoliage(elapsed);
+  if (!paused) drawPassingCar(elapsed,currentLight);
   drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);

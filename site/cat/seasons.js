@@ -42,6 +42,35 @@ function cloudSprites() {
   });
 }
 
+function drawSkyTraffic(ctx, seconds, light) {
+  if (light.night > .55) return;
+  const birds = (seconds+38)%47;
+  if (birds < 12) {
+    ctx.fillStyle = '#343846';
+    ctx.globalAlpha = .76*(1-light.night);
+    for (let i=0; i<4; i++) {
+      const x = Math.round(916+birds*55-i*24);
+      const y = Math.round(138-birds*3+i*6+5*Math.sin(birds+i));
+      const wing = Math.round(3*Math.sin(birds*11+i*1.8));
+      ctx.fillRect(x-2,y,5,2);
+      ctx.fillRect(x-5,y+wing,3,2);
+      ctx.fillRect(x+3,y+wing,3,2);
+    }
+  }
+  const plane = (seconds+102)%125;
+  if (plane < 21) {
+    const x = Math.round(1710-plane*45);
+    const y = Math.round(74+plane*.8);
+    ctx.globalAlpha = .78*(1-light.night);
+    ctx.fillStyle = '#f9eeda';
+    ctx.fillRect(x-7,y,14,2);
+    ctx.fillRect(x-1,y-3,3,8);
+    ctx.fillRect(x+5,y-2,2,4);
+    ctx.globalAlpha *= .35;
+    ctx.fillRect(x+10,y,30,1);
+  }
+}
+
 export function createCloudLayer() {
   const layer = document.createElement('canvas');
   layer.width = WIDTH;
@@ -55,11 +84,11 @@ export function createCloudLayer() {
   return (seconds, light, weather, skyMask) => {
     const step = seconds - previous;
     previous = seconds;
-    const prevailingSpeed = (weather?.windSpeed ?? 9) / 6;
+    const prevailingSpeed = Math.min(16, 4 + (weather?.windSpeed ?? 9)*.47);
     const direction = Math.sin((weather?.windDirection ?? 250)*Math.PI/180);
-    position = (position - step * prevailingSpeed * direction) ;
+    position -= step * prevailingSpeed * (Math.abs(direction) < .25 ? (direction < 0 ? -.25 : .25) : direction);
     cover += ((weather?.cloudCover ?? 38)/100 - cover) * (1-Math.exp(-step/12));
-    const drawingTick = Math.floor(seconds*8);
+    const drawingTick = Math.floor(seconds*15);
     if (drawingTick === drawingTime) return layer;
     drawingTime = drawingTick;
     ctx.clearRect(0,0,WIDTH,SKY_HEIGHT);
@@ -77,6 +106,8 @@ export function createCloudLayer() {
     });
     ctx.globalAlpha = 1;
     ctx.filter = 'none';
+    drawSkyTraffic(ctx, seconds, light);
+    ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'destination-in';
     ctx.drawImage(skyMask,0,0,WIDTH,SKY_HEIGHT);
     ctx.globalCompositeOperation = 'source-over';

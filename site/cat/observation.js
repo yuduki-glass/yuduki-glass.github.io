@@ -1,7 +1,7 @@
 import { wetnessAt } from './puddles.js';
 import { createCloudLayer, seasonFor } from './seasons.js?v=8';
 import { readVisibleCats, pollInterval } from './positions.js';
-import { fetchConditions, formatWeather, japanClock, weatherLabel } from './conditions.js?v=3';
+import { fetchConditions, forecastLead, formatWeather, japanClock, weatherLabel } from './conditions.js?v=11';
 
 const canvas = document.querySelector('#scene');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -73,7 +73,7 @@ let previous = 0;
 let previousDraw = 0;
 let gradeMinute = -1;
 let lastRain = -1;
-let report, lastWetReport, lastRainSample;
+let report;
 let lastWeatherAttempt = 0;
 let weatherRequest;
 let nowInJapan;
@@ -296,7 +296,7 @@ function composePlate(light) {
   }
   plate.globalAlpha = 1;
   if (flowers) blendPatch(flowers,40,538,light);
-  const wetness = wetnessAt(lastWetReport, Date.now(), rainTarget() > 0, lastRainSample);
+  const wetness = wetnessAt(report && {...report, sampledAt:report.forecastAt}, report?.forecastAt, raining);
   drawDryingRoad(light, raining ? 0 : wetness);
   plate.filter = 'none';
   if (raining) {
@@ -498,16 +498,16 @@ function stop() {
 }
 
 function rainTarget() {
-  if (!report || Date.now() - report.sampledAt >= 45*60000) return 0;
+  if (!report || Math.abs(Date.now()+forecastLead-report.forecastAt) >= 45*60000) return 0;
   const label = weatherLabel(report.code);
   return Math.min(1, (report.rain + report.showers) * 2 + (label === '雨' || label === '雷雨' ? .4 : 0));
 }
 
 function updateClock() {
   const previousDate = nowInJapan?.date;
-  nowInJapan = japanClock(new Date());
+  nowInJapan = japanClock(new Date(report?.forecastAt ?? Date.now()+forecastLead));
   if (nowInJapan.date !== previousDate) refreshSeason();
-  clock.textContent = nowInJapan.display;
+  clock.textContent = nowInJapan.display + ' 気象予報';
   clock.dateTime = nowInJapan.date + 'T' + nowInJapan.label + ':00+09:00';
   if (paused) render();
 }
@@ -518,12 +518,12 @@ async function updateWeather() {
   weatherRequest = fetchConditions();
   try {
     report = await weatherRequest;
-    lastWetReport = report;
-    if (rainTarget() > 0) lastRainSample = { end: report.sampledAt, amount: Math.max(1, report.rain + report.showers) };
+    gradeMinute = -1;
+    updateClock();
     conditions.textContent = formatWeather(report);
   } catch {
     report = undefined;
-    conditions.textContent = '葛飾の天候を取得できません';
+    conditions.textContent = '葛飾の4時間後の予報を取得できません';
   } finally {
     weatherRequest = undefined;
     gradeMinute = -1;
@@ -560,7 +560,7 @@ function refreshSeason() {
 }
 
 async function start() {
-  const season = seasonFor(japanClock(new Date()).date);
+  const season = seasonFor(japanClock(new Date(Date.now()+forecastLead)).date);
   seasonRequested = season;
   [scenery, sprites, dryRoad] = await Promise.all([
     loadSeason(season).catch(async () => ({

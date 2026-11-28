@@ -418,31 +418,50 @@ function lightingEffects(light) {
   ctx.restore();
 }
 
+// Keep each trajectory stable between frames; choose independent phases and lifetimes.
+const rainDrops = Array.from({length:240}, () => {
+  const depth = Math.random();
+  return {
+    x: Math.random()*(W+80),
+    phase: Math.random(),
+    speed: 235+depth*350+Math.random()*65,
+    length: 6+depth*17+Math.random()*5,
+    lean: .05+Math.random()*.2,
+    opacity: .32+depth*.6,
+  };
+});
+const rainSplashes = Array.from({length:38}, () => ({
+  x: 540+Math.random()*980,
+  y: 592+Math.random()*349,
+  phase: Math.random(),
+  interval: .42+Math.random()*.9,
+}));
+
 function weather(t) {
   if (rain < .01) return;
   ctx.save();
   ctx.lineWidth = 1.2;
-  ctx.strokeStyle = `rgba(219,230,237,${.18+rain*.37})`;
-  ctx.beginPath();
-  for (let i=0; i<240; i++) {
-    const velocity = 310+(i*213 % 275);
-    const y = (i*1337 + t*velocity) % (H+60)-30;
-    const x = (i*1379 + Math.floor((i*1337+t*velocity)/(H+60))*143+y*.14) % (W+40);
-    ctx.moveTo(x,y);
-    ctx.lineTo(x+3,y+12+(i%8));
-  }
-  ctx.stroke();
-  ctx.clip(rainRoad);
-  ctx.lineWidth = 1.2;
-  for (let i=0; i<38; i++) {
-    const x = 540+(i*271)%980;
-    const y = 592+(i*137)%349;
-    const cycle = (t*1.4+i*.381)%1;
-    const width = 1 + cycle*(y-520)*.017;
-    ctx.strokeStyle = `rgba(209,220,230,${(1-cycle)*rain*.31})`;
+  for (const drop of rainDrops) {
+    const fall = drop.phase + t*drop.speed/(H+80);
+    const passage = Math.floor(fall);
+    const y = (fall-passage)*(H+80)-40;
+    const x = (drop.x + passage*(310+drop.speed) + (y+40)*drop.lean)%(W+80)-40;
+    ctx.strokeStyle = `rgba(219,230,237,${(.18+rain*.37)*drop.opacity})`;
     ctx.beginPath();
-    ctx.moveTo(x-width,y);
-    ctx.lineTo(x+width,y);
+    ctx.moveTo(x,y);
+    ctx.lineTo(x+drop.lean*drop.length,y+drop.length);
+    ctx.stroke();
+  }
+  ctx.clip(rainRoad);
+  for (const splash of rainSplashes) {
+    const phase = (t/splash.interval+splash.phase)%1;
+    if (phase > .45) continue;
+    const life = phase/.45;
+    const width = 1+life*(splash.y-520)*.017;
+    ctx.strokeStyle = `rgba(209,220,230,${(1-life)*rain*.31})`;
+    ctx.beginPath();
+    ctx.moveTo(splash.x-width,splash.y);
+    ctx.lineTo(splash.x+width,splash.y);
     ctx.stroke();
   }
   ctx.restore();

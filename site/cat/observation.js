@@ -1,5 +1,5 @@
 import { wetnessAt } from './puddles.js';
-import { createCloudLayer, seasonFor } from './seasons.js';
+import { createCloudLayer, seasonFor } from './seasons.js?v=8';
 import { readVisibleCats, pollInterval } from './positions.js';
 import { fetchConditions, formatWeather, japanClock, weatherLabel } from './conditions.js?v=3';
 
@@ -180,8 +180,8 @@ function refreshLeafLayers() {
 
 function drawFoliage(t) {
   const speed = report?.windSpeed ?? 5;
-  const strength = clamp(.55 + speed/13,.55,1.7);
-  const gust = .68 + .32*Math.sin(t*.53);
+  const strength = clamp(1.9 + speed/7,1.9,4.1);
+  const gust = .73 + .27*Math.sin(t*.53);
   ctx.save();
   ctx.globalAlpha = .76;
   for (const { x,y,layer,phase } of foliage) {

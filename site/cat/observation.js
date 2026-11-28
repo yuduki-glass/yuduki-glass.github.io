@@ -395,7 +395,11 @@ function lightingEffects(light) {
     ctx.translate(x,y);
     ctx.scale(rx,ry);
     const glow = ctx.createRadialGradient(0,0,.02,0,0,1);
-    glow.addColorStop(0,`rgba(255,163,72,${a*intensity})`);
+    const hour = nowInJapan.minute/60;
+    const isWindow = y < 500;
+    const afterBedtime = hour >= (x < 400 ? 22 : 23) || hour < (x < 400 ? 5.5 : 6.5);
+    const output = isWindow && afterBedtime ? .18 : 1;
+    glow.addColorStop(0,`rgba(255,163,72,${a*intensity*output})`);
     glow.addColorStop(1,'rgba(255,140,45,0)');
     ctx.fillStyle = glow;
     ctx.fillRect(-1,-1,2,2);
@@ -446,7 +450,7 @@ function drawPassingCar(t, light) {
   }
   if (t >= nextCarAt) {
     nextCarAt = t + 85 + Math.random()*65;
-    if (!streetOccupied) carStartedAt = t;
+    if (!streetOccupied && walker === null) carStartedAt = t;
   }
   if (carStartedAt === null) return;
 
@@ -490,6 +494,79 @@ function drawPassingCar(t, light) {
   ctx.restore();
 }
 
+// Local time changes the type and frequency of passing pedestrians.
+let nextWalkerAt = 13;
+let walker = null;
+const umbrellaTop = new Path2D('M -25 -54 Q 0 -81 25 -54 Q 12 -58 0 -53 Q -12 -58 -25 -54 Z');
+
+function walkingPeriod(minute) {
+  if (minute >= 7*60 && minute < 9*60+30) return 'commute';
+  if (minute >= 16*60 && minute < 20*60) return 'evening';
+  if (minute >= 6*60 && minute < 22*60) return 'day';
+  return 'overnight';
+}
+
+function drawPedestrian(t, light) {
+  const period = walkingPeriod(nowInJapan.minute);
+  if (walker && t-walker.started >= 24) walker = null;
+  if (t >= nextWalkerAt) {
+    const interval = { commute: 55, evening: 70, day: 105, overnight: 270 }[period];
+    nextWalkerAt = t + interval*(.85+Math.random()*.55);
+    if (carStartedAt === null) walker = { started: t, period };
+  }
+  if (!walker) return;
+
+  const walkingTime = t-walker.started;
+  const progress = walkingTime/24;
+  const distance = (1-progress)**1.7;
+  const x = 1166-distance*793;
+  const y = 573+distance*398;
+  const size = .19+.94*distance;
+  const gait = Math.sin(walkingTime*7.8);
+  const stride = gait*7;
+  const bob = Math.abs(gait)*2;
+  const umbrella = rainTarget() > 0;
+
+  ctx.save();
+  ctx.globalAlpha = clamp((1-progress)*9)*(1-light.night*.38);
+  ctx.translate(Math.round(x),Math.round(y));
+  ctx.scale(size,size);
+  ctx.fillStyle = '#22293555';
+  ctx.beginPath();
+  ctx.ellipse(0,0,13,3,0,0,TAU);
+  ctx.fill();
+  ctx.translate(0,-bob);
+  ctx.strokeStyle = '#343847';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(-5,-22);
+  ctx.lineTo(-5-stride*.48,-2-Math.max(0,stride*.32));
+  ctx.moveTo(5,-22);
+  ctx.lineTo(5+stride*.48,-2-Math.max(0,-stride*.32));
+  ctx.stroke();
+  ctx.fillStyle = walker.period === 'commute' ? '#445164' :
+    walker.period === 'evening' ? '#855f52' : '#637565';
+  ctx.fillRect(-10,-44,20,23);
+  ctx.fillRect(-13,-42,4,17);
+  ctx.fillRect(9,-42,4,17);
+  ctx.fillStyle = '#483a36';
+  ctx.fillRect(-6,-57,12,10);
+  ctx.fillStyle = '#bc9374';
+  ctx.fillRect(-4,-48,8,4);
+  if (umbrella) {
+    ctx.fillStyle = '#3f506e';
+    ctx.fill(umbrellaTop);
+    ctx.fillStyle = '#74839d';
+    ctx.fillRect(-10,-64,18,2);
+    ctx.fillStyle = '#333746';
+    ctx.fillRect(0,-54,2,21);
+  } else if (walker.period === 'commute' || walker.period === 'evening') {
+    ctx.fillStyle = '#45414a';
+    ctx.fillRect(11,-31+stride*.19,9,11);
+  }
+  ctx.restore();
+}
+
 function render() {
   const minute = nowInJapan.minute;
   if (minute !== gradeMinute || Math.abs(rain-lastRain) > .025) {
@@ -510,7 +587,10 @@ function render() {
   ctx.drawImage(background,0,0,W,H);
   drawClouds(elapsed,currentLight);
   if (!paused) drawFoliage(elapsed);
-  if (!paused) drawPassingCar(elapsed,currentLight);
+  if (!paused) {
+    drawPassingCar(elapsed,currentLight);
+    drawPedestrian(elapsed,currentLight);
+  }
   drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);

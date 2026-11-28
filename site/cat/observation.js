@@ -1,5 +1,5 @@
 import { wetnessAt } from './puddles.js';
-import { createCloudLayer, seasonFor } from './seasons.js';
+import { createCloudLayer, seasonFor } from './seasons.js?v=8';
 import { readVisibleCats, pollInterval } from './positions.js';
 import { fetchConditions, formatWeather, japanClock, weatherLabel } from './conditions.js?v=3';
 
@@ -180,8 +180,8 @@ function refreshLeafLayers() {
 
 function drawFoliage(t) {
   const speed = report?.windSpeed ?? 5;
-  const strength = clamp(.55 + speed/13,.55,1.7);
-  const gust = .68 + .32*Math.sin(t*.53);
+  const strength = clamp(1.9 + speed/7,1.9,4.1);
+  const gust = .73 + .27*Math.sin(t*.53);
   ctx.save();
   ctx.globalAlpha = .76;
   for (const { x,y,layer,phase } of foliage) {
@@ -395,7 +395,11 @@ function lightingEffects(light) {
     ctx.translate(x,y);
     ctx.scale(rx,ry);
     const glow = ctx.createRadialGradient(0,0,.02,0,0,1);
-    glow.addColorStop(0,`rgba(255,163,72,${a*intensity})`);
+    const hour = nowInJapan.minute/60;
+    const isWindow = y < 500;
+    const afterBedtime = hour >= (x < 400 ? 22 : 23) || hour < (x < 400 ? 5.5 : 6.5);
+    const output = isWindow && afterBedtime ? .18 : 1;
+    glow.addColorStop(0,`rgba(255,163,72,${a*intensity*output})`);
     glow.addColorStop(1,'rgba(255,140,45,0)');
     ctx.fillStyle = glow;
     ctx.fillRect(-1,-1,2,2);
@@ -434,6 +438,135 @@ function weather(t) {
   ctx.restore();
 }
 
+// A car occasionally recedes towards the bend. Skip a pass if a cat is in the street.
+let nextCarAt = 32;
+let carStartedAt = null;
+
+function drawPassingCar(t, light) {
+  const streetOccupied = positions.expiresAt > Date.now() &&
+    positions.cats.some(cat => cat.layer === 'street' && cat.action !== 'crawl');
+  if (carStartedAt !== null && (streetOccupied || t-carStartedAt >= 13)) {
+    carStartedAt = null;
+  }
+  if (t >= nextCarAt) {
+    nextCarAt = t + 85 + Math.random()*65;
+    if (!streetOccupied && walker === null) carStartedAt = t;
+  }
+  if (carStartedAt === null) return;
+
+  const progress = (t-carStartedAt)/13;
+  const distance = (1-progress)**2.45;
+  const x = 1170 - distance*395;
+  const y = 565 + distance*490;
+  const size = .065 + distance*.96;
+  ctx.save();
+  ctx.globalAlpha = clamp((1-progress)*10);
+  ctx.translate(Math.round(x),Math.round(y));
+  ctx.scale(size,size);
+  ctx.filter = `brightness(${1-light.night*.55-rain*.13})`;
+
+  ctx.fillStyle = '#28293562';
+  ctx.fill(new Path2D('M -92 1 L -62 -20 L 62 -20 L 92 1 Z'));
+  ctx.fillStyle = '#22242b';
+  ctx.fillRect(-68,-29,24,28);
+  ctx.fillRect(44,-29,24,28);
+  ctx.fillStyle = '#455356';
+  ctx.fill(new Path2D('M -74 -18 L -76 -53 L -66 -65 L -51 -101 L 48 -101 L 64 -69 L 75 -57 L 75 -18 L 62 -12 L -62 -12 Z'));
+  ctx.fillStyle = '#a1aaa6';
+  ctx.fill(new Path2D('M -69 -57 L -55 -69 L 55 -69 L 70 -55 L 70 -27 L -70 -27 Z'));
+  ctx.fillStyle = '#657b87';
+  ctx.fill(new Path2D('M -45 -93 L 43 -93 L 54 -71 L -56 -71 Z'));
+  ctx.fillStyle = '#384a58';
+  ctx.fill(new Path2D('M -45 -93 L 43 -93 L 47 -86 L -49 -86 Z'));
+  ctx.fillStyle = '#c6cbc1';
+  ctx.fillRect(-47,-103,94,4);
+  ctx.fillRect(-64,-60,128,3);
+  ctx.fillStyle = '#a13535';
+  ctx.fillRect(-67,-53,29,9);
+  ctx.fillRect(38,-53,29,9);
+  ctx.fillStyle = light.night > .4 ? '#ff6859' : '#e18470';
+  ctx.fillRect(-66,-52,21,3);
+  ctx.fillRect(45,-52,21,3);
+  ctx.fillStyle = '#d9d9c8';
+  ctx.fillRect(-15,-43,30,12);
+  ctx.fillStyle = '#637374';
+  ctx.fillRect(-9,-39,18,3);
+  ctx.restore();
+}
+
+// Local time changes the type and frequency of passing pedestrians.
+let nextWalkerAt = 13;
+let walker = null;
+const umbrellaTop = new Path2D('M -25 -54 Q 0 -81 25 -54 Q 12 -58 0 -53 Q -12 -58 -25 -54 Z');
+
+function walkingPeriod(minute) {
+  if (minute >= 7*60 && minute < 9*60+30) return 'commute';
+  if (minute >= 16*60 && minute < 20*60) return 'evening';
+  if (minute >= 6*60 && minute < 22*60) return 'day';
+  return 'overnight';
+}
+
+function drawPedestrian(t, light) {
+  const period = walkingPeriod(nowInJapan.minute);
+  if (walker && t-walker.started >= 24) walker = null;
+  if (t >= nextWalkerAt) {
+    const interval = { commute: 55, evening: 70, day: 105, overnight: 270 }[period];
+    nextWalkerAt = t + interval*(.85+Math.random()*.55);
+    if (carStartedAt === null) walker = { started: t, period };
+  }
+  if (!walker) return;
+
+  const walkingTime = t-walker.started;
+  const progress = walkingTime/24;
+  const distance = (1-progress)**1.7;
+  const x = 1166-distance*793;
+  const y = 573+distance*398;
+  const size = .19+.94*distance;
+  const gait = Math.sin(walkingTime*7.8);
+  const stride = gait*7;
+  const bob = Math.abs(gait)*2;
+  const umbrella = rainTarget() > 0;
+
+  ctx.save();
+  ctx.globalAlpha = clamp((1-progress)*9)*(1-light.night*.38);
+  ctx.translate(Math.round(x),Math.round(y));
+  ctx.scale(size,size);
+  ctx.fillStyle = '#22293555';
+  ctx.beginPath();
+  ctx.ellipse(0,0,13,3,0,0,TAU);
+  ctx.fill();
+  ctx.translate(0,-bob);
+  ctx.strokeStyle = '#343847';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(-5,-22);
+  ctx.lineTo(-5-stride*.48,-2-Math.max(0,stride*.32));
+  ctx.moveTo(5,-22);
+  ctx.lineTo(5+stride*.48,-2-Math.max(0,-stride*.32));
+  ctx.stroke();
+  ctx.fillStyle = walker.period === 'commute' ? '#445164' :
+    walker.period === 'evening' ? '#855f52' : '#637565';
+  ctx.fillRect(-10,-44,20,23);
+  ctx.fillRect(-13,-42,4,17);
+  ctx.fillRect(9,-42,4,17);
+  ctx.fillStyle = '#483a36';
+  ctx.fillRect(-6,-57,12,10);
+  ctx.fillStyle = '#bc9374';
+  ctx.fillRect(-4,-48,8,4);
+  if (umbrella) {
+    ctx.fillStyle = '#3f506e';
+    ctx.fill(umbrellaTop);
+    ctx.fillStyle = '#74839d';
+    ctx.fillRect(-10,-64,18,2);
+    ctx.fillStyle = '#333746';
+    ctx.fillRect(0,-54,2,21);
+  } else if (walker.period === 'commute' || walker.period === 'evening') {
+    ctx.fillStyle = '#45414a';
+    ctx.fillRect(11,-31+stride*.19,9,11);
+  }
+  ctx.restore();
+}
+
 function render() {
   const minute = nowInJapan.minute;
   if (minute !== gradeMinute || Math.abs(rain-lastRain) > .025) {
@@ -454,6 +587,10 @@ function render() {
   ctx.drawImage(background,0,0,W,H);
   drawClouds(elapsed,currentLight);
   if (!paused) drawFoliage(elapsed);
+  if (!paused) {
+    drawPassingCar(elapsed,currentLight);
+    drawPedestrian(elapsed,currentLight);
+  }
   drawVisibleCats(currentLight);
   lightingEffects(currentLight);
   weather(elapsed);
